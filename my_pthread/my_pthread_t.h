@@ -3,6 +3,9 @@
 #include <ucontext.h>
 #include <signal.h>
 
+struct node_;
+typedef struct node_ node;
+
 struct scheduler_;
 typedef struct scheduler_ scheduler;
 

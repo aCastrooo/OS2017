@@ -6,13 +6,14 @@ typedef struct scheduler_{
 
 } scheduler;
 
-typedef struct node {
+
+struct node {
 
     pthread_t* threadID;
     ucontext_t ut;
     struct node * next;
 
-} node_t;
+}
 
 
 
@@ -63,5 +64,6 @@ int my_pthread_create( pthread_t * thread, pthread_attr_t * attr, void *(*functi
 //step 1: setup scheduler if it is not already set up
 //step 2: call getcontext then makecontext using info from thread
 //step 3: call scheduler function that adds this context to a list
+
   return 0;
 }
