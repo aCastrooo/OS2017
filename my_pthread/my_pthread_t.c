@@ -2,16 +2,14 @@
 
 struct scheduler{
 
-  
-
 }
 
-typedef struct node {
+struct node {
 
     ucontext_t ut;
     struct node * next;
 
-} node_t;
+}
 
 void enqueue(node_t * head, ucontext_t ut) {
     node_t * ptr = head;
@@ -57,5 +55,8 @@ int my_pthread_create( pthread_t * thread, pthread_attr_t * attr, void *(*functi
 
 //step 1: setup scheduler if it is not already set up
 //step 2: call makecontext using info from thread
+
+
+
   return 0;
 }
