@@ -2,7 +2,6 @@
 
 
 typedef struct scheduler_ {
-
   //multilevel priority running queue of size 5
   struct queue_* runQ[RUN_QUEUE_SIZE];
 
@@ -20,35 +19,26 @@ typedef struct scheduler_ {
 
   //list of mutexes + waitQ
   struct my_pthread_mutex_t_* mutexList;
-
-
 } scheduler;
 
 typedef struct node_ {
-
     pthread_t threadID;
     ucontext_t* ut;
+    int priority;
     struct node_ * next;
-
 } node;
 
 typedef struct queue_ {
-
     struct node_* head;
     int priorityLevel;
-
 } queue;
 
 typedef struct list_ {
-
     struct node_* head;
-
 } list;
 
 typedef struct my_pthread_mutex_t_ {
-
     int mutexID;
-
 } my_pthread_mutex_t;
 
 //takes a pointer to a context and a pthread_t and returns a pointer to a node
@@ -61,11 +51,23 @@ node* createNode(ucontext_t* context, pthread_t thread){
     return newNode;
 }
 
+//enqueues the node in the next lower priority queue if it can be demoted
+void demoteNode(scheduler* sched, node* demotee){
+    int newPriority = demotee->priority;
+
+    if(demotee->priority < RUN_QUEUE_SIZE - 1){
+        newPriority++;
+    }
+
+    enQ(sched->runQ[newPriority], demotee);
+}
+
 //takes pointer to head of list and pointer to the node to be inserted
 void enQ(queue* q, node* newNode) {
     node* ptr = q->head;
     node* prev = NULL;
 
+    newNode->priority = q->priorityLevel;
 
     while (ptr != NULL) {
         prev = ptr;
@@ -107,6 +109,11 @@ int existsInList(pthread_t id, list* ls){
     }
 
     return 0;
+}
+
+void insertToList(node* newNode, list* ls) {
+    newNode->next = ls->head;
+    ls->head = newNode;
 }
 
 //removes a node from a list
