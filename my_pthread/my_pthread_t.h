@@ -3,6 +3,8 @@
 #include <ucontext.h>
 #include <signal.h>
 
+#define RUN_QUEUE_SIZE 5
+
 struct node_;
 typedef struct node_ node;
 
