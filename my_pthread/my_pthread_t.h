@@ -5,14 +5,11 @@
 
 #define RUN_QUEUE_SIZE 5
 
-struct node_;
 typedef struct node_ node;
 
-struct scheduler_;
 typedef struct scheduler_ scheduler;
 
-struct mutex_;
-typedef struct mutex_ mutex;
+typedef struct my_pthread_mutex_t_ my_pthread_mutex_t;
 
 int my_pthread_create(pthread_t * thread, pthread_attr_t * attr,
   void *(*function)(void*), void * arg);
