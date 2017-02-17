@@ -2,16 +2,25 @@
 
 struct scheduler{
 
-  
+
 
 }
 
 typedef struct node {
 
+    pthread_t threadID;
     ucontext_t ut;
     struct node * next;
 
 } node_t;
+
+
+typedef struct pthread_t_ {
+
+    int id;
+
+} pthread_t;
+
 
 void enqueue(node_t * head, ucontext_t ut) {
     node_t * ptr = head;
