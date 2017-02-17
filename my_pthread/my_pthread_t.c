@@ -1,6 +1,6 @@
 #include "my_pthread_t.h"
 
-struct scheduler{
+struct scheduler_ {
 
 
 
@@ -10,26 +10,18 @@ struct node_ {
 
     pthread_t threadID;
     ucontext_t ut;
-    struct node * next;
+    struct node_ * next;
 
 }
 
-
-typedef struct pthread_t_ {
-
-    int id;
-
-} pthread_t;
-
-
-void enqueue(node_t * head, ucontext_t ut) {
+void enqueue(node * head, ucontext_t ut) {
     node * ptr = head;
 
     while (ptr->next != NULL) {
         ptr = ptr->next;
     }
 
-    ptr->next = malloc(sizeof(node_t));
+    ptr->next = malloc(sizeof(node));
     ptr->next->ut = ut;
     ptr->next->next = NULL;
 }
