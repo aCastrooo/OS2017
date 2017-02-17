@@ -7,6 +7,10 @@
 
 typedef struct node_ node;
 
+typedef struct queue_ queue;
+
+typedef struct list_ list;
+
 typedef struct scheduler_ scheduler;
 
 typedef struct my_pthread_mutex_t_ my_pthread_mutex_t;

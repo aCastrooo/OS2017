@@ -4,7 +4,7 @@
 typedef struct scheduler_ {
 
   //multilevel priority running queue of size 5
-  struct node_* runQ[RUN_QUEUE_SIZE];
+  struct queue_* runQ[RUN_QUEUE_SIZE];
 
   //node which holds the context which currently is running
   struct node_* current;
@@ -13,10 +13,10 @@ typedef struct scheduler_ {
   ucontext_t schedContext;
 
   //list of nodes waiting for a join
-  struct node_* joinList;
+  struct list_* joinList;
 
   //list of nodes that have finished execution for use of nodes waiting on joins
-  struct node_* deadList;
+  struct list_* deadList;
 
   //list of mutexes + waitQ
   struct my_pthread_mutex_t_* mutexList;
@@ -32,7 +32,21 @@ typedef struct node_ {
 
 } node;
 
+typedef struct queue_ {
+
+    struct node_* head;
+    int priorityLevel;
+
+} queue;
+
+typedef struct list_ {
+
+    struct node_* head;
+
+} list;
+
 typedef struct my_pthread_mutex_t_ {
+
     int mutexID;
 
 } my_pthread_mutex_t;
@@ -48,8 +62,8 @@ node* createNode(ucontext_t* context, pthread_t thread){
 }
 
 //takes pointer to head of list and pointer to the node to be inserted
-void enQ(node* head, node* newNode) {
-    node* ptr = head;
+void enQ(queue* q, node* newNode) {
+    node* ptr = q->head;
     node* prev = NULL;
 
 
@@ -59,7 +73,7 @@ void enQ(node* head, node* newNode) {
     }
 
     if(prev == NULL){
-        head = newNode;
+        q->head = newNode;
     }else{
         prev->next = newNode;
     }
@@ -68,18 +82,55 @@ void enQ(node* head, node* newNode) {
 
 //takes a pointer to the pointer of the head of the list NOT just a pointer to head
 //returns pointer to node removed from head
-node* deQ(node** listPtr) {
-    node* head = *listPtr;
+node* deQ(queue* q) {
+    node* head = q->head;
 
     if (head == NULL) {
         return NULL;
     }
 
     node* result = head;
-    head = head->next;
-    *listPtr = head;
+    q->head = head->next;
 
     return result;
+}
+
+//returns 1 if the node with pthread id exists in list, 0 if not
+int existsInList(pthread_t id, list* ls){
+    node* ptr = ls->head;
+
+    while(ptr != NULL){
+      if(ptr->threadID == id){
+        return 1;
+      }
+      ptr = ptr->next;
+    }
+
+    return 0;
+}
+
+//removes a node from a list
+node* removeFromList(pthread_t id, list* ls){
+    node* ptr = ls->head;
+    node* prev = NULL;
+
+    while(ptr != NULL && ptr->threadID != id){
+      prev = ptr;
+      ptr = ptr->next;
+    }
+
+    if(ptr != NULL && ptr->threadID == id){
+      if(prev == NULL){
+        node* result = ptr;
+        ls->head = ptr->next;
+        return result;
+      }else{
+        prev->next = ptr->next;
+        return ptr;
+      }
+    }
+
+    return NULL;
 }
 
 void initialize(){
@@ -114,24 +165,16 @@ int main(int argc, char const *argv[]) {
 
   printf("%d\n",head->threadID );
 
+  queue* Q = (queue*) malloc(sizeof(queue));
+  enQ(Q,head);
+
   int i;
   for ( i = 1; i <= 5; i++) {
     pthread_t p = (pthread_t) i;
     node* ptr = createNode(&ct, p);
     printf("created node %d\n",ptr->threadID );
-    enQ(head,ptr);
+    enQ(Q,ptr);
   }
 
-  node* x = head;
-
-  while (head != NULL) {
-    node** hptr = &head;
-    x=deQ(hptr);
-    printf("dequeued %d\n",x->threadID );
-  }
-
-  if(head == NULL){
-    printf("head is no more\n" );
-  }
   return 0;
 }
