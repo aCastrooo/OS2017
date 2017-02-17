@@ -1,50 +1,47 @@
 #include "my_pthread_t.h"
 
-typedef struct scheduler_{
-    
+
+struct scheduler_{
 
 
-} scheduler;
 
+}
 
-struct node {
+struct node_ {
 
-    pthread_t* threadID;
+    pthread_t threadID;
     ucontext_t ut;
-    struct node * next;
+    struct node_ * next;
 
 }
 
 
 
 
-
-void enqueue(node_t * head, ucontext_t ut) {
-    node_t * ptr = head;
+void enqueue(node * head, ucontext_t ut) {
+    node * ptr = head;
 
     while (ptr->next != NULL) {
         ptr = ptr->next;
     }
 
-    ptr->next = malloc(sizeof(node_t));
+    ptr->next = malloc(sizeof(node));
     ptr->next->ut = ut;
     ptr->next->next = NULL;
 }
 
-ucontext_t dequeue(node_t ** head) {
-    ucontext_t ut;
-    node_t * next = NULL;
+node dequeue(node * head) {
+    node * next = NULL;
 
     if (*head == NULL) {
         return NULL;
     }
 
     next = (*head)->next;
-    ut = (*head)->ut;
     free(*head);
     *head = next;
 
-    return ut;
+    return node;
 }
 
 void initialize(){
