@@ -1,25 +1,21 @@
 #include "my_pthread_t.h"
 
-struct scheduler{
+typedef struct scheduler_{
 
 
 
-}
+} scheduler;
 
 typedef struct node {
 
-    pthread_t threadID;
+    pthread_t* threadID;
     ucontext_t ut;
     struct node * next;
 
 } node_t;
 
 
-typedef struct pthread_t_ {
 
-    int id;
-
-} pthread_t;
 
 
 void enqueue(node_t * head, ucontext_t ut) {
