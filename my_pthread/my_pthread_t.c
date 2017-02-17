@@ -7,6 +7,7 @@ int my_pthread_create( pthread_t * thread, pthread_attr_t * attr, void *(*functi
 //arg is the void pointer that points to the arg(s) passed to the function
 
 //step 1: setup scheduler if it is not already set up
-//step 2: call makecontext using info from thread
+//step 2: call getcontext then makecontext using info from thread
+//step 3: call scheduler function that adds this context to a list
   return 0;
 }
