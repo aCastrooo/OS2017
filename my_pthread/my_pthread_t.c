@@ -1,26 +1,29 @@
 #include "my_pthread_t.h"
 
-typedef struct scheduler_{
+struct scheduler{
 
 
 
-} scheduler;
+}
 
+struct node_ {
 
-struct node {
-
-    pthread_t* threadID;
+    pthread_t threadID;
     ucontext_t ut;
     struct node * next;
 
 }
 
 
+typedef struct pthread_t_ {
 
+    int id;
+
+} pthread_t;
 
 
 void enqueue(node_t * head, ucontext_t ut) {
-    node_t * ptr = head;
+    node * ptr = head;
 
     while (ptr->next != NULL) {
         ptr = ptr->next;
@@ -31,20 +34,18 @@ void enqueue(node_t * head, ucontext_t ut) {
     ptr->next->next = NULL;
 }
 
-ucontext_t dequeue(node_t ** head) {
-    ucontext_t ut;
-    node_t * next = NULL;
+node dequeue(node * head) {
+    node * next = NULL;
 
     if (*head == NULL) {
         return NULL;
     }
 
     next = (*head)->next;
-    ut = (*head)->ut;
     free(*head);
     *head = next;
 
-    return ut;
+    return node;
 }
 
 void initialize(){
