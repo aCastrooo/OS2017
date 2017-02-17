@@ -1,6 +1,6 @@
 #include "my_pthread_t.h"
 
-
+/******************************structs**************************/
 typedef struct scheduler_ {
   //multilevel priority running queue of size 5
   struct queue_* runQ[RUN_QUEUE_SIZE];
@@ -9,7 +9,10 @@ typedef struct scheduler_ {
   struct node_* current;
 
   //the context of the scheduler function which every other context will point to
-  ucontext_t schedContext;
+  ucontext_t* schedContext;
+
+  //timer to be set and reset that will set off the alarm signals
+  struct itimerval* timer;
 
   //list of nodes waiting for a join
   struct list_* joinList;
@@ -39,8 +42,15 @@ typedef struct list_ {
 
 typedef struct my_pthread_mutex_t_ {
     int mutexID;
+    struct queue_* mutexWait;
 } my_pthread_mutex_t;
 
+/******************globals***********************/
+scheduler* scd = NULL;
+
+
+
+/********************functions*******************/
 //takes a pointer to a context and a pthread_t and returns a pointer to a node
 node* createNode(ucontext_t* context, pthread_t thread){
     node* newNode = (node*) malloc(sizeof(node));
@@ -141,6 +151,33 @@ node* removeFromList(pthread_t id, list* ls){
 }
 
 void initialize(){
+    scd = (scheduler*) malloc(sizeof(scheduler));
+
+    int i = 0;
+    for ( i = 0; i < RUN_QUEUE_SIZE; i++) {
+        scd->runQ[i] = (queue*) malloc(sizeof(queue));
+    }
+
+    scd->current = NULL;
+
+    //call getcontext, setup the ucontext_t, then makecontext with scheduler func
+    /*
+    ucontext_t* ct = (ucontext_t*) malloc(sizeof(ucontext_t));
+    getcontext(ct);
+    ct->uc_stack.ss_sp = (char*) malloc(STACK_SIZE);
+    ct->uc_stack.ss_size = STACK_SIZE;
+    makecontext(ct, POINTER_TO_SCHEDULER_FUNCTION, 0);
+    scd->schedContext = ct;
+    */
+
+    scd->timer = (struct itimerval*) malloc(sizeof(struct itimerval));
+
+    scd->joinList = (list*) malloc(sizeof(list));
+
+    scd->deadList = (list*) malloc(sizeof(list));
+
+    //to do: make a mutex list struct that holds a list of my_pthread_mutex_t
+    scd->mutexList;
 
 }
 
