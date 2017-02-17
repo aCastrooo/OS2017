@@ -1,7 +1,8 @@
 #include "my_pthread_t.h"
 
 
-struct scheduler_{
+struct scheduler_ {
+
 
 
 
@@ -14,8 +15,6 @@ struct node_ {
     struct node_ * next;
 
 }
-
-
 
 
 void enqueue(node * head, ucontext_t ut) {
