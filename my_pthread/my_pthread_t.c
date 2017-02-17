@@ -3,7 +3,14 @@
 
 struct scheduler_ {
 
+  struct node_* runQ[RUN_QUEUE_SIZE];
+  struct node_* current;
+  struct node_* schedContext;
+  struct node_* joinList;
+  struct node_* deadList;
 
+  //list of mutexes + waitQ
+  struct my_pthread_mutex_t_* mutexList;
 
 
 }
@@ -17,7 +24,7 @@ struct node_ {
 }
 
 
-void enqueue(node * head, ucontext_t ut) {
+void enQ(node * head, ucontext_t ut) {
     node * ptr = head;
 
     while (ptr->next != NULL) {
@@ -29,7 +36,7 @@ void enqueue(node * head, ucontext_t ut) {
     ptr->next->next = NULL;
 }
 
-node dequeue(node * head) {
+node deQ(node * head) {
     node * next = NULL;
 
     if (*head == NULL) {
