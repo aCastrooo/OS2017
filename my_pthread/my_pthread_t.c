@@ -25,7 +25,7 @@ typedef struct scheduler_ {
 } scheduler;
 
 typedef struct node_ {
-    pthread_t threadID;
+    pthread_t* threadID;
     ucontext_t* ut;
     int priority;
     struct node_ * next;
@@ -33,6 +33,7 @@ typedef struct node_ {
 
 typedef struct queue_ {
     struct node_* head;
+    struct node_* rear;
     int priorityLevel;
 } queue;
 
@@ -45,6 +46,11 @@ typedef struct my_pthread_mutex_t_ {
     struct queue_* mutexWait;
 } my_pthread_mutex_t;
 
+union pointerConverter{
+    void* ptr;
+    int arr[2];
+};
+
 /******************globals***********************/
 scheduler* scd = NULL;
 
@@ -52,7 +58,7 @@ scheduler* scd = NULL;
 
 /********************functions*******************/
 //takes a pointer to a context and a pthread_t and returns a pointer to a node
-node* createNode(ucontext_t* context, pthread_t thread){
+node* createNode(ucontext_t* context, pthread_t* thread){
     node* newNode = (node*) malloc(sizeof(node));
     newNode->threadID = thread;
     newNode->ut = context;
@@ -74,6 +80,8 @@ void demoteNode(scheduler* sched, node* demotee){
 
 //takes pointer to head of list and pointer to the node to be inserted
 void enQ(queue* q, node* newNode) {
+    /*
+    //previous implementation of enQ before rear was added
     node* ptr = q->head;
     node* prev = NULL;
 
@@ -88,6 +96,17 @@ void enQ(queue* q, node* newNode) {
         q->head = newNode;
     }else{
         prev->next = newNode;
+    }
+    */
+    /////////////
+    if(q->head == NULL){
+        q->head = newNode;
+        q->rear = newNode;
+        newNode->priority = q->priorityLevel;
+    }else{
+        q->rear->next = newNode;
+        q->rear = newNode;
+        newNode->priority = q->priorityLevel;
     }
 
 }
@@ -108,7 +127,7 @@ node* deQ(queue* q) {
 }
 
 //returns 1 if the node with pthread id exists in list, 0 if not
-int existsInList(pthread_t id, list* ls){
+int existsInList(pthread_t* id, list* ls){
     node* ptr = ls->head;
 
     while(ptr != NULL){
@@ -127,7 +146,7 @@ void insertToList(node* newNode, list* ls) {
 }
 
 //removes a node from a list
-node* removeFromList(pthread_t id, list* ls){
+node* removeFromList(pthread_t* id, list* ls){
     node* ptr = ls->head;
     node* prev = NULL;
 
@@ -160,6 +179,16 @@ void initialize(){
 
     scd->current = NULL;
 
+    scd->timer = (struct itimerval*) malloc(sizeof(struct itimerval));
+
+    scd->joinList = (list*) malloc(sizeof(list));
+
+    scd->deadList = (list*) malloc(sizeof(list));
+
+    //to do: make a mutex list struct that holds a list of my_pthread_mutex_t
+    scd->mutexList;
+
+
     //call getcontext, setup the ucontext_t, then makecontext with scheduler func
     /*
     ucontext_t* ct = (ucontext_t*) malloc(sizeof(ucontext_t));
@@ -170,18 +199,36 @@ void initialize(){
     scd->schedContext = ct;
     */
 
-    scd->timer = (struct itimerval*) malloc(sizeof(struct itimerval));
+    ucontext_t* mainCxt = (ucontext_t*) malloc(sizeof(ucontext_t));
+    getcontext(mainCxt);
+    node* mainNode = createNode(mainCxt, (pthread_t*) 0);
 
-    scd->joinList = (list*) malloc(sizeof(list));
-
-    scd->deadList = (list*) malloc(sizeof(list));
-
-    //to do: make a mutex list struct that holds a list of my_pthread_mutex_t
-    scd->mutexList;
+    //enqueue mainNode into the runQ but don't switch contexts yet
+    //let the first create thread call finish making the context for its thread
+    //then start scheduling
 
 }
 
+//scheduler context function
 void schedule(){
+    /*
+    while(queues are not empty){
+      //loops while the run queues arent empty
+
+      //enqueue the previously ran context on its respective queue or list
+
+      //check join list/dead list to see if anything can be added back to the run queue
+
+      //set the timer again
+      //dequeue the next thing to be run
+      //set scheduler->current to be what was dequeued
+      //swapcontext with scheduler->current
+    }
+    */
+}
+
+//alarm signal handler that will set to the scheduler context which will change what is running
+void timerHandler(int signum){
 
 }
 
@@ -195,7 +242,27 @@ int my_pthread_create( pthread_t * thread, pthread_attr_t * attr, void *(*functi
 //step 2: call getcontext then makecontext using info from thread
 //step 3: call scheduler function that adds this context to a list
 
-  return 0;
+    if(scd == NULL){
+        initialize();
+    }
+
+    ucontext_t* newCxt = (ucontext_t*) malloc(sizeof(ucontext_t));
+    getcontext(newCxt);
+    newCxt->uc_stack.ss_sp = (char*) malloc(STACK_SIZE);
+    newCxt->uc_stack.ss_size = STACK_SIZE;
+    newCxt->uc_link = scd->schedContext;
+
+    union pointerConverter pc;
+    pc.ptr = arg;
+
+    //fix this to make it work
+    makecontext(newCxt, function, 2, pc.arr[1], pc.arr[0]);
+
+    node* newNode = createNode(newCxt, thread);
+
+    enQ(scd->runQ[0], newNode);
+
+    return 1;
 }
 
 int main(int argc, char const *argv[]) {
@@ -203,7 +270,7 @@ int main(int argc, char const *argv[]) {
 
   getcontext(&ct);
 
-  pthread_t id = (pthread_t) 0;
+  pthread_t* id = (pthread_t*) 0;
 
   node* head = createNode(&ct, id);
 
@@ -214,7 +281,7 @@ int main(int argc, char const *argv[]) {
 
   int i;
   for ( i = 1; i <= 5; i++) {
-    pthread_t p = (pthread_t) i;
+    pthread_t* p = (pthread_t*) i;
     node* ptr = createNode(&ct, p);
     printf("created node %d\n",ptr->threadID );
     enQ(Q,ptr);
