@@ -168,6 +168,19 @@ node* removeFromList(pthread_t* id, list* ls){
     return NULL;
 }
 
+//pause the timer for use in "blocking calls" so that if a
+//function is using shared data (scheduler/queues/etc) it doesnt
+//fuck with it
+void pause_timer(struct itimerval* timer){
+    struct itimerval zero = { 0 };
+    setitimer(ITIMER_REAL, &zero, timer);
+}
+
+//always unpause your timers after doing the sensitive "blocking" task
+void unpause_timer(struct itimerval* timer){
+    setitimer(ITIMER_REAL, timer, NULL);
+}
+
 void initialize(){
     scd = (scheduler*) malloc(sizeof(scheduler));
 
@@ -205,7 +218,10 @@ void initialize(){
     enQ(scd->runQ[0], mainNode);
 
     //set up signal and timer
+    signal(SIGALRM, timerHandler);
 
+    scd->timer.it_value.tv_usec = 50000;//50ms
+    setitimer(ITIMER_REAL, scd->timer, NULL);
 }
 
 //scheduler context function
