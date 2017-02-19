@@ -78,7 +78,7 @@ void demoteNode(scheduler* sched, node* demotee){
     enQ(sched->runQ[newPriority], demotee);
 }
 
-//takes pointer to head of list and pointer to the node to be inserted
+//takes pointer to queue and pointer to the node to be inserted
 void enQ(queue* q, node* newNode) {
     /*
     //previous implementation of enQ before rear was added
@@ -111,8 +111,7 @@ void enQ(queue* q, node* newNode) {
 
 }
 
-//takes a pointer to the pointer of the head of the list NOT just a pointer to head
-//returns pointer to node removed from head
+//takes a pointer to the pointer to the queue and returns pointer to node removed from head
 node* deQ(queue* q) {
     node* head = q->head;
 
@@ -203,9 +202,9 @@ void initialize(){
     getcontext(mainCxt);
     node* mainNode = createNode(mainCxt, (pthread_t*) 0);
 
-    //enqueue mainNode into the runQ but don't switch contexts yet
-    //let the first create thread call finish making the context for its thread
-    //then start scheduling
+    enQ(scd->runQ[0], mainNode);
+
+    //set up signal and timer
 
 }
 
@@ -247,8 +246,18 @@ int my_pthread_create( pthread_t * thread, pthread_attr_t * attr, void *(*functi
     }
 
     ucontext_t* newCxt = (ucontext_t*) malloc(sizeof(ucontext_t));
+
+    if(newCxt == NULL){
+        return 0;
+    }
+
     getcontext(newCxt);
     newCxt->uc_stack.ss_sp = (char*) malloc(STACK_SIZE);
+
+    if(newCxt->uc_stack.ss_sp == NULL){
+        return 0;
+    }
+
     newCxt->uc_stack.ss_size = STACK_SIZE;
     newCxt->uc_link = scd->schedContext;
 
