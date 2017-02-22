@@ -93,6 +93,8 @@ void enQ(queue* q, node* newNode) {
     if(q->head == NULL){
         q->head = newNode;
         q->rear = newNode;
+        q->head->next = NULL;
+        q->rear->next = NULL;
         newNode->priority = q->priorityLevel;
     }else{
         if (q->rear == NULL) {
@@ -100,6 +102,7 @@ void enQ(queue* q, node* newNode) {
         }
         q->rear->next = newNode;
         q->rear = newNode;
+        q->rear->next = NULL;
         newNode->priority = q->priorityLevel;
     }
 
@@ -117,10 +120,12 @@ node* deQ(queue* q) {
     node* result = head;
     q->head = head->next;
 
+
     result->next = NULL;
 
     if(q->head == NULL){
         q->rear = NULL;
+
     }
 
     return result;
@@ -308,6 +313,7 @@ void initialize(){
         scd->runQ[i]->head = NULL;
         scd->runQ[i]->rear = NULL;
         scd->runQ[i]->priorityLevel = i;
+
     }
 
     scd->current = NULL;
@@ -336,7 +342,7 @@ void initialize(){
 
     ucontext_t* mainCxt = (ucontext_t*) calloc(0,sizeof(ucontext_t));
     getcontext(mainCxt);
-    node* mainNode = createNode(mainCxt, (pthread_t*) 0);
+    node* mainNode = createNode(mainCxt, (pthread_t*)0);
 
     //enQ(scd->runQ[0], mainNode);
     scd->current = mainNode;
