@@ -64,7 +64,7 @@ scheduler* scd = NULL;
 /********************functions*******************/
 //takes a pointer to a context and a pthread_t and returns a pointer to a node
 node* createNode(ucontext_t* context, pthread_t* thread){
-    node* newNode = (node*) malloc(sizeof(node));
+    node* newNode = (node*) calloc(0,sizeof(node));
     newNode->threadID = thread;
     newNode->ut = context;
     newNode->next = NULL;
@@ -95,6 +95,9 @@ void enQ(queue* q, node* newNode) {
         q->rear = newNode;
         newNode->priority = q->priorityLevel;
     }else{
+        if (q->rear == NULL) {
+            printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n" );
+        }
         q->rear->next = newNode;
         q->rear = newNode;
         newNode->priority = q->priorityLevel;
@@ -113,6 +116,12 @@ node* deQ(queue* q) {
 
     node* result = head;
     q->head = head->next;
+
+    result->next = NULL;
+
+    if(q->head == NULL){
+        q->rear = NULL;
+    }
 
     return result;
 }
@@ -266,8 +275,8 @@ void schedule(){
         return;
     }
     printf("nextNode is %d\n",nextNode->threadID );
-
-/*    node* ptr=NULL;
+/*
+    node* ptr=NULL;
     int i=0;
     for(i = 0; i<5;i++){
       printf("queue #%d:",i );
@@ -291,20 +300,23 @@ void schedule(){
 //sets up all of the scheduler stuff
 void initialize(){
 
-    scd = (scheduler*) malloc(sizeof(scheduler));
+    scd = (scheduler*) calloc(0,sizeof(scheduler));
 
     int i = 0;
     for ( i = 0; i < RUN_QUEUE_SIZE; i++) {
-        scd->runQ[i] = (queue*) malloc(sizeof(queue));
+        scd->runQ[i] = (queue*) calloc(0,sizeof(queue));
+        scd->runQ[i]->head = NULL;
+        scd->runQ[i]->rear = NULL;
+        scd->runQ[i]->priorityLevel = i;
     }
 
     scd->current = NULL;
 
-    scd->timer = (struct itimerval*) malloc(sizeof(struct itimerval));
+    scd->timer = (struct itimerval*) calloc(0,sizeof(struct itimerval));
 
-    scd->joinList = (list*) malloc(sizeof(list));
+    scd->joinList = (list*) calloc(0,sizeof(list));
 
-    scd->deadList = (list*) malloc(sizeof(list));
+    scd->deadList = (list*) calloc(0,sizeof(list));
 
     //to do: make a mutex list struct that holds a list of my_pthread_mutex_t
     scd->mutexList;
@@ -312,9 +324,9 @@ void initialize(){
 
     //call getcontext, setup the ucontext_t, then makecontext with scheduler func
 
-    ucontext_t* ct = (ucontext_t*) malloc(sizeof(ucontext_t));
+    ucontext_t* ct = (ucontext_t*) calloc(0,sizeof(ucontext_t));
     getcontext(ct);
-    ct->uc_stack.ss_sp = (char*) malloc(STACK_SIZE);
+    ct->uc_stack.ss_sp = (char*) calloc(0,STACK_SIZE);
     ct->uc_stack.ss_size = STACK_SIZE;
     makecontext(ct, schedule, 0);
     scd->schedContext = ct;
@@ -322,7 +334,7 @@ void initialize(){
     scd->cycles = 0;
 
 
-    ucontext_t* mainCxt = (ucontext_t*) malloc(sizeof(ucontext_t));
+    ucontext_t* mainCxt = (ucontext_t*) calloc(0,sizeof(ucontext_t));
     getcontext(mainCxt);
     node* mainNode = createNode(mainCxt, (pthread_t*) 0);
 
@@ -353,14 +365,14 @@ int my_pthread_create( pthread_t * thread, pthread_attr_t * attr, void *(*functi
         initialize();
     }
 
-    ucontext_t* newCxt = (ucontext_t*) malloc(sizeof(ucontext_t));
+    ucontext_t* newCxt = (ucontext_t*) calloc(0,sizeof(ucontext_t));
 
     if(newCxt == NULL){
         return 0;
     }
 
     getcontext(newCxt);
-    newCxt->uc_stack.ss_sp = (char*) malloc(STACK_SIZE);
+    newCxt->uc_stack.ss_sp = (char*) calloc(0,STACK_SIZE);
 
     if(newCxt->uc_stack.ss_sp == NULL){
         return 0;
@@ -400,6 +412,7 @@ void* testfunc(void* arg){
     printf("got here and my number is %d\n",*(int*)arg );
     my_pthread_yield();
     printf("got here again\n" );
+
     long long int i = 0;
     long long int j=0;
     int c = 0;
@@ -410,6 +423,7 @@ void* testfunc(void* arg){
         }
 
     }
+
 }
 
 int main(int argc, char const *argv[]) {
@@ -424,7 +438,7 @@ int main(int argc, char const *argv[]) {
 
   printf("%d\n",head->threadID );
 
-  queue* Q = (queue*) malloc(sizeof(queue));
+  queue* Q = (queue*) calloc(0,sizeof(queue));
   enQ(Q,head);
 
   int i;
@@ -435,7 +449,7 @@ int main(int argc, char const *argv[]) {
     enQ(Q,ptr);
   }
   */
-
+/*
   int a=5;
 
   my_pthread_create((pthread_t*) 123, (pthread_attr_t*)0, testfunc, (void*) &a );
@@ -452,6 +466,84 @@ int main(int argc, char const *argv[]) {
         printf("main says j is: %d\n",c++ );
       }
 
+  }
+*/
+
+  queue* q = (queue*)calloc(0,sizeof(queue));
+  int i = 0;
+  for ( i = 0; i < 10; i++) {
+      node* n = createNode((ucontext_t*)i,(pthread_t*)i);
+      enQ(q,n);
+  }
+
+  node* ptr = q->head;
+  while(ptr!=NULL){
+      printf("%d\n",ptr->threadID );
+      ptr=ptr->next;
+  }
+
+  for ( i = 0; i < 10; i++) {
+      if(i%2 == 0){
+          printf("dequeued %d\n",deQ(q)->threadID );
+      }
+  }
+
+  ptr = q->head;
+  while(ptr!=NULL){
+      printf("%d\n",ptr->threadID );
+      ptr=ptr->next;
+  }
+
+  scd = calloc(0,sizeof(scheduler));
+  //scd->runQ = calloc(0, 5*sizeof(queue*));
+  for ( i = 0; i < 5; i++) {
+      scd->runQ[i]=calloc(0,sizeof(queue));
+      scd->runQ[i]->priorityLevel = i;
+      scd->runQ[i]->head=calloc(0,sizeof(node));
+      scd->runQ[i]->rear=calloc(0,sizeof(node));
+  }
+
+  for ( i = 0; i < 5; i++) {
+      scd->runQ[i]->priorityLevel = i;
+      scd->runQ[i]->head=NULL;
+      scd->runQ[i]->rear=NULL;
+  }
+
+  ptr = NULL;
+
+  for(i = 0; i<5;i++){
+    printf("queue #%d:",i );
+    for(ptr = scd->runQ[i]->head;ptr != NULL; ptr=ptr->next){
+      printf("%d ->",ptr->threadID );
+    }
+    printf("null\n" );
+  }
+
+  ptr = q->head;
+  while(ptr!=NULL){
+      //printf("%d\n",ptr->threadID );
+      enQ(scd->runQ[0], ptr);
+      ptr=ptr->next;
+  }
+
+
+  for(i = 0; i<5;i++){
+    printf("queue #%d:",i );
+    for(ptr = scd->runQ[i]->head;ptr != NULL; ptr=ptr->next){
+      printf("%d ->",ptr->threadID );
+    }
+    printf("null\n" );
+  }
+
+  printf("next is %d\n",getNextNode()->threadID );
+  printf("next is %d\n",getNextNode()->threadID );
+
+  for(i = 0; i<5;i++){
+    printf("queue #%d:",i );
+    for(ptr = scd->runQ[i]->head;ptr != NULL; ptr=ptr->next){
+      printf("%d ->",ptr->threadID );
+    }
+    printf("null\n" );
   }
 
   return 0;
