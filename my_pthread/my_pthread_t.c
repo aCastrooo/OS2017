@@ -64,7 +64,7 @@ scheduler* scd = NULL;
 /********************functions*******************/
 //takes a pointer to a context and a pthread_t and returns a pointer to a node
 node* createNode(ucontext_t* context, pthread_t* thread){
-    node* newNode = (node*) malloc(sizeof(node));
+    node* newNode = (node*) calloc(0,sizeof(node));
     newNode->threadID = thread;
     newNode->ut = context;
     newNode->next = NULL;
@@ -93,10 +93,13 @@ void enQ(queue* q, node* newNode) {
     if(q->head == NULL){
         q->head = newNode;
         q->rear = newNode;
+        q->head->next = NULL;
+        q->rear->next = NULL;
         newNode->priority = q->priorityLevel;
     }else{
         q->rear->next = newNode;
         q->rear = newNode;
+        q->rear->next = NULL;
         newNode->priority = q->priorityLevel;
     }
 
@@ -113,6 +116,10 @@ node* deQ(queue* q) {
 
     node* result = head;
     q->head = head->next;
+
+    if(q->head = NULL){
+      q->rear = NULL;
+    }
 
     return result;
 }
@@ -291,20 +298,23 @@ void schedule(){
 //sets up all of the scheduler stuff
 void initialize(){
 
-    scd = (scheduler*) malloc(sizeof(scheduler));
+    scd = (scheduler*) calloc(0,sizeof(scheduler));
 
     int i = 0;
     for ( i = 0; i < RUN_QUEUE_SIZE; i++) {
-        scd->runQ[i] = (queue*) malloc(sizeof(queue));
+        scd->runQ[i] = (queue*) calloc(0,sizeof(queue));
+        scd->runQ[i]->priorityLevel = i;
+        scd->runQ[i]->head = NULL;
+        scd->runQ[i]->rear = NULL;
     }
 
     scd->current = NULL;
 
-    scd->timer = (struct itimerval*) malloc(sizeof(struct itimerval));
+    scd->timer = (struct itimerval*) calloc(0,sizeof(struct itimerval));
 
-    scd->joinList = (list*) malloc(sizeof(list));
+    scd->joinList = (list*) calloc(0,sizeof(list));
 
-    scd->deadList = (list*) malloc(sizeof(list));
+    scd->deadList = (list*) calloc(0,sizeof(list));
 
     //to do: make a mutex list struct that holds a list of my_pthread_mutex_t
     scd->mutexList;
@@ -312,9 +322,9 @@ void initialize(){
 
     //call getcontext, setup the ucontext_t, then makecontext with scheduler func
 
-    ucontext_t* ct = (ucontext_t*) malloc(sizeof(ucontext_t));
+    ucontext_t* ct = (ucontext_t*) calloc(0,sizeof(ucontext_t));
     getcontext(ct);
-    ct->uc_stack.ss_sp = (char*) malloc(STACK_SIZE);
+    ct->uc_stack.ss_sp = (char*) calloc(0,STACK_SIZE);
     ct->uc_stack.ss_size = STACK_SIZE;
     makecontext(ct, schedule, 0);
     scd->schedContext = ct;
@@ -322,9 +332,9 @@ void initialize(){
     scd->cycles = 0;
 
 
-    ucontext_t* mainCxt = (ucontext_t*) malloc(sizeof(ucontext_t));
+    ucontext_t* mainCxt = (ucontext_t*) calloc(0,sizeof(ucontext_t));
     getcontext(mainCxt);
-    node* mainNode = createNode(mainCxt, (pthread_t*) 0);
+    node* mainNode = createNode(mainCxt, (pthread_t*)0);
 
     //enQ(scd->runQ[0], mainNode);
     scd->current = mainNode;
@@ -353,14 +363,14 @@ int my_pthread_create( pthread_t * thread, pthread_attr_t * attr, void *(*functi
         initialize();
     }
 
-    ucontext_t* newCxt = (ucontext_t*) malloc(sizeof(ucontext_t));
+    ucontext_t* newCxt = (ucontext_t*) calloc(0,sizeof(ucontext_t));
 
     if(newCxt == NULL){
         return 0;
     }
 
     getcontext(newCxt);
-    newCxt->uc_stack.ss_sp = (char*) malloc(STACK_SIZE);
+    newCxt->uc_stack.ss_sp = (char*) calloc(0,STACK_SIZE);
 
     if(newCxt->uc_stack.ss_sp == NULL){
         return 0;
@@ -424,7 +434,7 @@ int main(int argc, char const *argv[]) {
 
   printf("%d\n",head->threadID );
 
-  queue* Q = (queue*) malloc(sizeof(queue));
+  queue* Q = (queue*) calloc(0,sizeof(queue));
   enQ(Q,head);
 
   int i;
