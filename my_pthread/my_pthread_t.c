@@ -244,6 +244,21 @@ void threadDied(my_pthread_t* thread){
     }
 }
 
+//returns 1 if the node with pthread id exists in threadlist, 0 if not
+int existsInThreadList(my_pthread_t* thread){
+
+    my_pthread_t* ptr = scd->threads->head;
+
+    while(ptr != NULL){
+      if(ptr->id == thread->id){
+        return 1;
+      }
+      ptr = ptr->next;
+    }
+
+    return 0;
+}
+
 //pause the timer for use in "blocking calls" so that if a
 //function is using shared data (scheduler/queues/etc) it doesnt
 //fuck with it
@@ -284,6 +299,8 @@ void schedule(){
         }else{
             //puts("someone died");
             threadDied(scd->current->threadID);
+
+            //check join list to see if anything can be added to runQ
 
         }
     }else{
@@ -462,13 +479,28 @@ int my_pthread_create( my_pthread_t * thread, pthread_attr_t * attr, void *(*fun
 
 //tekes the thread that called this function and requeues it at the end of the current priority queue
 void my_pthread_yield(){
-    //1 means the context is yielding which the scheduler will look at and know what to do
 
     if(scd == NULL){
         return;
     }
 
+    pause_timer(scd->timer);
     scd->current->status = YIELDING;
+    unpause_timer(scd->timer);
+
+    schedule();
+}
+
+//exits the thread that called this function and passes on value_ptr as an argument for whatever might join on this thread
+void my_pthread_exit(void * value_ptr){
+    if(scd == NULL){
+        return;
+    }
+
+    pause_timer(scd->timer);
+    scd->current->status = EXITING;
+    scd->current->threadID->exitArg = value_ptr;
+    unpause_timer(scd->timer);
 
     schedule();
 }
@@ -478,7 +510,7 @@ void* testfunc(void* arg){
     printf("got here and my number is %d\n",*(int*)arg );
     my_pthread_yield();
     printf("got here again\n" );
-
+    //printf("my thread id is %d\n",scd->current->threadID->id );
     long long int i = 0;
     long long int j=0;
     int c = 0;
@@ -487,6 +519,10 @@ void* testfunc(void* arg){
         if(j%10000000 == 0){
           printf("thread %d says is: %d\n",*(int*)arg,c++ );
           //printf("thread's priority is %d\n", scd->current->priority );
+          if(*(int*)arg == 1 && c > 5){
+                printf("thread %d says IM GONNA EXIT\n",*(int*)arg);
+                my_pthread_exit(NULL);
+          }
 
         }
 
@@ -525,6 +561,7 @@ int main(int argc, char const *argv[]) {
 
   my_pthread_create(th, (pthread_attr_t*)0, testfunc, (void*) &a );
   my_pthread_create(th2, (pthread_attr_t*)0, testfunc, (void*) &b );
+
   my_pthread_yield();
   printf("back from first yield\n" );
   my_pthread_yield();
