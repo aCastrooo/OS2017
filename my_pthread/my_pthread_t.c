@@ -240,8 +240,8 @@ void threadDied(my_pthread_t* thread){
             ptr->isDead = 1;
             return;
         }
+        ptr = ptr->next;
     }
-    puts("something bad happened...");
 }
 
 //pause the timer for use in "blocking calls" so that if a
@@ -278,11 +278,11 @@ void schedule(){
         //context finished within its allotted time and linked back to scheduler
         //or it yielded and has time left
         if(scd->current->status == YIELDING){
-            puts("someone yielded");
+            //puts("someone yielded");
             scd->current->status = NEUTRAL;
             enQ(scd->runQ[scd->current->priority], scd->current);
         }else{
-            puts("someone died");
+            //puts("someone died");
             threadDied(scd->current->threadID);
 
         }
@@ -485,7 +485,7 @@ void* testfunc(void* arg){
     for (i = 0; i < 100000000; i++) {
       j++;
         if(j%10000000 == 0){
-          printf("thread says j is: %d\n",c++ );
+          printf("thread %d says is: %d\n",*(int*)arg,c++ );
           //printf("thread's priority is %d\n", scd->current->priority );
 
         }
@@ -518,14 +518,22 @@ int main(int argc, char const *argv[]) {
   }
 */
 
-  int a=5;
+  int a=1;
+  int b=2;
   my_pthread_t* th;
+  my_pthread_t* th2;
 
   my_pthread_create(th, (pthread_attr_t*)0, testfunc, (void*) &a );
+  my_pthread_create(th2, (pthread_attr_t*)0, testfunc, (void*) &b );
   my_pthread_yield();
   printf("back from first yield\n" );
   my_pthread_yield();
   printf("back from second yield\n" );
+
+  my_pthread_t* pt = NULL;
+  for ( pt = scd->threads->head; pt != NULL; pt=pt->next) {
+      printf("thread %d is alive? %d\n",pt->id, pt->isDead );
+  }
 
   long long int i = 0;
   long long int j=0;
@@ -534,6 +542,10 @@ int main(int argc, char const *argv[]) {
     j++;
       if(j%10000000 == 0){
         printf("main says j is: %d\n",c++ );
+        /*pt = NULL;
+        for ( pt = scd->threads->head; pt != NULL; pt=pt->next) {
+            printf("thread %d is alive? %d\n",pt->id, pt->isDead );
+        }*/
         //printf("main's priority is %d\n", scd->current->priority );
         //my_pthread_yield();
       }
