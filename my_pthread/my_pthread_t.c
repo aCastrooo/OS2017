@@ -20,14 +20,8 @@ typedef struct scheduler_ {
   //list of nodes waiting for a join
   struct list_* joinList;
 
-  //list of threads
-  struct threadList_* threads;
-
-  //list of mutexes + waitQ
-  struct my_pthread_mutex_t_* mutexList;
-
-  //number of threads created for use in making thread id's
-  int threadNum;
+  //list of nodes that have finished execution for use of nodes waiting on joins
+  struct list_* deadList;
 } scheduler;
 
 typedef struct node_ {
@@ -58,8 +52,9 @@ typedef struct threadList_ {
 } threadList;
 
 typedef struct my_pthread_mutex_t_ {
+  int isLocked; //1 = locked, 0 = not locked
     int mutexID;
-    struct queue_* mutexWait;
+  struct my_pthread_mutex_t_ *next;
 } my_pthread_mutex_t;
 
 typedef struct my_pthread_t_ {
@@ -68,6 +63,10 @@ typedef struct my_pthread_t_ {
     void* exitArg;
     struct my_pthread_t_* next;
 } my_pthread_t;
+
+typedef struct mutex_list_ {
+  struct my_pthread_mutex_t_ *head;
+}mutex_list;
 
 union pointerConverter{
     void* ptr;
@@ -78,10 +77,26 @@ union pointerConverter{
 
 /******************globals***********************/
 scheduler* scd = NULL;
+int currMutexID = -1;
+mutex_list *mutexList = NULL;
+//For testing the mutexes
+int c = 0;
+struct my_pthread_mutex_t_ *L1 = NULL;
 
 
 
 /********************functions*******************/
+//inits the mutex list that stores mutexes
+void initMutexList(){
+    if(mutexList != NULL){
+  return;
+    }
+
+    mutexList= (mutex_list*) calloc(0, sizeof(mutex_list));
+    mutexList->head = (my_pthread_mutex_t*) calloc(0, sizeof(my_pthread_mutex_t));
+}
+
+
 //takes a pointer to a context and a pthread_t and returns a pointer to a node
 node* createNode(ucontext_t* context, my_pthread_t* thread){
     node* newNode = (node*) malloc(sizeof(node));
@@ -197,11 +212,57 @@ int existsInList(my_pthread_t* thread, list* ls){
     return 0;
 }
 
+//searches through the mutex list in the scheduler to see if the mutex lock has already been created
+int existsInMutexList(int mutexToCheck) {
+  my_pthread_mutex_t *ptr = mutexList->head;
+  while (ptr != NULL) {
+    if (ptr->mutexID == mutexToCheck) {
+      return 1;
+    }
+    ptr = ptr->next;
+  }
+  return 0;
+}
+
 void insertToList(node* newNode, list* ls) {
 
     newNode->next = ls->head;
     ls->head = newNode;
 }
+
+void insertToMutexList(my_pthread_mutex_t *newMutex) {
+    if(mutexList->head == NULL){
+  mutexList->head = newMutex;
+    }
+
+    newMutex->next = mutexList->head;
+    mutexList->head = newMutex;
+}
+
+my_pthread_mutex_t* removeFromMutexList(int mID) {
+
+    my_pthread_mutex_t* ptr = mutexList->head;
+    my_pthread_mutex_t* prev = NULL;
+
+    while(ptr != NULL && ptr->mutexID != mID){
+      prev = ptr;
+      ptr = ptr->next;
+    }
+
+    if(ptr != NULL && ptr->mutexID == mID){
+      if(prev == NULL){
+        my_pthread_mutex_t* result = ptr;
+        mutexList->head = ptr->next;
+        return result;
+      }else{
+        prev->next = ptr->next;
+        return ptr;
+      }
+    }
+
+    return NULL;
+}
+
 
 //removes a node from a list
 node* removeFromList(my_pthread_t* thread, list* ls){
@@ -416,9 +477,6 @@ void initialize(){
     scd->threads = (threadList*) malloc(sizeof(threadList));
     scd->threads->head = NULL;
 
-    //to do: make a mutex list struct that holds a list of my_pthread_mutex_t
-    scd->mutexList;
-
 
     //call getcontext, setup the ucontext_t, then makecontext with scheduler func
 
@@ -567,6 +625,86 @@ void* testfunc(void* arg){
     }
 
 }
+
+
+//Just a note:
+//p_thread_mutexattr_t will always be null/ignored, so the struct is there for compilation, but wont be malloc'd
+int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *mutexattr) {
+  initMutexList();
+  mutex = (my_pthread_mutex_t*)malloc(sizeof(my_pthread_mutex_t));
+
+
+  mutex->mutexID = currMutexID++;
+  mutex->isLocked = 0;
+  mutex->next = NULL;
+
+  insertToMutexList(mutex);
+  
+  //Successful, so returns 0
+  printf("initialized mutex: \n", mutex->mutexID);
+  return 0;
+  
+}
+
+//locks the mutex, updates the list
+//uses spinlocking with test and set implementation
+int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
+  while(__sync_lock_test_and_set(&(mutex->isLocked), 1));
+  printf("locked mutex: %d\n", mutex->mutexID);
+  return 0;
+}
+
+//unlocks the mutex, updates the list
+int my_pthread_mutex_unlock(my_pthread_mutex_t *mutex) {
+  __sync_lock_release(&(mutex->isLocked), 1);
+  mutex->isLocked = 0;
+  printf("unlocked mutex: %d\n", mutex->mutexID);
+  return 0;
+}
+
+//removes the mutex from the list of tracked mutexes by the scheduler and destroys it
+int my_pthread_mutex_destroy(my_pthread_mutex_t *mutex) {
+  printf("mutex %d\n", mutex->mutexID);
+  my_pthread_mutex_t *mFromList = removeFromMutexList(mutex->mutexID);
+  printf("mutex %d\n", mFromList->mutexID);  
+  if(mFromList == NULL){
+    printf("destroying failed\n");
+    return -1;
+  }
+  mFromList->isLocked = 0;
+  mFromList->next = NULL;
+  mFromList->mutexID = -1;
+
+  mFromList = NULL;
+  mutex = NULL;
+  return 0;
+}
+
+
+/*
+/The following two funcitons are used to test mutexes
+*/
+void incrementOne(){
+  int i = 0;
+  for(i = 0; i < 100; i++){
+    my_pthread_mutex_lock(&L1);
+      c++;
+    my_pthread_mutex_unlock(&L1);
+  }
+
+}
+
+void incrementTwo(){
+  int i = 0;
+  for(i = 0; i < 100; i++){
+    my_pthread_mutex_lock(&L1);
+      c++;
+    my_pthread_mutex_unlock(&L1);
+  }
+
+}
+
+
 
 int main(int argc, char const *argv[]) {
 /*
