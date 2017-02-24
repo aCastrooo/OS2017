@@ -655,7 +655,12 @@ int my_pthread_join(my_pthread_t thread, void ** value_ptr){
             if(ptr->isDead == 1){
                 //puts("found em");
                 //thread to join on is dead, take its arg and return
-                *value_ptr = ptr->exitArg;
+
+                if(value_ptr != NULL){
+                  *value_ptr = ptr->exitArg;
+
+                }
+
                 return 0;
             }else{
                 //thread hasn't died yet, put this thread on a waitlist until that thread dies
@@ -665,7 +670,11 @@ int my_pthread_join(my_pthread_t thread, void ** value_ptr){
                 scd->current->joinee = ptr;
                 schedule();
 
-                *value_ptr = ptr->exitArg;
+                if(value_ptr != NULL){
+                  *value_ptr = ptr->exitArg;
+
+                }
+
                 return 0;
             }
         }
@@ -781,30 +790,9 @@ void incrementTwo(){
 }
 
 
-
-int main(int argc, char const *argv[]) {
 /*
-  ucontext_t ct;
+int main(int argc, char const *argv[]) {
 
-  getcontext(&ct);
-
-  pthread_t* id = (pthread_t*) 0;
-
-  node* head = createNode(&ct, id);
-
-  printf("%d\n",head->threadID );
-
-  queue* Q = (queue*) malloc(sizeof(queue));
-  enQ(Q,head);
-
-  int i;
-  for ( i = 1; i <= 5; i++) {
-    pthread_t* p = (pthread_t*) i;
-    node* ptr = createNode(&ct, p);
-    printf("created node %d\n",ptr->threadID );
-    enQ(Q,ptr);
-  }
-*/
 
   int a=1;
   int b=2;
@@ -842,10 +830,7 @@ int main(int argc, char const *argv[]) {
     j++;
       if(j%10000000 == 0){
         printf("main says j is: %d\n",c++ );
-        /*pt = NULL;
-        for ( pt = scd->threads->head; pt != NULL; pt=pt->next) {
-            printf("thread %d is alive? %d\n",pt->id, pt->isDead );
-        }*/
+
         printf("main's priority is %d\n", scd->current->priority );
         if(c == 3 || c == 5){
             //puts("yielding");
@@ -879,10 +864,7 @@ int main(int argc, char const *argv[]) {
     j++;
       if(j%10000000 == 0){
         printf("main says j is: %d\n",c++ );
-        /*pt = NULL;
-        for ( pt = scd->threads->head; pt != NULL; pt=pt->next) {
-            printf("thread %d is alive? %d\n",pt->id, pt->isDead );
-        }*/
+
         printf("main's priority is %d\n", scd->current->priority );
         //my_pthread_yield();
       }
@@ -893,3 +875,4 @@ int main(int argc, char const *argv[]) {
 
   return 0;
 }
+*/
