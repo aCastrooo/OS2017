@@ -20,6 +20,12 @@ typedef struct scheduler_ {
   //list of nodes waiting for a join
   struct list_* joinList;
 
+  //list of threads
+  struct threadList_* threads;
+
+  //number of threads created for use in making thread id's
+  int threadNum;
+
   //list of nodes that have finished execution for use of nodes waiting on joins
   struct list_* deadList;
 } scheduler;
@@ -709,11 +715,11 @@ int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *
   mutex->next = NULL;
 
   insertToMutexList(mutex);
-  
+
   //Successful, so returns 0
   printf("initialized mutex: \n", mutex->mutexID);
   return 0;
-  
+
 }
 
 //locks the mutex, updates the list
@@ -736,7 +742,7 @@ int my_pthread_mutex_unlock(my_pthread_mutex_t *mutex) {
 int my_pthread_mutex_destroy(my_pthread_mutex_t *mutex) {
   printf("mutex %d\n", mutex->mutexID);
   my_pthread_mutex_t *mFromList = removeFromMutexList(mutex->mutexID);
-  printf("mutex %d\n", mFromList->mutexID);  
+  printf("mutex %d\n", mFromList->mutexID);
   if(mFromList == NULL){
     printf("destroying failed\n");
     return -1;
