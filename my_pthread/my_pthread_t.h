@@ -20,6 +20,8 @@ typedef struct threadList_ threadList;
 
 typedef struct my_pthread_t_ my_pthread_t;
 
+typedef struct mutex_list_ mutex_list;
+
 typedef struct my_pthread_mutex_t_ my_pthread_mutex_t;
 
 int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr,
