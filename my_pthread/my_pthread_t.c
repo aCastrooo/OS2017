@@ -38,8 +38,10 @@ typedef struct node_ {
     enum STATUS {
         NEUTRAL,
         YIELDING,
-        EXITING
+        EXITING,
+        JOINING
     } status;
+    struct my_pthread_t_* joinee;
     struct node_ * next;
 } node;
 
@@ -91,6 +93,7 @@ node* createNode(ucontext_t* context, my_pthread_t* thread){
     newNode->priority = 0;
     newNode->timeCreated = 0;
     newNode->status = NEUTRAL;
+    newNode->joinee = NULL;
 
     return newNode;
 }
@@ -218,9 +221,11 @@ node* removeFromList(my_pthread_t* thread, list* ls){
       if(prev == NULL){
         node* result = ptr;
         ls->head = ptr->next;
+        result->next = NULL;
         return result;
       }else{
         prev->next = ptr->next;
+        ptr->next = NULL;
         return ptr;
       }
     }
@@ -278,12 +283,12 @@ void unpause_timer(struct itimerval* timer){
 
 //alarm signal handler that will set to the scheduler context which will change what is running
 void timerHandler(int signum){
-    //puts("times up");
+    ////puts("times up");
     //printf("current's status is %d\n",scd->current->status );
     //printf("time left on timer = %d\n",scd->timer->it_value.tv_usec );
 
     /*printf("current thread id is %d\n",scd->current->threadID->id );
-    puts("printing runQ");
+    //puts("printing runQ");
       node* ptr=NULL;
 
       ptr = scd->runQ[0]->head;
@@ -297,7 +302,7 @@ void timerHandler(int signum){
         printf("null\n" );
       }
 
-    puts("printing threadlist");
+    //puts("printing threadlist");
     my_pthread_t* pt;
       for ( pt = scd->threads->head; pt != NULL; pt=pt->next) {
           printf("thread %d is alive? %d\n",pt->id, pt->isDead );
@@ -311,6 +316,7 @@ void schedule(){
 
 
     pause_timer(scd->timer);
+    //puts("schedule time");
     //printf("time left on timer = %d\n",scd->timer->it_value.tv_usec );
     scd->cycles++;
     //printf("cycles: %d\n",scd->cycles );
@@ -319,28 +325,46 @@ void schedule(){
     //if(scd->timer->it_value.tv_usec > 0){
         //context finished within its allotted time and linked back to scheduler
         //or it yielded and has time left
-        if(scd->current->status == YIELDING){
-            //puts("someone yielded");
-            scd->current->status = NEUTRAL;
-            enQ(scd->runQ[scd->current->priority], scd->current);
-        }else if(scd->current->status == EXITING){
-            //puts("someone died");
-            threadDied(scd->current->threadID);
+    if(scd->current->status == YIELDING){
 
-            //check join list to see if anything can be added to runQ
+        //puts("someone yielded");
+        scd->current->status = NEUTRAL;
+        enQ(scd->runQ[scd->current->priority], scd->current);
+    }else if(scd->current->status == EXITING){
+        //puts("someone died");
+        threadDied(scd->current->threadID);
+        //puts("is joinlist->head null?");
+        //check join list to see if anything can be added to runQ
+        node* jptr = scd->joinList->head;
+        while(jptr != NULL){
+            if(jptr->joinee->id == scd->current->threadID->id){
+                //puts("returning things");
+                node* returnToQ = removeFromList(jptr->threadID, scd->joinList);
+                enQ(scd->runQ[returnToQ->priority], returnToQ);
+                jptr = scd->joinList->head;
+            }else{
+                //puts("movin on");
+                jptr = jptr->next;
+            }
+        }
+        //puts("probably");
+    }else if(scd->current->status == JOINING){
+        //puts("joining");
+        //current is waiting on another running thread to finish
+        //put current in joining queue and after every thread death check the join list if it should be requeued
+        insertToList(scd->current, scd->joinList);
 
-        /*}else{
-            puts("bad things happened");
-        }*/
     }else{
+        //puts("neutral");
         //context ran out of time and should be requeued
         demoteNode(scd->current);
     }
 
     justRun = scd->current;
     //printf("justRun is %d\n",justRun->threadID );
-
+    //puts("are you failing here?");
     node* nextNode = getNextNode();
+    //puts("are you failing here????????????");
 
     if(nextNode == NULL){
         //nothing left to run, only thing left to do is exit
@@ -475,7 +499,7 @@ int my_pthread_create( my_pthread_t * thread, pthread_attr_t * attr, void *(*fun
     if(newCxt == NULL){
         unpause_timer(scd->timer);
 
-        return 0;
+        return 1;
     }
 
     getcontext(newCxt);
@@ -483,7 +507,7 @@ int my_pthread_create( my_pthread_t * thread, pthread_attr_t * attr, void *(*fun
 
     if(newCxt->uc_stack.ss_sp == NULL){
         unpause_timer(scd->timer);
-        return 0;
+        return 1;
     }
 
     newCxt->uc_stack.ss_size = STACK_SIZE;
@@ -495,15 +519,16 @@ int my_pthread_create( my_pthread_t * thread, pthread_attr_t * attr, void *(*fun
     //fix this to make it work
     makecontext(newCxt, function, 2, pc.arr[0], pc.arr[1]);
 
-    thread = (my_pthread_t*)malloc(sizeof(my_pthread_t));
-    thread->id = scd->threadNum;
+    my_pthread_t* newthread = (my_pthread_t*)malloc(sizeof(my_pthread_t));
+    newthread = thread;
+    newthread->id = scd->threadNum;
     scd->threadNum++;
     //printf("thread id is %d\n",thread->id );
-    thread->isDead = 0;
-    thread->exitArg = NULL;
-    thread->next = NULL;
+    newthread->isDead = 0;
+    newthread->exitArg = NULL;
+    newthread->next = NULL;
 
-    addThread(thread);
+    addThread(newthread);
 
 
     node* newNode = createNode(newCxt, thread);
@@ -512,7 +537,7 @@ int my_pthread_create( my_pthread_t * thread, pthread_attr_t * attr, void *(*fun
     enQ(scd->runQ[0], newNode);
     unpause_timer(scd->timer);
 
-    return 1;
+    return 0;
 }
 
 //tekes the thread that called this function and requeues it at the end of the current priority queue
@@ -543,6 +568,49 @@ void my_pthread_exit(void * value_ptr){
     schedule();
 }
 
+//joins calling thread on the thread in argument, and saves previous thread's exit argument to be pointed to by value_ptr
+int my_pthread_join(my_pthread_t thread, void ** value_ptr){
+    if(scd == NULL){
+        //puts("asdf");
+        return 1;
+    }
+
+    //my_pthread_t* threadptr = &thread;
+/*
+    if(!existsInThreadList(threadptr)){
+        //puts("asdfasdf");
+        return 1;
+    }
+*/
+    my_pthread_t* ptr = scd->threads->head;
+//puts("got here tho");
+    while (ptr != NULL) {
+
+      ////puts("well it wasnt null to start");
+        if(ptr->id == /*threadptr->id*/thread.id){
+            if(ptr->isDead == 1){
+                //puts("found em");
+                //thread to join on is dead, take its arg and return
+                *value_ptr = ptr->exitArg;
+                return 0;
+            }else{
+                //thread hasn't died yet, put this thread on a waitlist until that thread dies
+                pause_timer(scd->timer);
+                //puts("didnt found em");
+                scd->current->status = JOINING;
+                scd->current->joinee = ptr;
+                schedule();
+
+                *value_ptr = ptr->exitArg;
+                return 0;
+            }
+        }
+        ptr = ptr->next;
+    }
+    //puts("asdfasdfasdfasdfasdf");
+    return 1;
+}
+
 void* testfunc(void* arg){
 
     printf("got here and my number is %d\n",*(int*)arg );
@@ -565,6 +633,8 @@ void* testfunc(void* arg){
         }
 
     }
+
+    my_pthread_exit(arg);
 
 }
 
@@ -594,11 +664,11 @@ int main(int argc, char const *argv[]) {
 
   int a=1;
   int b=2;
-  my_pthread_t* th;
-  my_pthread_t* th2;
+  my_pthread_t th;
+  my_pthread_t th2;
 
-  my_pthread_create(th, (pthread_attr_t*)0, testfunc, (void*) &a );
-  my_pthread_create(th2, (pthread_attr_t*)0, testfunc, (void*) &b );
+  my_pthread_create(&th, (pthread_attr_t*)0, testfunc, (void*) &a );
+  my_pthread_create(&th2, (pthread_attr_t*)0, testfunc, (void*) &b );
 
   my_pthread_yield();
   printf("back from first yield\n" );
@@ -609,6 +679,17 @@ int main(int argc, char const *argv[]) {
   for ( pt = scd->threads->head; pt != NULL; pt=pt->next) {
       printf("thread %d is alive? %d\n",pt->id, pt->isDead );
   }
+  printf("th.id is %d, th2.id is %d\n",th.id,th2.id );
+
+  int* rt1;
+  int* rt2;
+  int re1 = my_pthread_join(th,(void**)&rt1);
+  int re2 = my_pthread_join(th2,(void**)&rt2);
+
+  printf("re1 is %d, re2 is %d\n",re1,re2 );
+
+  printf("rt1 is %d\n",*rt1 );
+  printf("rt2 is %d\n",*rt2 );
 
   long long int i = 0;
   long long int j=0;
@@ -623,7 +704,7 @@ int main(int argc, char const *argv[]) {
         }*/
         printf("main's priority is %d\n", scd->current->priority );
         if(c == 3 || c == 5){
-            puts("yielding");
+            //puts("yielding");
             my_pthread_yield();
         }
         //my_pthread_yield();
@@ -632,7 +713,7 @@ int main(int argc, char const *argv[]) {
   }
 
 
-puts("printing runQ");
+//puts("printing runQ");
   node* ptr=NULL;
 
   ptr = scd->runQ[0]->head;
@@ -645,7 +726,7 @@ puts("printing runQ");
     printf("null\n" );
   }
 
-puts("printing threadlist");
+//puts("printing threadlist");
   for ( pt = scd->threads->head; pt != NULL; pt=pt->next) {
       printf("thread %d is alive? %d\n",pt->id, pt->isDead );
   }
