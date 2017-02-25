@@ -28,13 +28,17 @@ typedef struct scheduler_ {
 
   //number of threads created for use in making thread id's
   int threadNum;
+
+  //sorts the nodes in order of time created then re-enQ nodes to runQ with updated priorityLevel
+  struct queue_* promotionQ[RUN_QUEUE_SIZE - 1];
 } scheduler;
 
 typedef struct node_ {
     struct my_pthread_t_* threadID;
     ucontext_t* ut;
     int priority;
-    int timeCreated;
+    time_t timeCreated;
+    double runtime;
     enum STATUS {
         NEUTRAL,
         YIELDING,
@@ -89,9 +93,9 @@ node* createNode(ucontext_t* context, my_pthread_t* thread){
     newNode->ut = context;
     newNode->next = NULL;
     newNode->priority = 0;
-    newNode->timeCreated = 0;
+    newNode->timeCreated = time(NULL);
     newNode->status = NEUTRAL;
-
+    newNode->runtime = 0;
     return newNode;
 }
 
@@ -105,6 +109,38 @@ void demoteNode(node* demotee){
     }
 
     enQ(scd->runQ[newPriority], demotee);
+}
+
+void insertByTime(queue* q, node* newNode){
+  if(q->head == NULL){
+    q->head = newNode;
+    q->rear = newNode;
+    q->head->next = NULL;
+    q->rear->next = NULL;
+  }
+  node* prev = NULL;
+  node* ptr;
+  for(ptr = q->head; ptr != NULL; ptr = ptr->next){
+
+    if(newNode->runtime > ptr->runtime){
+
+      if(prev == NULL){
+        newNode->next = ptr;
+        q->head = newNode;
+        return;
+      }
+
+      newNode->next = ptr;
+      prev->next = newNode;
+      return;
+
+    }
+    prev = ptr;
+  }
+
+  q->rear->next = newNode;
+  q->rear = newNode;
+  return;
 }
 
 //takes pointer to queue and pointer to the node to be inserted
@@ -306,6 +342,36 @@ void timerHandler(int signum){
     schedule();
 }
 
+void reschedule(){
+
+  node* ptr;
+  int i;
+  int j;
+  int k;
+
+  int *arr = (int*)malloc((RUN_QUEUE_SIZE-1)*sizeof(int));
+
+  for(i = 0; i < RUN_QUEUE_SIZE - 1; i++){
+
+    arr[i] = 0;
+
+    for(ptr = deQ(scd->runQ[i+1]); ptr != NULL; ptr = deQ(scd->runQ[i+1])){
+      ptr->runtime = difftime(time(NULL), ptr->timeCreated);
+      insertByTime(scd->promotionQ[i], ptr);
+      arr[i]++;
+    }
+
+    for(j = 0; j < i + 2; j++){
+      for(k = 0; k < arr[i]/(i+2); k++){
+        node* ptr = deQ(scd->promotionQ[i]);
+        enQ(scd->runQ[i - j], ptr);
+      }
+    }
+
+
+  }
+}
+
 //scheduler context function
 void schedule(){
 
@@ -313,6 +379,12 @@ void schedule(){
     pause_timer(scd->timer);
     //printf("time left on timer = %d\n",scd->timer->it_value.tv_usec );
     scd->cycles++;
+
+    if(scd->cycles > 100){
+      scd->cycles = 0;
+      reschedule();
+    }
+
     //printf("cycles: %d\n",scd->cycles );
     node* justRun = NULL;
 
@@ -390,6 +462,13 @@ void initialize(){
         scd->runQ[i]->head = NULL;
         scd->runQ[i]->rear = NULL;
         scd->runQ[i]->priorityLevel = i;
+
+        if(i < RUN_QUEUE_SIZE - 1){
+          scd->promotionQ[i] = (queue*) malloc(sizeof(queue));
+          scd->promotionQ[i]->head = NULL;
+          scd->promotionQ[i]->rear = NULL;
+          scd->promotionQ[i]->priorityLevel = i;
+        }
     }
 
     /*
