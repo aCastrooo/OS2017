@@ -146,7 +146,10 @@ void enQ(queue* q, node* newNode) {
         q->rear->next = newNode;
         q->rear = newNode;
         q->rear->next = NULL;
-        newNode->priority = q->priorityLevel;
+        if(newNode->status != YIELDING){
+            //puts("was i right?");
+            newNode->priority = q->priorityLevel;
+        }
     }
 
 }
@@ -337,7 +340,8 @@ int existsInThreadList(my_pthread_t* thread){
 //fuck with it
 void pause_timer(struct itimerval* timer){
 
-    struct itimerval zero = { 0 };
+    struct itimerval zero; //= { 0 };
+    zero.it_value.tv_usec = 0;
     setitimer(ITIMER_REAL, &zero, timer);
     scd->timer = timer;
 }
@@ -350,7 +354,7 @@ void unpause_timer(struct itimerval* timer){
 
 //alarm signal handler that will set to the scheduler context which will change what is running
 void timerHandler(int signum){
-    ////puts("times up");
+    //puts("times up");
     //printf("current's status is %d\n",scd->current->status );
     //printf("time left on timer = %d\n",scd->timer->it_value.tv_usec );
 
@@ -394,9 +398,11 @@ void schedule(){
         //or it yielded and has time left
     if(scd->current->status == YIELDING){
 
-        //puts("someone yielded");
+      //  puts("someone yielded");
+
+        int requeuepriority = scd->current->priority;
+        enQ(scd->runQ[requeuepriority], scd->current);
         scd->current->status = NEUTRAL;
-        enQ(scd->runQ[scd->current->priority], scd->current);
     }else if(scd->current->status == EXITING){
         //puts("someone died");
         threadDied(scd->current->threadID);
@@ -453,10 +459,14 @@ void schedule(){
     scd->current = nextNode;
 
     //run time is 50ms * (level of priority + 1)
+    //printf("scd->current->priority is %d\n",scd->current->priority);
     scd->timer->it_value.tv_usec = 50000 * (scd->current->priority + 1);
     setitimer(ITIMER_REAL, scd->timer, NULL);
 
-    swapcontext(justRun->ut, scd->current->ut);
+    if(scd->current->threadID->id != justRun->threadID->id){
+        swapcontext(justRun->ut, scd->current->ut);
+    }
+
 
 }
 
@@ -790,7 +800,7 @@ void incrementTwo(){
 }
 
 
-/*
+
 int main(int argc, char const *argv[]) {
 
 
@@ -812,7 +822,7 @@ int main(int argc, char const *argv[]) {
       printf("thread %d is alive? %d\n",pt->id, pt->isDead );
   }
   printf("th.id is %d, th2.id is %d\n",th.id,th2.id );
-
+/*
   int* rt1;
   int* rt2;
   int re1 = my_pthread_join(th,(void**)&rt1);
@@ -822,7 +832,7 @@ int main(int argc, char const *argv[]) {
 
   printf("rt1 is %d\n",*rt1 );
   printf("rt2 is %d\n",*rt2 );
-
+*/
   long long int i = 0;
   long long int j=0;
   int c = 0;
@@ -836,7 +846,7 @@ int main(int argc, char const *argv[]) {
             //puts("yielding");
             my_pthread_yield();
         }
-        //my_pthread_yield();
+        my_pthread_yield();
       }
 
   }
@@ -875,4 +885,3 @@ int main(int argc, char const *argv[]) {
 
   return 0;
 }
-*/
