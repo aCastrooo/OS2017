@@ -31,8 +31,8 @@ void initMutexList(){
         return;
     }
 
-    mutexList= (mutex_list*) calloc(0, sizeof(mutex_list));
-    mutexList->head = (my_pthread_mutex_t*) calloc(0, sizeof(my_pthread_mutex_t));
+    mutexList = (mutex_list*) malloc(sizeof(mutex_list));
+    mutexList->head = NULL;
 }
 
 
@@ -514,7 +514,7 @@ void initialize(){
 
 
 
-int my_pthread_create( my_pthread_t * thread, pthread_attr_t * attr, void *(*function)(void*), void * arg){
+int my_pthread_create( my_pthread_t * thread, my_pthread_attr_t * attr, void *(*function)(void*), void * arg){
 //thread is pointer that references this thread
 //attr is unused
 //function is the function that the thread will be running and will be passed to the context
@@ -642,7 +642,7 @@ int my_pthread_join(my_pthread_t thread, void ** value_ptr){
 
 //Just a note:
 //p_thread_mutexattr_t will always be null/ignored, so the struct is there for compilation, but wont be malloc'd
-int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *mutexattr) {
+int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const my_pthread_mutexattr_t *mutexattr) {
   initMutexList();
 
   my_pthread_mutex_t *newMutex = (my_pthread_mutex_t*)malloc(sizeof(my_pthread_mutex_t));

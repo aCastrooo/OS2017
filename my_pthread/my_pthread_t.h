@@ -7,7 +7,9 @@
 #include <time.h>
 
 #define pthread_t my_pthread_t
+#define pthread_attr_t my_pthread_attr_t
 #define pthread_mutex_t my_pthread_mutex_t
+#define pthread_mutex_attr_t my_pthread_mutexattr_t
 
 #define pthread_create my_pthread_create
 #define pthread_yield my_pthread_yield
@@ -103,18 +105,26 @@ typedef struct mutex_list_ {
   struct my_pthread_mutex_t_ *head;
 }mutex_list;
 
+typedef struct my_pthread_attr_t_ {
+    int nothing;
+} my_pthread_attr_t;
+
+typedef struct my_pthread_mutexattr_t_ {
+    int nothing;
+} my_pthread_mutexattr_t;
+
 union pointerConverter{
     void* ptr;
     int arr[2];
 };
 
-int my_pthread_create(my_pthread_t * thread, pthread_attr_t * attr,
+int my_pthread_create(my_pthread_t * thread, my_pthread_attr_t * attr,
   void *(*function)(void*), void * arg);
 void my_pthread_yield();
 void my_pthread_exit(void * value_ptr);
 int my_pthread_join(my_pthread_t thread, void ** value_ptr);
 int my_pthread_mutex_init(my_pthread_mutex_t * mutex,
-  const pthread_mutexattr_t * mutexattr);
+  const my_pthread_mutexattr_t * mutexattr);
 int my_pthread_mutex_lock(my_pthread_mutex_t * mutex);
 int my_pthread_mutex_unlock(my_pthread_mutex_t * mutex);
 int my_pthread_mutex_destroy(my_pthread_mutex_t * mutex);
