@@ -30,7 +30,7 @@ typedef struct scheduler_ {
   struct queue_* promotionQ[RUN_QUEUE_SIZE - 1];
 
   //start time of the scheduler
-  time_t start_time;
+  clock_t start_time;
 
 } scheduler;
 
@@ -38,7 +38,7 @@ typedef struct node_ {
     struct my_pthread_t_* threadID;
     ucontext_t* ut;
     int priority;
-    time_t timeCreated;
+    clock_t timeCreated;
     double runtime;
     enum STATUS {
         NEUTRAL,
@@ -117,7 +117,7 @@ node* createNode(ucontext_t* context, my_pthread_t* thread){
     newNode->ut = context;
     newNode->next = NULL;
     newNode->priority = 0;
-    newNode->timeCreated = time(NULL);
+    newNode->timeCreated = clock();
     newNode->status = NEUTRAL;
     newNode->runtime = 0;
     newNode->joinee = NULL;
@@ -437,6 +437,7 @@ void reschedule(){
   int i;
   int j;
   int k;
+  clock_t currTime = clock();
 
   int *arr = (int*)malloc((RUN_QUEUE_SIZE-1)*sizeof(int));
 
@@ -445,7 +446,7 @@ void reschedule(){
     arr[i] = 0;
 
     for(ptr = deQ(scd->runQ[i+1]); ptr != NULL; ptr = deQ(scd->runQ[i+1])){
-      ptr->runtime = difftime(time(NULL), ptr->timeCreated);
+      ptr->runtime = ((double)(currTime - ptr->timeCreated) / CLOCKS_PER_SEC);
       printf("ptr is %d\n", ptr->threadID->id);
       insertByTime(scd->promotionQ[i], ptr);
       arr[i]++;
@@ -486,7 +487,9 @@ void schedule(){
     //puts("schedule time");
     //printf("time left on timer = %d\n",scd->timer->it_value.tv_usec );
     scd->cycles++;
-
+    if(scd->cycles % 10 == 0){
+      benchmark();
+    }
     if(scd->cycles > 100){
       printf("rescheduling\n");
       scd->cycles = 0;
@@ -581,8 +584,9 @@ void terminationHandler(){
 }
 
 void benchmark(){
-  double runtime = difftime(time(NULL), scd->start_time);
-  printf("runtime of the program is: %f", runtime);
+  clock_t currTime = clock();
+  double runtime = ((double)(currTime - scd->start_time)/CLOCKS_PER_SEC);
+  printf("runtime of the program is: %f\n", runtime);
 }
 
 //sets up all of the scheduler stuff
@@ -590,7 +594,7 @@ void initialize(){
 
     scd = (scheduler*) malloc(sizeof(scheduler));
 
-    scd->start_time = time(NULL);
+    scd->start_time = clock();
 
     //yes this is probably the right way to do it but lets try hardcoding it
 
@@ -645,16 +649,8 @@ void initialize(){
 
     scd->cycles = 0;
 
-    ucontext_t* bench = (ucontext_t*) malloc(sizeof(ucontext_t));
-    getcontext(bench);
-    bench->uc_stack.ss_sp = (char*) malloc(STACK_SIZE);
-    bench->uc_stack.ss_size = STACK_SIZE;
-    makecontext(bench, benchmark, 0);
-
-
     ucontext_t* mainCxt = (ucontext_t*) malloc(sizeof(ucontext_t));
     getcontext(mainCxt);
-    mainCxt->uc_link = bench
     my_pthread_t* mainthread = (my_pthread_t*) malloc(sizeof(my_pthread_t));
     mainthread->id = -123456789;
     mainthread->isDead = 0;
@@ -991,7 +987,7 @@ int main(int argc, char const *argv[]) {
 
   ptr = scd->runQ[0]->head;
   printf("0->head is %d\n",ptr );
-  for(i = 0; i<5;i++){
+  for(i = 0; i<RUN_QUEUE_SIZE;i++){
     printf("queue #%d:",i );
     for(ptr = scd->runQ[i]->head;ptr != NULL; ptr=ptr->next){
       printf("%d ->",ptr->threadID->id );
