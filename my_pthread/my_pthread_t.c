@@ -29,6 +29,9 @@ typedef struct scheduler_ {
   //sorts the nodes in order of time created then re-enQ nodes to runQ with updated priorityLevel
   struct queue_* promotionQ[RUN_QUEUE_SIZE - 1];
 
+  //start time of the scheduler
+  time_t start_time;
+
 } scheduler;
 
 typedef struct node_ {
@@ -472,7 +475,7 @@ void reschedule(){
     }
   }
   free(arr);
-
+  arr = NULL;
 }
 
 //scheduler context function
@@ -577,11 +580,17 @@ void terminationHandler(){
     }
 }
 
+void benchmark(){
+  double runtime = difftime(time(NULL), scd->start_time);
+  printf("runtime of the program is: %f", runtime);
+}
 
 //sets up all of the scheduler stuff
 void initialize(){
 
     scd = (scheduler*) malloc(sizeof(scheduler));
+
+    scd->start_time = time(NULL);
 
     //yes this is probably the right way to do it but lets try hardcoding it
 
@@ -636,9 +645,16 @@ void initialize(){
 
     scd->cycles = 0;
 
+    ucontext_t* bench = (ucontext_t*) malloc(sizeof(ucontext_t));
+    getcontext(bench);
+    bench->uc_stack.ss_sp = (char*) malloc(STACK_SIZE);
+    bench->uc_stack.ss_size = STACK_SIZE;
+    makecontext(bench, benchmark, 0);
+
 
     ucontext_t* mainCxt = (ucontext_t*) malloc(sizeof(ucontext_t));
     getcontext(mainCxt);
+    mainCxt->uc_link = bench
     my_pthread_t* mainthread = (my_pthread_t*) malloc(sizeof(my_pthread_t));
     mainthread->id = -123456789;
     mainthread->isDead = 0;
