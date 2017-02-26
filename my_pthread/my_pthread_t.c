@@ -1,10 +1,8 @@
 #include "my_pthread_t.h"
 
-/******************************structs**************************/
-
 /******************globals***********************/
 static scheduler* scd = NULL;
-static int currMutexID = -1;
+static int currMutexID = 0;
 static mutex_list *mutexList = NULL;
 
 /********************functions*******************/
@@ -220,12 +218,13 @@ void insertToList(node* newNode, list* ls) {
 }
 
 void insertToMutexList(my_pthread_mutex_t *newMutex) {
-    if(mutexList->head == NULL){
+    /*if(mutexList->head == NULL){
   mutexList->head = newMutex;
     }
-
+*/
     newMutex->next = mutexList->head;
     mutexList->head = newMutex;
+
 }
 
 my_pthread_mutex_t* removeFromMutexList(int mID) {
@@ -738,17 +737,24 @@ int my_pthread_join(my_pthread_t thread, void ** value_ptr){
 //p_thread_mutexattr_t will always be null/ignored, so the struct is there for compilation, but wont be malloc'd
 int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *mutexattr) {
   initMutexList();
-  mutex = (my_pthread_mutex_t*)malloc(sizeof(my_pthread_mutex_t));
 
+  my_pthread_mutex_t *newMutex = (my_pthread_mutex_t*)malloc(sizeof(my_pthread_mutex_t));
 
+  newMutex = mutex;
+  newMutex->mutexID = ++currMutexID;
+  newMutex->isInit = 1;
+  newMutex->next = NULL;
+  newMutex->isLocked = 0;
+
+/*
   mutex->mutexID = currMutexID++;
   mutex->isLocked = 0;
   mutex->next = NULL;
-
+*/
   insertToMutexList(mutex);
 
   //Successful, so returns 0
-  printf("initialized mutex: \n", mutex->mutexID);
+  printf("initialized mutex: %d\n", mutexList->head->mutexID);
   return 0;
 
 }
@@ -756,6 +762,10 @@ int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *
 //locks the mutex, updates the list
 //uses spinlocking with test and set implementation
 int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
+  if(mutex->isInit != 1 && existsInMutexList(mutex->mutexID)){
+    return -1;
+  }
+
   while(__sync_lock_test_and_set(&(mutex->isLocked), 1));
   //printf("locked mutex: %d\n", mutex->mutexID);
   return 0;
