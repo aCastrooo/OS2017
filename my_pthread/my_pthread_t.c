@@ -1,104 +1,32 @@
 #include "my_pthread_t.h"
 
 /******************************structs**************************/
-typedef struct scheduler_ {
-  //multilevel priority running queue of size 5
-  struct queue_* runQ[RUN_QUEUE_SIZE];
-
-  //node which holds the context which currently is running
-  struct node_* current;
-
-  //the context of the scheduler function which every other context will point to
-  ucontext_t* termHandler;
-
-  //number of times the scheduler function was called, used for maintainence
-  int cycles;
-
-  //timer to be set and reset that will set off the alarm signals
-  struct itimerval* timer;
-
-  //list of nodes waiting for a join
-  struct list_* joinList;
-
-  //list of threads
-  struct threadList_* threads;
-
-  //number of threads created for use in making thread id's
-  int threadNum;
-
-  //sorts the nodes in order of time created then re-enQ nodes to runQ with updated priorityLevel
-  struct queue_* promotionQ[RUN_QUEUE_SIZE - 1];
-
-  //start time of the scheduler
-  time_t start_time;
-
-} scheduler;
-
-typedef struct node_ {
-    struct my_pthread_t_* threadID;
-    ucontext_t* ut;
-    int priority;
-    time_t timeCreated;
-    double runtime;
-    enum STATUS {
-        NEUTRAL,
-        YIELDING,
-        EXITING,
-        JOINING
-    } status;
-    struct my_pthread_t_* joinee;
-    struct node_ * next;
-} node;
-
-typedef struct queue_ {
-    struct node_* head;
-    struct node_* rear;
-    int priorityLevel;
-} queue;
-
-typedef struct list_ {
-    struct node_* head;
-} list;
-
-typedef struct threadList_ {
-    struct my_pthread_t_* head;
-} threadList;
-
-typedef struct my_pthread_mutex_t_ {
-  int isLocked; //1 = locked, 0 = not locked
-    int mutexID;
-  struct my_pthread_mutex_t_ *next;
-} my_pthread_mutex_t;
-
-typedef struct my_pthread_t_ {
-    int id;
-    int isDead;
-    void* exitArg;
-    struct my_pthread_t_* next;
-} my_pthread_t;
-
-typedef struct mutex_list_ {
-  struct my_pthread_mutex_t_ *head;
-}mutex_list;
-
-union pointerConverter{
-    void* ptr;
-    int arr[2];
-};
-
-
 
 /******************globals***********************/
-scheduler* scd = NULL;
-int currMutexID = -1;
-mutex_list *mutexList = NULL;
-//For testing the mutexes
-int c = 0;
-struct my_pthread_mutex_t_ *L1 = NULL;
-
-
+static scheduler* scd = NULL;
+static int currMutexID = -1;
+static mutex_list *mutexList = NULL;
 
 /********************functions*******************/
+
+//pause the timer for use in "blocking calls" so that if a
+//function is using shared data (scheduler/queues/etc) it doesnt
+//fuck with it
+void pause_timer(struct itimerval* timer){
+
+    struct itimerval zero; //= { 0 };
+    zero.it_value.tv_usec = 0;
+    setitimer(ITIMER_REAL, &zero, timer);
+    scd->timer = timer;
+}
+
+//always unpause your timers after doing the sensitive "blocking" task
+void unpause_timer(struct itimerval* timer){
+
+    setitimer(ITIMER_REAL, timer, NULL);
+}
+
+
 //inits the mutex list that stores mutexes
 void initMutexList(){
     if(mutexList != NULL){
@@ -124,17 +52,6 @@ node* createNode(ucontext_t* context, my_pthread_t* thread){
     return newNode;
 }
 
-//enqueues the node in the next lower priority queue if it can be demoted
-void demoteNode(node* demotee){
-
-    int newPriority = demotee->priority;
-
-    if(demotee->priority < RUN_QUEUE_SIZE - 1){
-        newPriority++;
-    }
-
-    enQ(scd->runQ[newPriority], demotee);
-}
 
 void insertByTime(queue* q, node* newNode){
   //printf("inserting node %d\n", newNode->threadID->id);
@@ -199,6 +116,19 @@ void enQ(queue* q, node* newNode) {
         }
     }
 
+}
+
+
+//enqueues the node in the next lower priority queue if it can be demoted
+void demoteNode(node* demotee){
+
+    int newPriority = demotee->priority;
+
+    if(demotee->priority < RUN_QUEUE_SIZE - 1){
+        newPriority++;
+    }
+
+    enQ(scd->runQ[newPriority], demotee);
 }
 
 //takes a pointer to the pointer to the queue and returns pointer to node removed from head
@@ -382,56 +312,10 @@ int existsInThreadList(my_pthread_t* thread){
     return 0;
 }
 
-//pause the timer for use in "blocking calls" so that if a
-//function is using shared data (scheduler/queues/etc) it doesnt
-//fuck with it
-void pause_timer(struct itimerval* timer){
-
-    struct itimerval zero; //= { 0 };
-    zero.it_value.tv_usec = 0;
-    setitimer(ITIMER_REAL, &zero, timer);
-    scd->timer = timer;
-}
-
-//always unpause your timers after doing the sensitive "blocking" task
-void unpause_timer(struct itimerval* timer){
-
-    setitimer(ITIMER_REAL, timer, NULL);
-}
-
-//alarm signal handler that will set to the scheduler context which will change what is running
-void timerHandler(int signum){
-    //puts("times up");
-    //printf("current's status is %d\n",scd->current->status );
-    //printf("time left on timer = %d\n",scd->timer->it_value.tv_usec );
-
-    /*printf("current thread id is %d\n",scd->current->threadID->id );
-    //puts("printing runQ");
-      node* ptr=NULL;
-
-      ptr = scd->runQ[0]->head;
-      printf("0->head is %d\n",ptr );
-      int i;
-      for(i = 0; i<5;i++){
-        printf("queue #%d:",i );
-        for(ptr = scd->runQ[i]->head;ptr != NULL; ptr=ptr->next){
-          printf("%d ->",ptr->threadID->id );
-        }
-        printf("null\n" );
-      }
-
-    //puts("printing threadlist");
-    my_pthread_t* pt;
-      for ( pt = scd->threads->head; pt != NULL; pt=pt->next) {
-          printf("thread %d is alive? %d\n",pt->id, pt->isDead );
-      }*/
-    scd->timer->it_value.tv_usec = 0;
-    schedule();
-}
 
 void reschedule(){
 
-  printf("current is %d\n", scd->current->threadID->id);
+  //printf("current is %d\n", scd->current->threadID->id);
 
   node* ptr;
   int i;
@@ -446,7 +330,7 @@ void reschedule(){
 
     for(ptr = deQ(scd->runQ[i+1]); ptr != NULL; ptr = deQ(scd->runQ[i+1])){
       ptr->runtime = difftime(time(NULL), ptr->timeCreated);
-      printf("ptr is %d\n", ptr->threadID->id);
+      //printf("ptr is %d\n", ptr->threadID->id);
       insertByTime(scd->promotionQ[i], ptr);
       arr[i]++;
     }
@@ -455,7 +339,7 @@ void reschedule(){
   for(i = 0; i < RUN_QUEUE_SIZE - 1; i++){
     for(j = i + 2; j > 0; j--){
       if(j > 1){
-        printf("size of arr is %d\n", arr[i]);
+        //printf("size of arr is %d\n", arr[i]);
         for(k = 0; k < arr[i]/(i+2); k++){
           ptr = deQ(scd->promotionQ[i]);
           if(ptr != NULL){
@@ -478,6 +362,8 @@ void reschedule(){
   arr = NULL;
 }
 
+
+
 //scheduler context function
 void schedule(){
 
@@ -488,7 +374,7 @@ void schedule(){
     scd->cycles++;
 
     if(scd->cycles > 100){
-      printf("rescheduling\n");
+      //printf("rescheduling\n");
       scd->cycles = 0;
       reschedule();
     }
@@ -544,7 +430,7 @@ void schedule(){
 
     if(nextNode == NULL){
         //nothing left to run, only thing left to do is exit
-        printf("job's done\n");
+        //printf("job's done\n");
         return;
     }
     //printf("nextNode is %d\n",nextNode->threadID );
@@ -571,6 +457,37 @@ void schedule(){
     }
 
 
+}
+
+
+//alarm signal handler that will set to the scheduler context which will change what is running
+void timerHandler(int signum){
+    //puts("times up");
+    //printf("current's status is %d\n",scd->current->status );
+    //printf("time left on timer = %d\n",scd->timer->it_value.tv_usec );
+
+    /*printf("current thread id is %d\n",scd->current->threadID->id );
+    //puts("printing runQ");
+      node* ptr=NULL;
+
+      ptr = scd->runQ[0]->head;
+      printf("0->head is %d\n",ptr );
+      int i;
+      for(i = 0; i<5;i++){
+        printf("queue #%d:",i );
+        for(ptr = scd->runQ[i]->head;ptr != NULL; ptr=ptr->next){
+          printf("%d ->",ptr->threadID->id );
+        }
+        printf("null\n" );
+      }
+
+    //puts("printing threadlist");
+    my_pthread_t* pt;
+      for ( pt = scd->threads->head; pt != NULL; pt=pt->next) {
+          printf("thread %d is alive? %d\n",pt->id, pt->isDead );
+      }*/
+    scd->timer->it_value.tv_usec = 0;
+    schedule();
 }
 
 void terminationHandler(){
@@ -654,7 +571,8 @@ void initialize(){
 
     ucontext_t* mainCxt = (ucontext_t*) malloc(sizeof(ucontext_t));
     getcontext(mainCxt);
-    mainCxt->uc_link = bench
+    mainCxt->uc_link = bench;
+
     my_pthread_t* mainthread = (my_pthread_t*) malloc(sizeof(my_pthread_t));
     mainthread->id = -123456789;
     mainthread->isDead = 0;
@@ -817,6 +735,61 @@ int my_pthread_join(my_pthread_t thread, void ** value_ptr){
     return 1;
 }
 
+
+//Just a note:
+//p_thread_mutexattr_t will always be null/ignored, so the struct is there for compilation, but wont be malloc'd
+int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *mutexattr) {
+  initMutexList();
+  mutex = (my_pthread_mutex_t*)malloc(sizeof(my_pthread_mutex_t));
+
+
+  mutex->mutexID = currMutexID++;
+  mutex->isLocked = 0;
+  mutex->next = NULL;
+
+  insertToMutexList(mutex);
+
+  //Successful, so returns 0
+  printf("initialized mutex: \n", mutex->mutexID);
+  return 0;
+
+}
+
+//locks the mutex, updates the list
+//uses spinlocking with test and set implementation
+int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
+  while(__sync_lock_test_and_set(&(mutex->isLocked), 1));
+  //printf("locked mutex: %d\n", mutex->mutexID);
+  return 0;
+}
+
+//unlocks the mutex, updates the list
+int my_pthread_mutex_unlock(my_pthread_mutex_t *mutex) {
+  __sync_lock_release(&(mutex->isLocked), 1);
+  mutex->isLocked = 0;
+  //printf("unlocked mutex: %d\n", mutex->mutexID);
+  return 0;
+}
+
+//removes the mutex from the list of tracked mutexes by the scheduler and destroys it
+int my_pthread_mutex_destroy(my_pthread_mutex_t *mutex) {
+  printf("mutex %d\n", mutex->mutexID);
+  my_pthread_mutex_t *mFromList = removeFromMutexList(mutex->mutexID);
+  printf("mutex %d\n", mFromList->mutexID);
+  if(mFromList == NULL){
+    printf("destroying failed\n");
+    return -1;
+  }
+  mFromList->isLocked = 0;
+  mFromList->next = NULL;
+  mFromList->mutexID = -1;
+
+  mFromList = NULL;
+  mutex = NULL;
+  return 0;
+}
+
+
 void* testfunc(void* arg){
 
     printf("got here and my number is %d\n",*(int*)arg );
@@ -854,85 +827,8 @@ void* testfunc2(void* arg){
 }
 
 
-//Just a note:
-//p_thread_mutexattr_t will always be null/ignored, so the struct is there for compilation, but wont be malloc'd
-int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *mutexattr) {
-  initMutexList();
-  mutex = (my_pthread_mutex_t*)malloc(sizeof(my_pthread_mutex_t));
-
-
-  mutex->mutexID = currMutexID++;
-  mutex->isLocked = 0;
-  mutex->next = NULL;
-
-  insertToMutexList(mutex);
-
-  //Successful, so returns 0
-  printf("initialized mutex: \n", mutex->mutexID);
-  return 0;
-
-}
-
-//locks the mutex, updates the list
-//uses spinlocking with test and set implementation
-int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
-  while(__sync_lock_test_and_set(&(mutex->isLocked), 1));
-  printf("locked mutex: %d\n", mutex->mutexID);
-  return 0;
-}
-
-//unlocks the mutex, updates the list
-int my_pthread_mutex_unlock(my_pthread_mutex_t *mutex) {
-  __sync_lock_release(&(mutex->isLocked), 1);
-  mutex->isLocked = 0;
-  printf("unlocked mutex: %d\n", mutex->mutexID);
-  return 0;
-}
-
-//removes the mutex from the list of tracked mutexes by the scheduler and destroys it
-int my_pthread_mutex_destroy(my_pthread_mutex_t *mutex) {
-  printf("mutex %d\n", mutex->mutexID);
-  my_pthread_mutex_t *mFromList = removeFromMutexList(mutex->mutexID);
-  printf("mutex %d\n", mFromList->mutexID);
-  if(mFromList == NULL){
-    printf("destroying failed\n");
-    return -1;
-  }
-  mFromList->isLocked = 0;
-  mFromList->next = NULL;
-  mFromList->mutexID = -1;
-
-  mFromList = NULL;
-  mutex = NULL;
-  return 0;
-}
-
 
 /*
-/The following two funcitons are used to test mutexes
-*/
-void incrementOne(){
-  int i = 0;
-  for(i = 0; i < 100; i++){
-    my_pthread_mutex_lock(&L1);
-      c++;
-    my_pthread_mutex_unlock(&L1);
-  }
-
-}
-
-void incrementTwo(){
-  int i = 0;
-  for(i = 0; i < 100; i++){
-    my_pthread_mutex_lock(&L1);
-      c++;
-    my_pthread_mutex_unlock(&L1);
-  }
-
-}
-
-
-
 int main(int argc, char const *argv[]) {
 
   int a=1;
@@ -956,7 +852,7 @@ int main(int argc, char const *argv[]) {
       printf("thread %d is alive? %d\n",pt->id, pt->isDead );
   }
   printf("th.id is %d, th2.id is %d\n",th.id,th2.id );
-/*
+
   int* rt1;
   int* rt2;
   int re1 = my_pthread_join(th,(void**)&rt1);
@@ -966,7 +862,7 @@ int main(int argc, char const *argv[]) {
 
   printf("rt1 is %d\n",*rt1 );
   printf("rt2 is %d\n",*rt2 );
-*/
+
   long long int i = 0;
   long long int j=0;
   int c = 0;
@@ -1018,4 +914,4 @@ int main(int argc, char const *argv[]) {
 
 
   return 0;
-}
+}*/
