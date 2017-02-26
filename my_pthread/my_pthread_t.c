@@ -134,12 +134,18 @@ void demoteNode(node* demotee){
 }
 
 void insertByTime(queue* q, node* newNode){
+  //printf("inserting node %d\n", newNode->threadID->id);
+  //printf("runtime is %f\n", newNode->runtime);
   if(q->head == NULL){
     q->head = newNode;
     q->rear = newNode;
     q->head->next = NULL;
     q->rear->next = NULL;
+    //puts("1");
+    return;
   }
+
+
   node* prev = NULL;
   node* ptr;
   for(ptr = q->head; ptr != NULL; ptr = ptr->next){
@@ -149,11 +155,13 @@ void insertByTime(queue* q, node* newNode){
       if(prev == NULL){
         newNode->next = ptr;
         q->head = newNode;
+        //puts("2");
         return;
       }
 
       newNode->next = ptr;
       prev->next = newNode;
+      //puts("3");
       return;
 
     }
@@ -162,6 +170,8 @@ void insertByTime(queue* q, node* newNode){
 
   q->rear->next = newNode;
   q->rear = newNode;
+  q->rear->next = NULL;
+  //puts("4");
   return;
 }
 
@@ -418,6 +428,8 @@ void timerHandler(int signum){
 
 void reschedule(){
 
+  printf("current is %d\n", scd->current->threadID->id);
+
   node* ptr;
   int i;
   int j;
@@ -431,19 +443,36 @@ void reschedule(){
 
     for(ptr = deQ(scd->runQ[i+1]); ptr != NULL; ptr = deQ(scd->runQ[i+1])){
       ptr->runtime = difftime(time(NULL), ptr->timeCreated);
+      printf("ptr is %d\n", ptr->threadID->id);
       insertByTime(scd->promotionQ[i], ptr);
       arr[i]++;
     }
+  }
 
-    for(j = 0; j < i + 2; j++){
-      for(k = 0; k < arr[i]/(i+2); k++){
-        node* ptr = deQ(scd->promotionQ[i]);
-        enQ(scd->runQ[i - j], ptr);
+  for(i = 0; i < RUN_QUEUE_SIZE - 1; i++){
+    for(j = i + 2; j > 0; j--){
+      if(j > 1){
+        printf("size of arr is %d\n", arr[i]);
+        for(k = 0; k < arr[i]/(i+2); k++){
+          ptr = deQ(scd->promotionQ[i]);
+          if(ptr != NULL){
+            enQ(scd->runQ[j - 1], ptr);
+          }
+
+        }
+      }else{
+        for(k = (arr[i]/(i+2))*(i + 1); k < arr[i]; k++){
+          ptr = deQ(scd->promotionQ[i]);
+          if(ptr != NULL){
+            enQ(scd->runQ[j - 1], ptr);
+          }
+
+        }
       }
     }
-
-
   }
+  free(arr);
+
 }
 
 //scheduler context function
@@ -456,6 +485,7 @@ void schedule(){
     scd->cycles++;
 
     if(scd->cycles > 100){
+      printf("rescheduling\n");
       scd->cycles = 0;
       reschedule();
     }
@@ -798,6 +828,15 @@ void* testfunc(void* arg){
 
 }
 
+void* testfunc2(void* arg){
+  int c = 0;
+  while(1){
+    printf("thread %d says is: %d\n", *(int*)arg, c++);
+    printf("threads priority is: %d", scd->current->priority);
+    my_pthread_yield();
+  }
+}
+
 
 //Just a note:
 //p_thread_mutexattr_t will always be null/ignored, so the struct is there for compilation, but wont be malloc'd
@@ -880,14 +919,16 @@ void incrementTwo(){
 
 int main(int argc, char const *argv[]) {
 
-
   int a=1;
   int b=2;
+  //int d=3;
   my_pthread_t th;
   my_pthread_t th2;
+  //my_pthread_t th3;
 
   my_pthread_create(&th, (pthread_attr_t*)0, testfunc, (void*) &a );
   my_pthread_create(&th2, (pthread_attr_t*)0, testfunc, (void*) &b );
+  //my_pthread_create(&th3, (pthread_attr_t*)0, testfunc2, (void*) &d );
 
   my_pthread_yield();
   printf("back from first yield\n" );

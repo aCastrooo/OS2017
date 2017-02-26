@@ -4,6 +4,7 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <time.h>
 
 #define pthread_t my_pthread_t
 #define pthread_mutex_t my_pthread_mutex_t
