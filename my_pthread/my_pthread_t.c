@@ -1,3 +1,8 @@
+/************Group Members**********/
+//Daniel Schley (drs218)
+//Anthony Castronuovo (ajc320)
+//Thanassi Natsis (tmn61)
+//ilab machines used: cd.cs.rutgers.edu
 #include "my_pthread_t.h"
 
 /******************************structs**************************/
@@ -694,7 +699,7 @@ int my_pthread_mutex_destroy(my_pthread_mutex_t *mutex) {
   mFromList->isLocked = 0;
   mFromList->next = NULL;
   mFromList->mutexID = -1;
-
+  mFromList->isInit = 0;
   mFromList = NULL;
   mutex = NULL;
   return 0;
