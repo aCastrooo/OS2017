@@ -1,4 +1,78 @@
+/************Group Members**********/
+//Daniel Schley (drs218)
+//Anthony Castronuovo (ajc320)
+//Thanassi Natsis (tmn61)
+//ilab machines used: cd.cs.rutgers.edu
 #include "my_pthread_t.h"
+
+/******************************structs**************************/
+
+typedef struct scheduler_ {
+  //multilevel priority running queue of size 5
+  struct queue_* runQ[RUN_QUEUE_SIZE];
+
+  //node which holds the context which currently is running
+  struct node_* current;
+
+  //the context of the scheduler function which every other context will point to
+  ucontext_t* termHandler;
+
+  //number of times the scheduler function was called, used for maintainence
+  int cycles;
+
+  //timer to be set and reset that will set off the alarm signals
+  struct itimerval* timer;
+
+  //list of nodes waiting for a join
+  struct list_* joinList;
+
+  //list of threads
+  struct threadList_* threads;
+
+  //number of threads created for use in making thread id's
+  int threadNum;
+
+  //sorts the nodes in order of time created then re-enQ nodes to runQ with updated priorityLevel
+  struct queue_* promotionQ[RUN_QUEUE_SIZE - 1];
+
+  //start time of the scheduler
+  time_t start_time;
+
+} scheduler;
+
+typedef struct node_ {
+    struct my_pthread_t_* threadID;
+    ucontext_t* ut;
+    int priority;
+    time_t timeCreated;
+    double runtime;
+    enum STATUS {
+        NEUTRAL,
+        YIELDING,
+        EXITING,
+        JOINING
+    } status;
+    struct my_pthread_t_* joinee;
+    struct node_ * next;
+} node;
+
+typedef struct queue_ {
+    struct node_* head;
+    struct node_* rear;
+    int priorityLevel;
+} queue;
+
+typedef struct list_ {
+    struct node_* head;
+} list;
+
+typedef struct threadList_ {
+    struct my_pthread_t_* head;
+} threadList;
+
+typedef struct mutex_list_ {
+  struct my_pthread_mutex_t_ *head;
+}mutex_list;
 
 /******************globals***********************/
 static scheduler* scd = NULL;
@@ -348,7 +422,11 @@ void reschedule(){
   arr = NULL;
 }
 
-
+void benchmark(){
+  clock_t currTime = clock();
+  double runtime = ((double)(currTime - scd->start_time)/CLOCKS_PER_SEC);
+  printf("runtime of the program is: %f\n", runtime);
+}
 
 //scheduler context function
 void schedule(){
@@ -359,7 +437,7 @@ void schedule(){
     scd->cycles++;
     /*
     //uncomment this block if you would like to see our benchmark function in action
-    if(scd->cycles % 10 == 0){
+    if(scd->cycles % NUM_CYCLES == 0){
       benchmark();
     }
     */
@@ -439,11 +517,6 @@ void terminationHandler(){
     }
 }
 
-void benchmark(){
-  clock_t currTime = clock();
-  double runtime = ((double)(currTime - scd->start_time)/CLOCKS_PER_SEC);
-  printf("runtime of the program is: %f\n", runtime);
-}
 
 //sets up all of the scheduler stuff
 void initialize(){
@@ -548,9 +621,6 @@ int my_pthread_create( my_pthread_t * thread, my_pthread_attr_t * attr, void *(*
 
     newCxt->uc_stack.ss_size = STACK_SIZE;
     newCxt->uc_link = scd->termHandler;
-
-    union pointerConverter pc;
-    pc.ptr = arg;
 
     makecontext(newCxt, (void (*) (void))function, 1, arg);
 
@@ -692,7 +762,7 @@ int my_pthread_mutex_destroy(my_pthread_mutex_t *mutex) {
   mFromList->isLocked = 0;
   mFromList->next = NULL;
   mFromList->mutexID = -1;
-
+  mFromList->isInit = 0;
   mFromList = NULL;
   mutex = NULL;
   return 0;
