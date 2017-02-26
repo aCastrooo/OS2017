@@ -375,7 +375,7 @@ int existsInThreadList(my_pthread_t* thread){
 }
 
 
-void reschedule(){
+void maintenance(){
 
   node* ptr;
   int i;
@@ -443,7 +443,7 @@ void schedule(){
     */
     if(scd->cycles > 100){
       scd->cycles = 0;
-      reschedule();
+      maintenance();
     }
 
     node* justRun = NULL;
