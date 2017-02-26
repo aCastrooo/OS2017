@@ -374,7 +374,12 @@ int existsInThreadList(my_pthread_t* thread){
     return 0;
 }
 
-
+/*
+maintenance on the run queue that runs every 100 cycles
+in the 2nd level queue, moves 1/2 of the oldest threads up and other 1/2 remain
+in 3rd level, moves oldest 1/3 up 2 levels, 2nd oldest 1/3 up 1 level,
+last 1/3 remains, and so on...
+*/
 void maintenance(){
 
   node* ptr;
