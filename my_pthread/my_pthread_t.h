@@ -88,6 +88,7 @@ typedef struct threadList_ {
 typedef struct my_pthread_mutex_t_ {
   int isLocked; //1 = locked, 0 = not locked
     int mutexID;
+    int isInit;
   struct my_pthread_mutex_t_ *next;
 } my_pthread_mutex_t;
 
