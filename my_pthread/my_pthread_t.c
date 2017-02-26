@@ -764,6 +764,10 @@ int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *
 //locks the mutex, updates the list
 //uses spinlocking with test and set implementation
 int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
+  if(mutex->isInit != 1 && existsInMutexList(mutex->mutexID)){
+    return -1;
+  }
+
   while(__sync_lock_test_and_set(&(mutex->isLocked), 1));
   //printf("locked mutex: %d\n", mutex->mutexID);
   return 0;
