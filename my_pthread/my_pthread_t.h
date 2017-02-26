@@ -20,7 +20,7 @@
 
 #define RUN_QUEUE_SIZE 5
 #define STACK_SIZE 10000
-#define QUANTA_TIME 1000
+#define QUANTA_TIME 50
 
 typedef struct scheduler_ {
   //multilevel priority running queue of size 5
