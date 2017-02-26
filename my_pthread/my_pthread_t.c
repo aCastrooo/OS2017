@@ -629,7 +629,8 @@ int my_pthread_create( my_pthread_t * thread, pthread_attr_t * attr, void *(*fun
     pc.ptr = arg;
 
     //fix this to make it work
-    makecontext(newCxt, function, 2, pc.arr[0], pc.arr[1]);
+    //makecontext(newCxt, function, 2, pc.arr[0], pc.arr[1]);
+    makecontext(newCxt, (void (*) (void))function, 1, arg);
 
     my_pthread_t* newthread = (my_pthread_t*)malloc(sizeof(my_pthread_t));
     newthread = thread;
@@ -825,7 +826,7 @@ void* testfunc2(void* arg){
 
 
 
-/*
+
 int main(int argc, char const *argv[]) {
 
   int a=1;
@@ -911,4 +912,4 @@ int main(int argc, char const *argv[]) {
 
 
   return 0;
-}*/
+}
