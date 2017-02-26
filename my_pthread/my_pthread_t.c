@@ -661,7 +661,7 @@ int my_pthread_join(my_pthread_t thread, void ** value_ptr){
     while (ptr != NULL) {
 
       ////puts("well it wasnt null to start");
-        if(ptr->id == /*threadptr->id*/thread.id){
+        if(ptr->id == thread.id){
             if(ptr->isDead == 1){
                 //puts("found em");
                 //thread to join on is dead, take its arg and return
