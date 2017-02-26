@@ -453,7 +453,7 @@ void schedule(){
 
     //run time is 50ms * (level of priority + 1)
     //printf("scd->current->priority is %d\n",scd->current->priority);
-    scd->timer->it_value.tv_usec = 50000 * (scd->current->priority + 1);
+    scd->timer->it_value.tv_usec = QUANTA_TIME * 1000 * (scd->current->priority + 1);
     setitimer(ITIMER_REAL, scd->timer, NULL);
 
     if(scd->current->threadID->id != justRun->threadID->id){
@@ -583,7 +583,7 @@ void initialize(){
     //set up signal and timer
     signal(SIGALRM, timerHandler);
 
-    scd->timer->it_value.tv_usec = 50000;//50ms
+    scd->timer->it_value.tv_usec = QUANTA_TIME * 1000;//50ms
     setitimer(ITIMER_REAL, scd->timer, NULL);
 }
 
@@ -850,7 +850,7 @@ int main(int argc, char const *argv[]) {
       printf("thread %d is alive? %d\n",pt->id, pt->isDead );
   }
   printf("th.id is %d, th2.id is %d\n",th.id,th2.id );
-
+/*
   int* rt1;
   int* rt2;
   int re1 = my_pthread_join(th,(void**)&rt1);
@@ -860,7 +860,7 @@ int main(int argc, char const *argv[]) {
 
   printf("rt1 is %d\n",*rt1 );
   printf("rt2 is %d\n",*rt2 );
-
+*/
   long long int i = 0;
   long long int j=0;
   int c = 0;
