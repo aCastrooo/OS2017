@@ -4,7 +4,7 @@
 
 /******************globals***********************/
 static scheduler* scd = NULL;
-static int currMutexID = -1;
+static int currMutexID = 0;
 static mutex_list *mutexList = NULL;
 
 /********************functions*******************/
@@ -220,12 +220,13 @@ void insertToList(node* newNode, list* ls) {
 }
 
 void insertToMutexList(my_pthread_mutex_t *newMutex) {
-    if(mutexList->head == NULL){
+    /*if(mutexList->head == NULL){
   mutexList->head = newMutex;
     }
-
+*/
     newMutex->next = mutexList->head;
     mutexList->head = newMutex;
+
 }
 
 my_pthread_mutex_t* removeFromMutexList(int mID) {
@@ -737,17 +738,24 @@ int my_pthread_join(my_pthread_t thread, void ** value_ptr){
 //p_thread_mutexattr_t will always be null/ignored, so the struct is there for compilation, but wont be malloc'd
 int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const pthread_mutexattr_t *mutexattr) {
   initMutexList();
-  mutex = (my_pthread_mutex_t*)malloc(sizeof(my_pthread_mutex_t));
 
+  my_pthread_mutex_t *newMutex = (my_pthread_mutex_t*)malloc(sizeof(my_pthread_mutex_t));
 
+  newMutex = mutex;
+  newMutex->mutexID = ++currMutexID;
+  newMutex->isInit = 1;
+  newMutex->next = NULL;
+  newMutex->isLocked = 0;
+
+/*
   mutex->mutexID = currMutexID++;
   mutex->isLocked = 0;
   mutex->next = NULL;
-
+*/
   insertToMutexList(mutex);
 
   //Successful, so returns 0
-  printf("initialized mutex: \n", mutex->mutexID);
+  printf("initialized mutex: %d\n", mutexList->head->mutexID);
   return 0;
 
 }
@@ -825,7 +833,7 @@ void* testfunc2(void* arg){
 
 
 
-
+/*
 int main(int argc, char const *argv[]) {
 
   int a=1;
@@ -859,7 +867,7 @@ int main(int argc, char const *argv[]) {
 
   printf("rt1 is %d\n",*rt1 );
   printf("rt2 is %d\n",*rt2 );
-*/
+
   long long int i = 0;
   long long int j=0;
   int c = 0;
@@ -883,9 +891,9 @@ int main(int argc, char const *argv[]) {
   node* ptr=NULL;
 
   ptr = scd->runQ[0]->head;
-  printf("0->head is %d\n",ptr );
+  //printf("0->head is %d\n",ptr );
   for(i = 0; i<RUN_QUEUE_SIZE;i++){
-    printf("queue #%d:",i );
+    //printf("queue #%d:",i );
     for(ptr = scd->runQ[i]->head;ptr != NULL; ptr=ptr->next){
       printf("%d ->",ptr->threadID->id );
     }
@@ -912,3 +920,4 @@ int main(int argc, char const *argv[]) {
 
   return 0;
 }
+*/
