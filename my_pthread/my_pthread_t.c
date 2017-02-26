@@ -33,8 +33,8 @@ void initMutexList(){
         return;
     }
 
-    mutexList= (mutex_list*) calloc(0, sizeof(mutex_list));
-    mutexList->head = (my_pthread_mutex_t*) calloc(0, sizeof(my_pthread_mutex_t));
+    mutexList = (mutex_list*) malloc(sizeof(mutex_list));
+    mutexList->head = NULL;
 }
 
 
