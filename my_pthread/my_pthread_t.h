@@ -71,7 +71,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t * mutex);
 int my_pthread_mutex_unlock(my_pthread_mutex_t * mutex);
 int my_pthread_mutex_destroy(my_pthread_mutex_t * mutex);
 
-void* myallocate(size_t size, const char* file, int line, THREADREQ);
-void mydeallocate(void* ptr, const char* file, int line, THREADREQ);
+void* myallocate(size_t size, const char* file, int line, int caller);
+void mydeallocate(void* ptr, const char* file, int line, int caller);
 
 #endif
