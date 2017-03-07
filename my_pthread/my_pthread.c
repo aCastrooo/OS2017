@@ -593,14 +593,7 @@ void initialize(){
 
 
 int my_pthread_create( my_pthread_t * thread, my_pthread_attr_t * attr, void *(*function)(void*), void * arg){
-//thread is pointer that references this thread
-//attr is unused
-//function is the function that the thread will be running and will be passed to the context
-//arg is the void pointer that points to the arg(s) passed to the function
 
-//step 1: setup scheduler if it is not already set up
-//step 2: call getcontext then makecontext using info from thread
-//step 3: call scheduler function that adds this context to a list
 
     if(scd == NULL){
         initialize();
@@ -728,11 +721,7 @@ int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const my_pthread_mutexattr_
   newMutex->next = NULL;
   newMutex->isLocked = 0;
 
-/*
-  mutex->mutexID = currMutexID++;
-  mutex->isLocked = 0;
-  mutex->next = NULL;
-*/
+
   insertToMutexList(mutex);
 
   //Successful, so returns 0
