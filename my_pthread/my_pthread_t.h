@@ -1,5 +1,9 @@
+#ifndef my_pthread_t_h
+#define my_pthread_t_h
+
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <ucontext.h>
 #include <signal.h>
 #include <sys/time.h>
@@ -20,10 +24,17 @@
 #define pthread_mutex_unlock my_pthread_mutex_unlock
 #define pthread_mutex_destroy my_pthread_mutex_destroy
 
+#define malloc(x) myallocate( x, __FILE__, __LINE__, THREADREQ);
+#define free(x) mydeallocate(x, __FILE__, __LINE__, THREADREQ);
+
 #define RUN_QUEUE_SIZE 5
 #define STACK_SIZE 10000
 #define QUANTA_TIME 50
 #define NUM_CYCLES 10
+
+#define MAX_MEMORY 5000
+#define LIBRARYREQ 0
+#define THREADREQ 1
 
 typedef struct my_pthread_mutex_t_ {
   int isLocked; //1 = locked, 0 = not locked
@@ -58,3 +69,8 @@ int my_pthread_mutex_init(my_pthread_mutex_t * mutex,
 int my_pthread_mutex_lock(my_pthread_mutex_t * mutex);
 int my_pthread_mutex_unlock(my_pthread_mutex_t * mutex);
 int my_pthread_mutex_destroy(my_pthread_mutex_t * mutex);
+
+void* myallocate(size_t size, const char* file, int line, THREADREQ);
+void mydeallocate(void* ptr, const char* file, int line, THREADREQ);
+
+#endif
