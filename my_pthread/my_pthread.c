@@ -116,14 +116,14 @@ void initMutexList(){
         return;
     }
 
-    mutexList = (mutex_list*) malloc(sizeof(mutex_list));
+    mutexList = (mutex_list*) myallocate(sizeof(mutex_list), __FILE__, __LINE__, LIBRARYREQ);
     mutexList->head = NULL;
 }
 
 
 //takes a pointer to a context and a pthread_t and returns a pointer to a node
 node* createNode(ucontext_t* context, my_pthread_t* thread){
-    node* newNode = (node*) malloc(sizeof(node));
+    node* newNode = (node*) myallocate(sizeof(node));
     newNode->threadID = thread;
     newNode->ut = context;
     newNode->next = NULL;
@@ -399,7 +399,7 @@ void maintenance(){
   int k;
   clock_t currTime = clock();
 
-  int *arr = (int*)malloc((RUN_QUEUE_SIZE-1)*sizeof(int));
+  int *arr = (int*)myallocate((RUN_QUEUE_SIZE-1)*sizeof(int), __FILE__, __LINE__, LIBRARYREQ);
 
   for(i = 0; i < RUN_QUEUE_SIZE - 1; i++){
 
@@ -537,7 +537,7 @@ void terminationHandler(){
 //sets up all of the scheduler stuff
 void initialize(){
 
-    scd = (scheduler*) malloc(sizeof(scheduler));
+    scd = (scheduler*) myallocate(sizeof(scheduler), __FILE__, __LINE__, LIBRARYREQ);
 
     scd->start_time = clock();
 
@@ -545,13 +545,13 @@ void initialize(){
 
     int i = 0;
     for ( i = 0; i < RUN_QUEUE_SIZE; i++) {
-        scd->runQ[i] = (queue*) malloc(sizeof(queue));
+        scd->runQ[i] = (queue*) myallocate(sizeof(queue), __FILE__, __LINE__, LIBRARYREQ);
         scd->runQ[i]->head = NULL;
         scd->runQ[i]->rear = NULL;
         scd->runQ[i]->priorityLevel = i;
 
         if(i < RUN_QUEUE_SIZE - 1){
-          scd->promotionQ[i] = (queue*) malloc(sizeof(queue));
+          scd->promotionQ[i] = (queue*) myallocate(sizeof(queue), __FILE__, __LINE__, LIBRARYREQ);
           scd->promotionQ[i]->head = NULL;
           scd->promotionQ[i]->rear = NULL;
           scd->promotionQ[i]->priorityLevel = i;
@@ -561,30 +561,30 @@ void initialize(){
 
     scd->current = NULL;
 
-    scd->timer = (struct itimerval*) malloc(sizeof(struct itimerval));
+    scd->timer = (struct itimerval*) myallocate(sizeof(struct itimerval), __FILE__, __LINE__, LIBRARYREQ);
 
-    scd->joinList = (list*) malloc(sizeof(list));
+    scd->joinList = (list*) myallocate(sizeof(list), __FILE__, __LINE__, LIBRARYREQ);
     scd->joinList->head = NULL;
 
-    scd->threads = (threadList*) malloc(sizeof(threadList));
+    scd->threads = (threadList*) myallocate(sizeof(threadList), __FILE__, __LINE__, LIBRARYREQ);
     scd->threads->head = NULL;
 
 
     //call getcontext, setup the ucontext_t, then makecontext with scheduler func
 
-    ucontext_t* ct = (ucontext_t*) malloc(sizeof(ucontext_t));
+    ucontext_t* ct = (ucontext_t*) myallocate(sizeof(ucontext_t), __FILE__, __LINE__, LIBRARYREQ);
     getcontext(ct);
-    ct->uc_stack.ss_sp = (char*) malloc(STACK_SIZE);
+    ct->uc_stack.ss_sp = (char*) myallocate(STACK_SIZE, __FILE__, __LINE__, LIBRARYREQ);
     ct->uc_stack.ss_size = STACK_SIZE;
     makecontext(ct, terminationHandler, 0);
     scd->termHandler = ct;
 
     scd->cycles = 0;
 
-    ucontext_t* mainCxt = (ucontext_t*) malloc(sizeof(ucontext_t));
+    ucontext_t* mainCxt = (ucontext_t*) myallocate(sizeof(ucontext_t), __FILE__, __LINE__, LIBRARYREQ);
     getcontext(mainCxt);
 
-    my_pthread_t* mainthread = (my_pthread_t*) malloc(sizeof(my_pthread_t));
+    my_pthread_t* mainthread = (my_pthread_t*) myallocate(sizeof(my_pthread_t), __FILE__, __LINE__, LIBRARYREQ);
     mainthread->id = -123456789;
     mainthread->isDead = 0;
     mainthread->exitArg = NULL;
@@ -612,7 +612,7 @@ int my_pthread_create( my_pthread_t * thread, my_pthread_attr_t * attr, void *(*
 
     pause_timer(scd->timer);
 
-    ucontext_t* newCxt = (ucontext_t*) malloc(sizeof(ucontext_t));
+    ucontext_t* newCxt = (ucontext_t*) myallocate(sizeof(ucontext_t), __FILE__, __LINE__, LIBRARYREQ);
 
     if(newCxt == NULL){
         unpause_timer(scd->timer);
@@ -621,7 +621,7 @@ int my_pthread_create( my_pthread_t * thread, my_pthread_attr_t * attr, void *(*
     }
 
     getcontext(newCxt);
-    newCxt->uc_stack.ss_sp = (char*) malloc(STACK_SIZE);
+    newCxt->uc_stack.ss_sp = (char*) myallocate(STACK_SIZE, __FILE__, __LINE__, LIBRARYREQ);
 
     if(newCxt->uc_stack.ss_sp == NULL){
         unpause_timer(scd->timer);
@@ -633,7 +633,7 @@ int my_pthread_create( my_pthread_t * thread, my_pthread_attr_t * attr, void *(*
 
     makecontext(newCxt, (void (*) (void))function, 1, arg);
 
-    my_pthread_t* newthread = (my_pthread_t*)malloc(sizeof(my_pthread_t));
+    my_pthread_t* newthread = (my_pthread_t*)myallocate(sizeof(my_pthread_t), __FILE__, __LINE__, LIBRARYREQ);
     newthread = thread;
     newthread->id = scd->threadNum;
     scd->threadNum++;
@@ -724,7 +724,7 @@ int my_pthread_join(my_pthread_t thread, void ** value_ptr){
 int my_pthread_mutex_init(my_pthread_mutex_t *mutex, const my_pthread_mutexattr_t *mutexattr) {
   initMutexList();
 
-  my_pthread_mutex_t *newMutex = (my_pthread_mutex_t*)malloc(sizeof(my_pthread_mutex_t));
+  my_pthread_mutex_t *newMutex = (my_pthread_mutex_t*)myallocate(sizeof(my_pthread_mutex_t), __FILE__, __LINE__, LIBRARYREQ);
 
   newMutex = mutex;
   newMutex->mutexID = ++currMutexID;
@@ -859,7 +859,7 @@ static bool freeAndMerge(Block* toFree) {
  * @param line defined to be __LINE__, used to print messages when an error is detected.
  * @return void pointer to memory in myblock
  */
-void* myallocate(size_t size, const char* file, int line, int req) {
+void* myallocate(size_t size, const char* file, int line, int caller) {
 
     // If it is the first time this function has been called, then initialize the root block.
     if (firstMalloc) {
@@ -918,7 +918,7 @@ void* myallocate(size_t size, const char* file, int line, int req) {
 /**
  * Checks if the block is eligible to be freed, and frees it if it is.
  */
-void mydeallocate(void* ptr, const char* file, int line, int req) {
+void mydeallocate(void* ptr, const char* file, int line, int caller) {
 
     if (!inMemorySpace(ptr)) {
         printf("Error at line %d of %s: pointer was not created using malloc.\n", line, file);
