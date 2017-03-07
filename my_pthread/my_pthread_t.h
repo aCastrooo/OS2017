@@ -10,6 +10,16 @@
 #include <unistd.h>
 #include <time.h>
 
+#define RUN_QUEUE_SIZE 5
+#define STACK_SIZE 10000
+#define QUANTA_TIME 50
+#define NUM_CYCLES 10
+
+#define MAX_MEMORY 8388608
+#define LIBRARYREQ 0
+#define THREADREQ 1
+#define PAGESIZE sysconf(_SC_PAGE_SIZE)
+
 #define pthread_t my_pthread_t
 #define pthread_attr_t my_pthread_attr_t
 #define pthread_mutex_t my_pthread_mutex_t
@@ -26,15 +36,6 @@
 
 #define malloc(x) myallocate( x, __FILE__, __LINE__, THREADREQ);
 #define free(x) mydeallocate(x, __FILE__, __LINE__, THREADREQ);
-
-#define RUN_QUEUE_SIZE 5
-#define STACK_SIZE 10000
-#define QUANTA_TIME 50
-#define NUM_CYCLES 10
-
-#define MAX_MEMORY 8388608
-#define LIBRARYREQ 0
-#define THREADREQ 1
 
 typedef struct my_pthread_mutex_t_ {
   int isLocked; //1 = locked, 0 = not locked
