@@ -32,7 +32,7 @@
 #define QUANTA_TIME 50
 #define NUM_CYCLES 10
 
-#define MAX_MEMORY 5000
+#define MAX_MEMORY 8388608
 #define LIBRARYREQ 0
 #define THREADREQ 1
 
