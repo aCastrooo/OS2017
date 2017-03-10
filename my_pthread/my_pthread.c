@@ -90,6 +90,7 @@ static char myblock[MAX_MEMORY];
 static bool firstMalloc = true;
 static Block* rootBlock;
 
+
 /********************functions*******************/
 
 //pause the timer for use in "blocking calls" so that if a
@@ -123,7 +124,7 @@ void initMutexList(){
 
 //takes a pointer to a context and a pthread_t and returns a pointer to a node
 node* createNode(ucontext_t* context, my_pthread_t* thread){
-    node* newNode = (node*) myallocate(sizeof(node));
+    node* newNode = (node*) myallocate(sizeof(node), __FILE__, __LINE__, LIBRARYREQ);
     newNode->threadID = thread;
     newNode->ut = context;
     newNode->next = NULL;
@@ -936,4 +937,16 @@ void mydeallocate(void* ptr, const char* file, int line, int caller) {
             printf("Error at line %d of %s: pointer was not created using malloc.\n", line, file);
         }
     }
+}
+
+void* test(void* arg){
+    printf("got here\n" );
+}
+
+int main(){
+  my_pthread_t th;
+
+  my_pthread_create(&th, NULL,test,NULL );
+  my_pthread_join(th, NULL);
+  return 0;
 }
