@@ -86,7 +86,7 @@ static int currMutexID = 0;
 static mutex_list *mutexList = NULL;
 
 static const unsigned short BLOCK_SIZE = sizeof(Block);
-static char myblock[MAX_MEMORY];
+static char memory[MAX_MEMORY];
 static bool firstMalloc = true;
 static Block* rootBlock;
 
@@ -781,7 +781,7 @@ int my_pthread_mutex_destroy(my_pthread_mutex_t *mutex) {
  * Initialize the root block. This is only called the first time that mymalloc is used.
  */
 static void initializeRoot() {
-    rootBlock = (Block*) myblock;
+    rootBlock = (Block*) memory;
     rootBlock->isFree = true;
     rootBlock->size = MAX_MEMORY - BLOCK_SIZE;
     rootBlock->next = NULL;
@@ -791,14 +791,14 @@ static void initializeRoot() {
 
 /**
  * Performs a basic check to ensure that the pointer address is contained
- * inside myblock. It does not verify that all of the promised space is in myblock,
+ * inside memory. It does not verify that all of the promised space is in memory,
  * nor does it verify that the address is actually correct (e.g. a Block pointer).
  *
- * @param ptr Check if this pointer points to an address in myblock.
- * @return true if ptr is in myblock, false otherwise.
+ * @param ptr Check if this pointer points to an address in memory.
+ * @return true if ptr is in memory, false otherwise.
  */
 static bool inMemorySpace(Block* ptr) {
-    return (char*) ptr >= &myblock[0] && (char*) ptr <= &myblock[MAX_MEMORY - 1];
+    return (char*) ptr >= &memory[0] && (char*) ptr <= &memory[MAX_MEMORY - 1];
 }
 
 
@@ -858,7 +858,7 @@ static bool freeAndMerge(Block* toFree) {
  *
  * @param file defined to be __FILE__, used to print messages when an error is detected.
  * @param line defined to be __LINE__, used to print messages when an error is detected.
- * @return void pointer to memory in myblock
+ * @return void pointer to memory in memory
  */
 void* myallocate(size_t size, const char* file, int line, int caller) {
 
