@@ -90,7 +90,7 @@ static char memory[MAX_MEMORY];
 static bool firstMalloc = true;
 static Block* rootBlock;
 
-
+char* userSpace = NULL;
 /********************functions*******************/
 
 //pause the timer for use in "blocking calls" so that if a
@@ -864,6 +864,8 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
 
     // If it is the first time this function has been called, then initialize the root block.
     if (firstMalloc) {
+        userSpace = &memory[10 * PAGESIZE];
+
         initializeRoot();
     }
 
