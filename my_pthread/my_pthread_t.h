@@ -11,7 +11,6 @@
 #include <time.h>
 
 #define RUN_QUEUE_SIZE 5
-#define STACK_SIZE 10000
 #define QUANTA_TIME 50
 #define NUM_CYCLES 10
 
@@ -19,6 +18,7 @@
 #define LIBRARYREQ 0
 #define THREADREQ 1
 #define PAGESIZE sysconf(_SC_PAGE_SIZE)
+#define STACK_SIZE PAGESIZE - sizeof(ucontext_t)
 
 #define pthread_t my_pthread_t
 #define pthread_attr_t my_pthread_attr_t
