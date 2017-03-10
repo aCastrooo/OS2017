@@ -76,7 +76,7 @@ typedef struct mutex_list_ {
 
 typedef struct Block {
     bool isFree;
-    unsigned short size; // We use short instead of size_t to save space
+    unsigned int size; // We use short instead of size_t to save space
     struct Block* next;
 } Block;
 
@@ -783,7 +783,7 @@ int my_pthread_mutex_destroy(my_pthread_mutex_t *mutex) {
 static void initializeRoot() {
     rootBlock = (Block*) memory;
     rootBlock->isFree = true;
-    rootBlock->size = MAX_MEMORY - BLOCK_SIZE;
+    rootBlock->size = 50 * PAGESIZE;
     rootBlock->next = NULL;
     firstMalloc = false;
 }
@@ -864,57 +864,65 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
 
     // If it is the first time this function has been called, then initialize the root block.
     if (firstMalloc) {
-        userSpace = &memory[10 * PAGESIZE];
+        userSpace = &memory[50 * PAGESIZE];
 
         initializeRoot();
     }
 
-    Block* current = rootBlock;
-    const unsigned short sizeWithBlock = size + BLOCK_SIZE; // Include extra space for metadata.
+    if(caller == LIBRARYREQ){
+        //do normal malloc stuff
 
-    // First fit placement strategy.
-    do {
+            Block* current = rootBlock;
+            const unsigned short sizeWithBlock = size + BLOCK_SIZE; // Include extra space for metadata.
 
-        // Look for free block with enough space.
-        if (!current->isFree || current->size < size) {
-            continue;
-        }
+            // First fit placement strategy.
+            do {
 
-        else if (current->isFree) {
+                // Look for free block with enough space.
+                if (!current->isFree || current->size < size) {
+                    continue;
+                }
 
-            if (current->size == size) {
-                // Mark current block as taken and return it.
-                current->isFree = false;
-                return ((char*) current) + BLOCK_SIZE;
-            }
+                else if (current->isFree) {
 
-            // If a free block has more than enough space, create new free block to take up the rest of the space.
-            else if (current->size >= sizeWithBlock) {
+                    if (current->size == size) {
+                        // Mark current block as taken and return it.
+                        current->isFree = false;
+                        return ((char*) current) + BLOCK_SIZE;
+                    }
 
-                Block* newBlock = (Block*) ((char*) current + sizeWithBlock);
+                    // If a free block has more than enough space, create new free block to take up the rest of the space.
+                    else if (current->size >= sizeWithBlock) {
 
-                newBlock->isFree = true;
-                newBlock->size = current->size - sizeWithBlock;
-                newBlock->next = current->next;
+                        Block* newBlock = (Block*) ((char*) current + sizeWithBlock);
 
-                current->next = newBlock;
-                current->size = size;
+                        newBlock->isFree = true;
+                        newBlock->size = current->size - sizeWithBlock;
+                        newBlock->next = current->next;
 
-                // Mark current block as taken and return it.
-                current->isFree = false;
-                return ((char*) current) + BLOCK_SIZE;
-            }
+                        current->next = newBlock;
+                        current->size = size;
 
-            /* NOTE: If current->size is greater than size, but less than sizeWithBlock,
-             * then there is not enough room to accommodate both the space and a new Block,
-             * so we continue the search. */
-        }
+                        // Mark current block as taken and return it.
+                        current->isFree = false;
+                        return ((char*) current) + BLOCK_SIZE;
+                    }
 
-    } while ((current = current->next) != NULL);
+                    /* NOTE: If current->size is greater than size, but less than sizeWithBlock,
+                     * then there is not enough room to accommodate both the space and a new Block,
+                     * so we continue the search. */
+                }
 
-    // If no suitable free block is found, print an error message and return NULL pointer.
-    printf("Error at line %d of %s: not enough space is available to allocate.\n", line, file);
-    return NULL;
+            } while ((current = current->next) != NULL);
+
+            // If no suitable free block is found, print an error message and return NULL pointer.
+            printf("Error at line %d of %s: not enough space is available to allocate.\n", line, file);
+            return NULL;
+    }else{
+        //do page stuff for threads
+
+    }
+
 }
 
 
@@ -947,8 +955,18 @@ void* test(void* arg){
 
 int main(){
   my_pthread_t th;
+  my_pthread_t th2;
 
   my_pthread_create(&th, NULL,test,NULL );
-  my_pthread_join(th, NULL);
+  my_pthread_create(&th2, NULL,test,NULL );
+  int i;
+  for ( i = 0; i < 1000; i++) {
+      printf("thread #%d\n",i );
+      my_pthread_create(&th, NULL,test,NULL);
+  }
+
+  while (1) {
+    i++;
+  }
   return 0;
 }
