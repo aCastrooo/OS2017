@@ -80,6 +80,13 @@ typedef struct Block {
     struct Block* next;
 } Block;
 
+typedef struct Page_ {
+    int threadID;
+    int pageID;
+    int sizeLeft;
+    struct Page_* next;
+} Page;
+
 /******************globals***********************/
 static scheduler* scd = NULL;
 static int currMutexID = 0;
@@ -798,7 +805,7 @@ static void initializeRoot() {
  * @return true if ptr is in memory, false otherwise.
  */
 static bool inMemorySpace(Block* ptr) {
-    return (char*) ptr >= &memory[0] && (char*) ptr <= &memory[MAX_MEMORY - 1];
+    return (char*) ptr >= &memory[0] && (char*) ptr <= &memory[50 * PAGESIZE - 1];
 }
 
 
@@ -930,23 +937,30 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
  * Checks if the block is eligible to be freed, and frees it if it is.
  */
 void mydeallocate(void* ptr, const char* file, int line, int caller) {
-
-    if (!inMemorySpace(ptr)) {
-        printf("Error at line %d of %s: pointer was not created using malloc.\n", line, file);
-    }
-
-    else {
-
-        Block* block = (Block*) ((char*) ptr - BLOCK_SIZE);
-
-        if (block->isFree) {
-            printf("Error at line %d of %s: pointer has already been freed.\n", line, file);
-        }
-
-        else if (!freeAndMerge(block)) {
+    if(caller == LIBRARYREQ){
+        //called from library
+        if (!inMemorySpace(ptr)) {
             printf("Error at line %d of %s: pointer was not created using malloc.\n", line, file);
         }
+
+        else {
+
+            Block* block = (Block*) ((char*) ptr - BLOCK_SIZE);
+
+            if (block->isFree) {
+                printf("Error at line %d of %s: pointer has already been freed.\n", line, file);
+            }
+
+            else if (!freeAndMerge(block)) {
+                printf("Error at line %d of %s: pointer was not created using malloc.\n", line, file);
+            }
+        }
+    }else{
+        //called from thread
+
     }
+
+
 }
 
 void* test(void* arg){
