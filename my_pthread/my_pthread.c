@@ -634,8 +634,7 @@ int my_pthread_create( my_pthread_t * thread, my_pthread_attr_t * attr, void *(*
     }
 
     getcontext(newCxt);
-    //newCxt->uc_stack.ss_sp = (char*) myallocate(STACK_SIZE, __FILE__, __LINE__, LIBRARYREQ);
-    newCxt->uc_stack.ss_sp = (char*) calloc(1,STACK_SIZE);
+    newCxt->uc_stack.ss_sp = (char*) myallocate(STACK_SIZE, __FILE__, __LINE__, LIBRARYREQ);
 
     if(newCxt->uc_stack.ss_sp == NULL){
         unpause_timer(scd->timer);
@@ -829,11 +828,29 @@ static void initializePage(Page* pg){
  * @param ptr Check if this pointer points to an address in memory.
  * @return true if ptr is in memory, false otherwise.
  */
-static bool inMemorySpace(Block* ptr) {
+static bool inLibrarySpace(Block* ptr) {
     return (char*) ptr >= &memory[0] && (char*) ptr < &memory[100 * PAGESIZE];
 }
 
+static bool inThreadSpace(Block* ptr){
+  return (char*) ptr >= userSpace && (char*) ptr < &memory[MAX_MEMORY];
+}
 
+//TODO add block param in case one thread has multiple pages
+Page* findPageByID(int id){
+  Page* page = (Page*) userSpace;
+
+  while(page != NULL){
+
+    if(page->threadID == id){
+      return page;
+    }
+
+    page = page->next;
+  }
+
+  return NULL;
+}
 /**
  * Free the block and merge it with its neighbors if they are free as well. Iterates
  * over the entire list of blocks until the correct block is found, while keeping
@@ -843,10 +860,18 @@ static bool inMemorySpace(Block* ptr) {
  * @param toFree the Block to be freed.
  * @return true if toFree was freed, false otherwise.
  */
-static bool freeAndMerge(Block* toFree) {
+static bool freeAndMerge(Block* toFree, Page* page, int caller) {
 
     Block* previous = NULL;
-    Block* current = rootBlock;
+    Block* current;
+
+    if(caller == LIBRARYREQ){
+      Block* current = rootBlock;
+    }
+    else if(caller == THREADREQ){
+      Block* current = (Block*) ((char*)page + sizeof(Page));
+    }
+
 
     // Iterate through the list until toFree is found.
     do {
@@ -866,6 +891,10 @@ static bool freeAndMerge(Block* toFree) {
             if (previous != NULL && previous->isFree) {
                 previous->size += current->size + BLOCK_SIZE;
                 previous->next = current->next;
+            }
+
+            if(caller == THREADREQ){
+              page->sizeLeft += toFree->size + BLOCK_SIZE;
             }
 
             return true;
@@ -1106,7 +1135,7 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
 void mydeallocate(void* ptr, const char* file, int line, int caller) {
     if(caller == LIBRARYREQ){
         //called from library
-        if (!inMemorySpace(ptr)) {
+        if (!inLibrarySpace(ptr)) {
             printf("Error at line %d of %s: pointer was not created using malloc.\n", line, file);
         }
 
@@ -1118,12 +1147,44 @@ void mydeallocate(void* ptr, const char* file, int line, int caller) {
                 printf("Error at line %d of %s: pointer has already been freed.\n", line, file);
             }
 
-            else if (!freeAndMerge(block)) {
+            else if (!freeAndMerge(block, NULL, LIBRARYREQ)) {
                 printf("Error at line %d of %s: pointer was not created using malloc.\n", line, file);
             }
         }
     }else{
         //called from thread
+        if(!inThreadSpace(ptr)){
+          printf("Error at line %d of %s: pointer was not created using malloc.\n", line, file);
+          return;
+        }
+
+        Block* block = (Block*) ((char*) ptr - BLOCK_SIZE);
+        if (block->isFree) {
+            printf("Error at line %d of %s: pointer has already been freed.\n", line, file);
+            return;
+        }
+
+        Page* page;
+
+        if(scd == NULL){
+          page = findPageByID(0);
+          if(page == NULL){
+            printf("Error at line %d of %s: unable to find page with id %d.\n", line, file, 0);
+            return;
+          }
+        }
+        else{
+          page = findPageByID(scd->current->threadID->id);
+          if(page == NULL){
+            printf("Error at line %d of %s: unable to find page with id %d.\n", line, file, scd->current->threadID->id);
+            return;
+          }
+        }
+
+        if (!freeAndMerge(block, page, THREADREQ)) {
+            printf("Error at line %d of %s: pointer was not created using malloc.\n", line, file);
+        }
+
 
     }
 
