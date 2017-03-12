@@ -9,6 +9,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <time.h>
+#include <string.h>
 
 #define RUN_QUEUE_SIZE 5
 #define QUANTA_TIME 50

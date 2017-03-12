@@ -89,15 +89,18 @@ typedef struct Page_ {
 
 /******************globals***********************/
 static scheduler* scd = NULL;
+static bool timerSet = false;
 static int currMutexID = 0;
 static mutex_list *mutexList = NULL;
 
 static const unsigned short BLOCK_SIZE = sizeof(Block);
 static char memory[MAX_MEMORY];
 static bool firstMalloc = true;
+static bool firstThreadMalloc = true;
 static Block* rootBlock;
 
-char* userSpace = NULL;
+static char* userSpace = NULL;
+static int pageNum = 0;
 /********************functions*******************/
 
 //pause the timer for use in "blocking calls" so that if a
@@ -577,6 +580,7 @@ void initialize(){
     scd->threads = (threadList*) myallocate(sizeof(threadList), __FILE__, __LINE__, LIBRARYREQ);
     scd->threads->head = NULL;
 
+    scd->threadNum = 2;
 
     //call getcontext, setup the ucontext_t, then makecontext with scheduler func
 
@@ -593,7 +597,7 @@ void initialize(){
     getcontext(mainCxt);
 
     my_pthread_t* mainthread = (my_pthread_t*) myallocate(sizeof(my_pthread_t), __FILE__, __LINE__, LIBRARYREQ);
-    mainthread->id = -123456789;
+    mainthread->id = 1;
     mainthread->isDead = 0;
     mainthread->exitArg = NULL;
     mainthread->next = NULL;
@@ -604,6 +608,7 @@ void initialize(){
     //set up signal and timer
     signal(SIGALRM, timerHandler);
 
+    timerSet = true;
     scd->timer->it_value.tv_usec = QUANTA_TIME * 1000;//50ms
     setitimer(ITIMER_REAL, scd->timer, NULL);
 }
@@ -629,7 +634,8 @@ int my_pthread_create( my_pthread_t * thread, my_pthread_attr_t * attr, void *(*
     }
 
     getcontext(newCxt);
-    newCxt->uc_stack.ss_sp = (char*) myallocate(STACK_SIZE, __FILE__, __LINE__, LIBRARYREQ);
+    //newCxt->uc_stack.ss_sp = (char*) myallocate(STACK_SIZE, __FILE__, __LINE__, LIBRARYREQ);
+    newCxt->uc_stack.ss_sp = (char*) calloc(1,STACK_SIZE);
 
     if(newCxt->uc_stack.ss_sp == NULL){
         unpause_timer(scd->timer);
@@ -790,9 +796,28 @@ int my_pthread_mutex_destroy(my_pthread_mutex_t *mutex) {
 static void initializeRoot() {
     rootBlock = (Block*) memory;
     rootBlock->isFree = true;
-    rootBlock->size = 50 * PAGESIZE;
+    rootBlock->size = (100 * PAGESIZE) - BLOCK_SIZE;
     rootBlock->next = NULL;
     firstMalloc = false;
+}
+
+static void initializePage(Page* pg){
+
+    if(scd == NULL){
+        pg->threadID = 1;
+    }else{
+        pg->threadID = scd->current->threadID->id;
+    }
+
+    pg->pageID = pageNum;
+    pageNum++;
+    pg->sizeLeft = PAGESIZE - sizeof(Page);
+    pg->next = NULL;
+
+    Block* rootBlock = (Block*) ((char*) pg + sizeof(Page));
+    rootBlock->isFree = true;
+    rootBlock->size = PAGESIZE - sizeof(Page) - BLOCK_SIZE;
+    rootBlock->next = NULL;
 }
 
 
@@ -805,7 +830,7 @@ static void initializeRoot() {
  * @return true if ptr is in memory, false otherwise.
  */
 static bool inMemorySpace(Block* ptr) {
-    return (char*) ptr >= &memory[0] && (char*) ptr <= &memory[50 * PAGESIZE - 1];
+    return (char*) ptr >= &memory[0] && (char*) ptr < &memory[100 * PAGESIZE];
 }
 
 
@@ -869,18 +894,25 @@ static bool freeAndMerge(Block* toFree) {
  */
 void* myallocate(size_t size, const char* file, int line, int caller) {
 
+    if(timerSet){
+        pause_timer(scd->timer);
+    }
+
     // If it is the first time this function has been called, then initialize the root block.
     if (firstMalloc) {
-        userSpace = &memory[50 * PAGESIZE];
+        userSpace = &memory[100 * PAGESIZE];
 
         initializeRoot();
     }
 
+    Block* current;
+    const unsigned short sizeWithBlock = size + BLOCK_SIZE; // Include extra space for metadata.
+
+
     if(caller == LIBRARYREQ){
         //do normal malloc stuff
 
-            Block* current = rootBlock;
-            const unsigned short sizeWithBlock = size + BLOCK_SIZE; // Include extra space for metadata.
+            current = rootBlock;
 
             // First fit placement strategy.
             do {
@@ -895,6 +927,11 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
                     if (current->size == size) {
                         // Mark current block as taken and return it.
                         current->isFree = false;
+
+                        if(timerSet){
+                            unpause_timer(scd->timer);
+                        }
+
                         return ((char*) current) + BLOCK_SIZE;
                     }
 
@@ -912,6 +949,11 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
 
                         // Mark current block as taken and return it.
                         current->isFree = false;
+
+                        if(timerSet){
+                            unpause_timer(scd->timer);
+                        }
+
                         return ((char*) current) + BLOCK_SIZE;
                     }
 
@@ -924,9 +966,134 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
 
             // If no suitable free block is found, print an error message and return NULL pointer.
             printf("Error at line %d of %s: not enough space is available to allocate.\n", line, file);
+
+            if(timerSet){
+                unpause_timer(scd->timer);
+            }
+
             return NULL;
     }else{
         //do page stuff for threads
+
+        Page* prev = NULL;
+        Page* pg = (Page*) userSpace;
+        int thread = (scd == NULL) ? 1 : scd->current->threadID->id;
+
+        if(firstThreadMalloc){
+            initializePage(pg);
+            firstThreadMalloc = false;
+        }
+
+        //find the page that belongs to this thread
+        while (pg != NULL) {
+            if(pg->threadID == thread){
+                break;
+            }
+
+            prev = pg;
+            pg = pg->next;
+        }
+
+        if(pg == NULL){
+            //thread does not have a page in memory so make one if theres enough space
+            //or find a page that has been freed already
+
+            //search again for first free page if there is one available
+            prev = NULL;
+            pg = (Page*) userSpace;
+
+            while (pg != NULL) {
+                if(pg->sizeLeft == PAGESIZE - sizeof(Page)){
+                    break;
+                }
+
+                prev = pg;
+                pg = pg->next;
+            }
+
+            if(pg == NULL){
+                //there were no empty pages to write over
+                if((char*)pg + sizeof(Page) > &memory[MAX_MEMORY]){
+                    printf("Error at line %d of %s: not enough space is available to allocate.\n", line, file);
+                    return NULL;
+                }
+                pg =(Page*) ((char*) prev + sizeof(Page));
+                initializePage(pg);
+                prev->next = pg;
+            }else{
+                //write over the currently free page pg
+                pg->threadID = thread;
+                pg->pageID = pageNum;
+                pageNum++;
+                pg->sizeLeft = PAGESIZE - sizeof(Page);
+
+                Block* rootBlock = (Block*) ((char*) pg + sizeof(Page));
+                rootBlock->isFree = true;
+                rootBlock->size = PAGESIZE - sizeof(Page) - BLOCK_SIZE;
+                rootBlock->next = NULL;
+            }
+
+        }
+
+        current = (Block*) ((char*) pg + sizeof(Page));
+
+        do {
+
+            // Look for free block with enough space.
+            if (!current->isFree || current->size < size) {
+                continue;
+            }
+
+            else if (current->isFree) {
+
+                if (current->size == size) {
+                    // Mark current block as taken and return it.
+                    current->isFree = false;
+
+                    if(timerSet){
+                        unpause_timer(scd->timer);
+                    }
+
+                    return ((char*) current) + BLOCK_SIZE;
+                }
+
+                // If a free block has more than enough space, create new free block to take up the rest of the space.
+                else if (current->size >= sizeWithBlock) {
+
+                    Block* newBlock = (Block*) ((char*) current + sizeWithBlock);
+
+                    newBlock->isFree = true;
+                    newBlock->size = current->size - sizeWithBlock;
+                    newBlock->next = current->next;
+
+                    current->next = newBlock;
+                    current->size = size;
+
+                    // Mark current block as taken and return it.
+                    current->isFree = false;
+
+                    if(timerSet){
+                        unpause_timer(scd->timer);
+                    }
+
+                    return ((char*) current) + BLOCK_SIZE;
+                }
+
+                /* NOTE: If current->size is greater than size, but less than sizeWithBlock,
+                 * then there is not enough room to accommodate both the space and a new Block,
+                 * so we continue the search. */
+            }
+
+        } while ((current = current->next) != NULL);
+
+        // If no suitable free block is found, print an error message and return NULL pointer.
+        printf("Error at line %d of %s: not enough space is available to allocate.\n", line, file);
+
+        if(timerSet){
+            unpause_timer(scd->timer);
+        }
+
+        return NULL;
 
     }
 
@@ -965,18 +1132,26 @@ void mydeallocate(void* ptr, const char* file, int line, int caller) {
 
 void* test(void* arg){
     printf("got here\n" );
+/*
+    int v = (int) *arg;
+
+    int* x = (int*) malloc(sizeof(int));
+    *x = v;
+    printf("I am thread %d and my number is %d\n",*arg, *x );
+    my_pthread_yield();
+    printf("I am still thread %d and my number is %d\n",*arg, *x );
+*/
+    return NULL;
 }
 
 int main(){
-  my_pthread_t th;
-  my_pthread_t th2;
-
-  my_pthread_create(&th, NULL,test,NULL );
-  my_pthread_create(&th2, NULL,test,NULL );
+  my_pthread_t th[10];
   int i;
-  for ( i = 0; i < 1000; i++) {
-      printf("thread #%d\n",i );
-      my_pthread_create(&th, NULL,test,NULL);
+  for ( i = 0; i < 10; i++) {
+      //int* x = (int*) malloc(sizeof(int));
+      //*x = i;
+      my_pthread_create(&th[i], NULL,test,NULL);
+      printf("thread #%d made\n",i );
   }
 
   while (1) {
