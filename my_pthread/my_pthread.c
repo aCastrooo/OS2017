@@ -853,17 +853,21 @@ static Page* findFirstPage(int threadID){
     return NULL;
 }
 
-//TODO add block param in case one thread has multiple pages
-Page* findPageByID(int id){
-  Page* page = (Page*) userSpace;
+Page* findPage(int id, Block* block){
+  int i;
 
-  while(page != NULL){
+  for(i = 0; i < MAX_MEMORY / PAGESIZE; i++){
+    if(pages[i]->threadID == id){
 
-    if(page->threadID == id){
-      return page;
+      if((char*) block >= pages[i]->physAddr && (char*) block < pages[i]->physAddr + pages[i]->sizeLeft){
+
+        printf("threadID is %d\n", id);
+        printf("physAddr is %s\n", pages[i]->physAddr);
+        return pages[i];
+
+      }
+
     }
-
-    page = page->next;
   }
 
   return NULL;
@@ -880,13 +884,21 @@ Page* findPageByID(int id){
 static bool freeAndMerge(Block* toFree, Page* page, int caller) {
 
     Block* previous = NULL;
-    Block* current;
+    Block* current = NULL;
 
     if(caller == LIBRARYREQ){
-      Block* current = rootBlock;
+      current = rootBlock;
     }
     else if(caller == THREADREQ){
-      Block* current = (Block*) ((char*)page + sizeof(Page));
+      current = (Block*) page->physAddr;
+      printf("%s\n", page->physAddr);
+    }
+
+
+
+    if(current == NULL){
+      printf("couldnt get block\n");
+      return false;
     }
 
 
@@ -1035,8 +1047,7 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
         int thread = (scd == NULL) ? 1 : scd->current->threadID->id;
 
         if(firstThreadMalloc){
-            initializePage(pages[0], 0);
-            firstThreadMalloc = false;
+             firstThreadMalloc = false;
         }
 
         Page* pg = findFirstPage(thread);
@@ -1122,62 +1133,143 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
  * Checks if the block is eligible to be freed, and frees it if it is.
  */
 void mydeallocate(void* ptr, const char* file, int line, int caller) {
+
+    if(timerSet){
+        pause_timer(scd->timer);
+    }
+
     if(caller == LIBRARYREQ){
+
+        printf("caller is library\n");
+
         //called from library
-        if (!inLibrarySpace(ptr)) {
+            if (!inLibrarySpace(ptr)) {
+                printf("Error at line %d of %s: pointer was not created using malloc.\n", line, file);
+
+                if(timerSet){
+                    unpause_timer(scd->timer);
+                }
+
+                return;
+            }
+
+
+
+        Block* block = (Block*) ((char*) ptr - BLOCK_SIZE);
+
+        if (block->isFree) {
+            printf("Error at line %d of %s: pointer has already been freed.\n", line, file);
+
+            if(timerSet){
+                unpause_timer(scd->timer);
+            }
+
+            return;
+        }
+
+        if(!freeAndMerge(block, NULL, LIBRARYREQ)) {
             printf("Error at line %d of %s: pointer was not created using malloc.\n", line, file);
         }
 
-        else {
-
-            Block* block = (Block*) ((char*) ptr - BLOCK_SIZE);
-
-            if (block->isFree) {
-                printf("Error at line %d of %s: pointer has already been freed.\n", line, file);
-            }
-
-            else if (!freeAndMerge(block, NULL, LIBRARYREQ)) {
-                printf("Error at line %d of %s: pointer was not created using malloc.\n", line, file);
-            }
+        if(timerSet){
+            unpause_timer(scd->timer);
         }
-    }else{
+
+        return;
+
+    }else if (caller == THREADREQ){
+
+        printf("caller is thread\n");
         //called from thread
         if(!inThreadSpace(ptr)){
-          printf("Error at line %d of %s: pointer was not created using malloc.\n", line, file);
-          return;
+            printf("Error at line %d of %s: pointer was not created using malloc.\n", line, file);
+
+            if(timerSet){
+                unpause_timer(scd->timer);
+            }
+
+            return;
         }
+
+        printf("in thread space\n");
 
         Block* block = (Block*) ((char*) ptr - BLOCK_SIZE);
         if (block->isFree) {
             printf("Error at line %d of %s: pointer has already been freed.\n", line, file);
+
+            if(timerSet){
+                unpause_timer(scd->timer);
+            }
+
             return;
         }
+
+        printf("got the block\n");
 
         Page* page;
 
         if(scd == NULL){
-          page = findPageByID(0);
-          if(page == NULL){
-            printf("Error at line %d of %s: unable to find page with id %d.\n", line, file, 0);
-            return;
-          }
+
+            printf("scd null\n");
+            page = findPage(1, block);
+
+            if(page == NULL){
+
+                printf("Error at line %d of %s: unable to find page with id %d.\n", line, file, 0);
+
+                if(timerSet){
+                    unpause_timer(scd->timer);
+                }
+
+                return;
+            }
+        }else{
+
+            printf("scd init\n");
+            page = findPage(scd->current->threadID->id, block);
+
+            if(page == NULL){
+
+                printf("Error at line %d of %s: unable to find page with id %d.\n", line, file, scd->current->threadID->id);
+
+                if(timerSet){
+                    unpause_timer(scd->timer);
+                }
+
+                return;
+            }
         }
-        else{
-          page = findPageByID(scd->current->threadID->id);
-          if(page == NULL){
-            printf("Error at line %d of %s: unable to find page with id %d.\n", line, file, scd->current->threadID->id);
-            return;
-          }
-        }
+
+        printf("got the page\n");
 
         if (!freeAndMerge(block, page, THREADREQ)) {
             printf("Error at line %d of %s: pointer was not created using malloc.\n", line, file);
+
+            if(timerSet){
+                unpause_timer(scd->timer);
+            }
+
+            return;
         }
 
+        printf("freeAndMerge successful\n");
 
+        if(timerSet){
+            unpause_timer(scd->timer);
+        }
+
+        return;
+
+
+    } else {
+      printf("invalid caller\n");
     }
 
+    if(timerSet){
+        unpause_timer(scd->timer);
+    }
 
+    return;
 }
 
 void* test(void* arg){
@@ -1188,7 +1280,7 @@ void* test(void* arg){
     int* y = (int*) malloc(sizeof(int));
     *y = x;
     printf("I am thread %d and my number is %d\n",*v,*y  );
-
+    free(y);
     return NULL;
 }
 
