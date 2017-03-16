@@ -862,7 +862,6 @@ Page* findPage(int id, Block* block){
       if((char*) block >= pages[i]->physAddr && (char*) block < pages[i]->physAddr + pages[i]->sizeLeft){
 
         printf("threadID is %d\n", id);
-        printf("physAddr is %s\n", pages[i]->physAddr);
         return pages[i];
 
       }
@@ -891,7 +890,6 @@ static bool freeAndMerge(Block* toFree, Page* page, int caller) {
     }
     else if(caller == THREADREQ){
       current = (Block*) page->physAddr;
-      printf("%s\n", page->physAddr);
     }
 
 
@@ -1295,9 +1293,9 @@ int main(){
       my_pthread_create(&th[i], NULL,test,(void*)x);
       printf("thread #%d made\n",i );
   }
-
-  while (1) {
-    i++;
+  long long int j = 0;
+  while (j < 100000000) {
+    j++;
   }
   return 0;
 }
