@@ -1031,7 +1031,8 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
 
     // If it is the first time this function has been called, then initialize the root block.
     if (firstMalloc) {
-        userSpace = &memory[100 * PAGESIZE];
+        posix_memalign((void **)&memory, PAGESIZE, MAX_MEMORY);
+	userSpace = &memory[100 * PAGESIZE];
 	setUpSignal();
         initializeRoot();
 
