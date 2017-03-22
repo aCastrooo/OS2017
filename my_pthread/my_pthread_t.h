@@ -10,6 +10,7 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <time.h>
+#include <malloc.h>
 #include <string.h>
 
 #define RUN_QUEUE_SIZE 5

@@ -84,6 +84,7 @@ typedef struct Page_ {
     char* physAddr;//this is where the page needs
     int threadID;
     int pageID;
+    bool isFree;
     int sizeLeft;
 } Page;
 
@@ -809,6 +810,7 @@ static void initializePage(Page* pg, int index){
     pg->pageID = pageNum;
     pageNum++;
     pg->sizeLeft = PAGESIZE;
+    pg->isFree = false;
 
     Block* rootBlock = (Block*) pg->physAddr;
     rootBlock->isFree = true;
@@ -871,6 +873,79 @@ Page* findPage(int id, Block* block){
 
   return NULL;
 }
+
+// swaps two pages in memory and in the page table that corresponds to those pages 
+static void pageSwap(int initial, int swapTo){
+	int i;
+	char* temp; 
+
+	// swap mem
+	memcpy(temp, userSpace + (PAGESIZE * swapTo), PAGESIZE);
+	memcpy(userSpace + (PAGESIZE * swapTo), userSpace + (PAGESIZE * initial), PAGESIZE);
+	memcpy(userSpace + (PAGESIZE * initial), temp, PAGESIZE);
+
+	// swap pages data
+	Page* tempPage;
+	memcpy(tempPage, pages[swapTo], PAGESIZE);
+	memcpy(pages[swapTo], pages[initial], PAGESIZE);
+	memcpy(pages[initial], tempPage, PAGESIZE);
+}
+
+static bool moveToFreeSpace(int index) {
+	int i;
+	for(i = 0; i < MAX_MEMORY / PAGESIZE; i++){
+		if(pages[i]->isFree){
+			memcpy(pages[i], pages[index], PAGESIZE);
+			memcpy(userSpace + (PAGESIZE * i), userSpace + (PAGESIZE * index), PAGESIZE);
+			pages[index]->isFree = true;
+			return true; 
+		}	
+	}
+
+	return false;
+}
+
+
+
+// this handler is called when a thread attempts to access data that does not belong to it. The handler will find the correct data and swap it
+static void sigHandler(int sig, siginfo_t *si, void *unused){
+	printf("Got SIGSEGV at address: 0x%lx\n", (long) si->si_addr);
+	puts("Swapping correct pages...");
+	char *addr = si->si_addr;
+	if(addr >= memory + MAX_MEMORY || addr < memory){
+		puts("trying to access out of bounds stuff. bad");
+		exit(1);
+	}
+	else if(addr < userSpace && addr > memory){
+		puts("trynna access library stuff. bad");
+		exit(1);
+	}
+	else{
+		int index = (int)((char *)si->si_addr - userSpace)/PAGESIZE;
+		int i;
+		for(i = 0; i < MAX_MEMORY / PAGESIZE; i++){
+			if(pages[i]->threadID == scd->current->threadID->id && pages[i]->pageID == index){
+				pageSwap(index, i);
+			}
+		}
+	}
+}
+
+void setUpSignal(){
+	struct sigaction sa;
+	sa.sa_flags = SA_SIGINFO;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_sigaction = sigHandler;
+
+	if(sigaction(SIGSEGV, &sa, NULL) == -1){
+		printf("Fatal error setting up signal handler\n");
+		exit(-1);
+	}
+}
+
+
+
+
 /**
  * Free the block and merge it with its neighbors if they are free as well. Iterates
  * over the entire list of blocks until the correct block is found, while keeping
@@ -957,7 +1032,7 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
     // If it is the first time this function has been called, then initialize the root block.
     if (firstMalloc) {
         userSpace = &memory[100 * PAGESIZE];
-
+	setUpSignal();
         initializeRoot();
 
         //allocate memory for the page table which will be addressed as an array
@@ -969,6 +1044,7 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
 
             //initializing sizeLeft to indicate that this index in pages hasn't been filled yet
             pages[i]->sizeLeft = 2 * PAGESIZE;
+	    pages[i]->isFree = true;
         }
     }
 
@@ -1020,7 +1096,7 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
                         if(timerSet){
                             unpause_timer(scd->timer);
                         }
-
+			
                         return ((char*) current) + BLOCK_SIZE;
                     }
 
@@ -1059,7 +1135,7 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
         }
 
         current = (Block*) pg->physAddr;
-
+	
         do {
 
             // Look for free block with enough space.
@@ -1078,8 +1154,8 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
                     if(timerSet){
                         unpause_timer(scd->timer);
                     }
-
-                    return ((char*) current) + BLOCK_SIZE;
+			
+			return ((char*) current) + BLOCK_SIZE;
                 }
 
                 // If a free block has more than enough space, create new free block to take up the rest of the space.
@@ -1102,8 +1178,8 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
                     if(timerSet){
                         unpause_timer(scd->timer);
                     }
-
-                    return ((char*) current) + BLOCK_SIZE;
+			
+			return ((char*) current) + BLOCK_SIZE;
                 }
 
                 /* NOTE: If current->size is greater than size, but less than sizeWithBlock,
