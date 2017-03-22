@@ -95,7 +95,7 @@ static int currMutexID = 0;
 static mutex_list *mutexList = NULL;
 
 static const unsigned short BLOCK_SIZE = sizeof(Block);
-static char memory[MAX_MEMORY];
+static char* memory;
 static bool firstMalloc = true;
 static bool firstThreadMalloc = true;
 static Block* rootBlock;
