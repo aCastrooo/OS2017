@@ -7,9 +7,11 @@
 #include <string.h>
 #include <ucontext.h>
 #include <signal.h>
+#include <sys/mman.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <time.h>
+#include <malloc.h>
 #include <string.h>
 
 #define RUN_QUEUE_SIZE 5
@@ -20,7 +22,7 @@
 #define LIBRARYREQ 0
 #define THREADREQ 1
 #define PAGESIZE sysconf(_SC_PAGE_SIZE)
-#define STACK_SIZE PAGESIZE - sizeof(ucontext_t)
+#define STACK_SIZE 1024
 
 #define pthread_t my_pthread_t
 #define pthread_attr_t my_pthread_attr_t
