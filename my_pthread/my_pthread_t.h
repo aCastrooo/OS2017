@@ -50,6 +50,7 @@ typedef struct my_pthread_t_ {
     int id;
     int isDead;
     void* exitArg;
+    int pageNum;
     struct my_pthread_t_* next;
 } my_pthread_t;
 

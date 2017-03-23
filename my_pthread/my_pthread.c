@@ -100,7 +100,7 @@ static bool firstThreadMalloc = true;
 static Block* rootBlock;
 
 static char* userSpace = NULL;
-static int pageNum = 0;
+static int mainPageNum = 0;
 static Page** pages;//this will be the array of pages in memory block
 /********************functions*******************/
 
@@ -602,6 +602,7 @@ void initialize(){
     mainthread->isDead = 0;
     mainthread->exitArg = NULL;
     mainthread->next = NULL;
+    mainthread->pageNum = mainPageNum;
     node* mainNode = createNode(mainCxt, mainthread);
 
     scd->current = mainNode;
@@ -653,6 +654,7 @@ int my_pthread_create( my_pthread_t * thread, my_pthread_attr_t * attr, void *(*
     scd->threadNum++;
     newthread->isDead = 0;
     newthread->exitArg = NULL;
+    newthread->pageNum = 0;
     newthread->next = NULL;
 
     addThread(newthread);
@@ -787,7 +789,47 @@ int my_pthread_mutex_destroy(my_pthread_mutex_t *mutex) {
   return 0;
 }
 
+static void alignPages(){
 
+    int thread = (scd == NULL) ? 1 : scd->current->threadID->id;
+
+    int i;
+    for (i = 0; i < (MAX_MEMORY / PAGESIZE) - 100; i++) {
+        if(pages[i]->threadID == thread && i != pages[i]->pageID){
+            pageSwap(i, pages[i]->pageID);
+        }
+    }
+
+    //once disk is in place, now check disk if there are any pages in disk to be aligned into memory
+}
+
+//returns the number of pages needed if there is enough room for them, 0 if there are not enough free pages
+static int isEnoughPages(int sizeRequest){
+    int pagesNeeded = (sizeRequest / PAGESIZE) + 1;
+    int freeCount = 0;
+    int i;
+    for ( i = 0; i < (MAX_MEMORY / PAGESIZE) - 100; i++) {
+        if(pages[i]->isFree == true){
+            freeCount++;
+        }
+    }
+
+    return (freeCount >= pagesNeeded) ? pagesNeeded : 0;
+}
+
+static void gatherPages(int pagesNeeded, Block* lastBlock){
+    int nextPage;
+
+    while(pagesNeeded > 0){
+        nextPage = (scd == NULL) ? mainPageNum : scd->current->threadID->pageNum;
+        moveToFreeSpace(nextPage);
+        initializePage(nextPage);
+        lastBlock->size += PAGESIZE;
+
+        pagesNeeded--;
+    }
+
+}
 
 
 /**
@@ -801,19 +843,23 @@ static void initializeRoot() {
     firstMalloc = false;
 }
 
-static void initializePage(Page* pg, int index){
+void initializePage(int index){
     //index is the index in the pages array which will be converted to address in memory here
+
+    Page* pg = pages[index];
 
     pg->physAddr = userSpace + (index * PAGESIZE);
     pg->threadID = (scd == NULL) ? 1 : scd->current->threadID->id;
-    pg->pageID = pageNum;
-    pageNum++;
+    pg->pageID = (scd == NULL) ? mainPageNum++ : scd->current->threadID->pageNum++ ;
     pg->sizeLeft = PAGESIZE;
 
-    Block* rootBlock = (Block*) pg->physAddr;
-    rootBlock->isFree = true;
-    rootBlock->size = PAGESIZE - BLOCK_SIZE;
-    rootBlock->next = NULL;
+    if(pg->pageID == 0){
+        Block* rootBlock = (Block*) pg->physAddr;
+        rootBlock->isFree = true;
+        rootBlock->size = PAGESIZE - BLOCK_SIZE;
+        rootBlock->next = NULL;
+    }
+
 }
 
 
@@ -836,7 +882,7 @@ static bool inThreadSpace(Block* ptr){
 static Page* findFirstPage(int threadID){
     int i;
     //search for first page that belongs to this thread
-    for (i = 0; i < MAX_MEMORY / PAGESIZE; i++) {
+    for (i = 0; i < (MAX_MEMORY / PAGESIZE) - 100; i++) {
         if(pages[i]->threadID == threadID){
             return pages[i];
         }else if(pages[i]->sizeLeft > PAGESIZE){
@@ -844,9 +890,9 @@ static Page* findFirstPage(int threadID){
         }
     }
     //no page belongs to this thread in memory so look for first free page
-    for (i = 0; i < MAX_MEMORY / PAGESIZE; i++) {
+    for (i = 0; i < (MAX_MEMORY / PAGESIZE) - 100; i++) {
         if(pages[i]->sizeLeft >= PAGESIZE){
-            initializePage(pages[i], i);
+            initializePage(i);
             return pages[i];
         }
     }
@@ -856,7 +902,7 @@ static Page* findFirstPage(int threadID){
 Page* findPage(int id, Block* block){
   int i;
 
-  for(i = 0; i < MAX_MEMORY / PAGESIZE; i++){
+  for(i = 0; i < (MAX_MEMORY / PAGESIZE) - 100; i++){
     if(pages[i]->threadID == id){
 
       if((char*) block >= pages[i]->physAddr && (char*) block < pages[i]->physAddr + pages[i]->sizeLeft){
@@ -962,9 +1008,9 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
 
         //allocate memory for the page table which will be addressed as an array
         //each index in this array will translate to the memory block as &(where user space starts) + (i * PAGESIZE)
-        pages = (Page**) myallocate(sizeof(Page*) * MAX_MEMORY / PAGESIZE, __FILE__, __LINE__, LIBRARYREQ);
+        pages = (Page**) myallocate(sizeof(Page*) * (MAX_MEMORY / PAGESIZE) - 100, __FILE__, __LINE__, LIBRARYREQ);
         int i;
-        for ( i = 0; i < MAX_MEMORY / PAGESIZE; i++) {
+        for ( i = 0; i < (MAX_MEMORY / PAGESIZE) - 100; i++) {
             pages[i] = (Page*) myallocate(sizeof(Page), __FILE__, __LINE__, LIBRARYREQ);
 
             //initializing sizeLeft to indicate that this index in pages hasn't been filled yet
@@ -1048,19 +1094,24 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
              firstThreadMalloc = false;
         }
 
-        Page* pg = findFirstPage(thread);
+        alignPages();
 
-        if(pg == NULL){
-            printf("Error at line %d of %s: not enough space is available to allocate.\n", line, file);
-            if(timerSet){
-                unpause_timer(scd->timer);
+        Page* pg = pages[0];
+
+        if(pg->threadID != thread){
+            //this is the first allocation for this thread so make room for it and start writing
+
+            if(moveToFreeSpace(0) != true){
+                //do move to disk stuff and if thats full then return NULL
             }
-            return NULL;
+
+            initializePage(0);
         }
 
         current = (Block*) pg->physAddr;
-
+        Block* prev = NULL;
         do {
+            prev = current;
 
             // Look for free block with enough space.
             if (!current->isFree || current->size < size) {
@@ -1113,6 +1164,70 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
 
         } while ((current = current->next) != NULL);
 
+        //there is no more room left in the current amount of pages so make a new one if possible
+
+        int nextIndex = (scd == NULL) ? mainPageNum : scd->current->threadID->pageNum;
+
+        //if theres no room left in memory to make the allocation happen then return NULL
+        int bytesLeft = (int)((char*) memory + MAX_MEMORY - ((char*)prev + BLOCK_SIZE));
+
+        if(sizeWithBlock > bytesLeft){
+
+            printf("Error at line %d of %s: not enough space is available to allocate.\n", line, file);
+
+            if(timerSet){
+                unpause_timer(scd->timer);
+            }
+
+            return NULL;
+        }
+
+        //this is if the last block isn't the free block pointing to the rest of the free space
+        int extraBlock = (prev->isFree == false) ? BLOCK_SIZE : 0;
+        int pagesNeeded = isEnoughPages(extraBlock + sizeWithBlock - prev->size);
+
+        if(pagesNeeded > 0){
+            if(extraBlock > 0){
+                int nextPage = (scd == NULL) ? mainPageNum : scd->current->threadID->pageNum;
+                moveToFreeSpace(nextPage);
+                initializePage(nextPage);
+                Block* bl = (Block*)((char*) userSpace + (nextPage * PAGESIZE));
+                bl->isFree = true;
+                bl->size = PAGESIZE - BLOCK_SIZE;
+                bl->next = NULL;
+                prev->next = bl;
+                prev = bl;
+
+                gatherPages(pagesNeeded - 1, prev);
+            }else{
+                gatherPages(pagesNeeded, prev);
+            }
+
+            current = prev;
+
+            Block* newBlock = (Block*) ((char*) current + sizeWithBlock);
+
+            newBlock->isFree = true;
+            newBlock->size = current->size - sizeWithBlock;
+            newBlock->next = current->next;
+
+            current->next = newBlock;
+            current->size = size;
+
+            // Mark current block as taken and return it.
+            current->isFree = false;
+
+            pg->sizeLeft -= sizeWithBlock;
+
+            if(timerSet){
+                unpause_timer(scd->timer);
+            }
+
+            return ((char*) current) + BLOCK_SIZE;
+
+
+        }
+
         // If no suitable free block is found, print an error message and return NULL pointer.
         printf("Error at line %d of %s: not enough space is available to allocate.\n", line, file);
 
@@ -1121,7 +1236,6 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
         }
 
         return NULL;
-
     }
 
 }
