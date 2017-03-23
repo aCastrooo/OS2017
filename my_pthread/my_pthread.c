@@ -96,6 +96,7 @@ static mutex_list *mutexList = NULL;
 
 static const unsigned short BLOCK_SIZE = sizeof(Block);
 static char* memory;
+static char* disk;
 static bool firstMalloc = true;
 static bool firstThreadMalloc = true;
 static Block* rootBlock;
@@ -525,6 +526,7 @@ void schedule(){
     setitimer(ITIMER_REAL, scd->timer, NULL);
 
     if(scd->current->threadID->id != justRun->threadID->id){
+	protectAllPages(scd->current->threadID->id);
         swapcontext(justRun->ut, scd->current->ut);
     }
 
@@ -874,10 +876,26 @@ Page* findPage(int id, Block* block){
   return NULL;
 }
 
+
+// Protects all pages belonging to the incoming threadID
+void protectAllPages(int threadID){
+	int i;
+	for(i = 0; i < MAX_MEMORY / PAGESIZE; i++){
+		if(pages[i]->threadID == threadID){
+			mprotect(userSpace + (i * PAGESIZE), PAGESIZE, PROT_NONE);
+		}
+	}
+}
+
 // swaps two pages in memory and in the page table that corresponds to those pages 
 static void pageSwap(int initial, int swapTo){
 	int i;
 	char* temp; 
+	
+	//un-protect so we can write to the new spots
+	mprotect(userSpace + (PAGESIZE * swapTo), PAGESIZE, PROT_READ | PROT_WRITE);
+	mprotect(userSpace + (PAGESIZE * initial), PAGESIZE, PROT_READ | PROT_WRITE);
+
 
 	// swap mem
 	memcpy(temp, userSpace + (PAGESIZE * swapTo), PAGESIZE);
@@ -889,15 +907,27 @@ static void pageSwap(int initial, int swapTo){
 	memcpy(tempPage, pages[swapTo], PAGESIZE);
 	memcpy(pages[swapTo], pages[initial], PAGESIZE);
 	memcpy(pages[initial], tempPage, PAGESIZE);
+
+	//protect the memory pages again
+	mprotect(userSpace + (PAGESIZE * swapTo), PAGESIZE, PROT_NONE);
+	mprotect(userSpace + (PAGESIZE * initial), PAGESIZE, PROT_NONE);
+
 }
 
 static bool moveToFreeSpace(int index) {
 	int i;
 	for(i = 0; i < MAX_MEMORY / PAGESIZE; i++){
 		if(pages[i]->isFree){
+			
+			mprotect(userSpace + (PAGESIZE * index), PAGESIZE, PROT_READ | PROT_WRITE);
+
 			memcpy(pages[i], pages[index], PAGESIZE);
 			memcpy(userSpace + (PAGESIZE * i), userSpace + (PAGESIZE * index), PAGESIZE);
 			pages[index]->isFree = true;
+
+			// protect the page where it was moved, unprotect the newly freed spot
+			mprotect(userSpace + (PAGESIZE * i), PAGESIZE, PROT_NONE);
+			mprotect(userSpace + (PAGESIZE * index), PAGESIZE, PROT_READ | PROT_WRITE);
 			return true; 
 		}	
 	}
@@ -926,6 +956,9 @@ static void sigHandler(int sig, siginfo_t *si, void *unused){
 		for(i = 0; i < MAX_MEMORY / PAGESIZE; i++){
 			if(pages[i]->threadID == scd->current->threadID->id && pages[i]->pageID == index){
 				pageSwap(index, i);
+
+				// Un-protect the page we just swapped in
+				mprotect(userSpace + (index * PAGESIZE), PAGESIZE, PROT_READ | PROT_WRITE);
 			}
 		}
 	}

@@ -7,6 +7,7 @@
 #include <string.h>
 #include <ucontext.h>
 #include <signal.h>
+#include <sys/mman.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <time.h>
