@@ -81,11 +81,9 @@ typedef struct Block {
 } Block;
 
 typedef struct Page_ {
-    char* physAddr;//this is where the page needs
     int threadID;
     int pageID;
     bool isFree;
-    int sizeLeft;
 } Page;
 
 /******************globals***********************/
@@ -805,14 +803,12 @@ static void initializeRoot() {
 static void initializePage(Page* pg, int index){
     //index is the index in the pages array which will be converted to address in memory here
 
-    pg->physAddr = userSpace + (index * PAGESIZE);
     pg->threadID = (scd == NULL) ? 1 : scd->current->threadID->id;
     pg->pageID = pageNum;
     pageNum++;
-    pg->sizeLeft = PAGESIZE;
     pg->isFree = false;
 
-    Block* rootBlock = (Block*) pg->physAddr;
+    Block* rootBlock = (Block*) userSpace + (index * PAGESIZE);
     rootBlock->isFree = true;
     rootBlock->size = PAGESIZE - BLOCK_SIZE;
     rootBlock->next = NULL;
@@ -841,17 +837,14 @@ static Page* findFirstPage(int threadID){
     for (i = 0; i < MAX_MEMORY / PAGESIZE; i++) {
         if(pages[i]->threadID == threadID){
             return pages[i];
-        }else if(pages[i]->sizeLeft > PAGESIZE){
-            break;
+        }
+        //no page belongs to this thread in memory so look for first free page
+        else if(pages[i]->isFree){
+          initializePage(pages[i], i);
+          return pages[i];
         }
     }
-    //no page belongs to this thread in memory so look for first free page
-    for (i = 0; i < MAX_MEMORY / PAGESIZE; i++) {
-        if(pages[i]->sizeLeft >= PAGESIZE){
-            initializePage(pages[i], i);
-            return pages[i];
-        }
-    }
+
     return NULL;
 }
 
@@ -861,12 +854,8 @@ Page* findPage(int id, Block* block){
   for(i = 0; i < MAX_MEMORY / PAGESIZE; i++){
     if(pages[i]->threadID == id){
 
-      if((char*) block >= pages[i]->physAddr && (char*) block < pages[i]->physAddr + pages[i]->sizeLeft){
-
-        printf("threadID is %d\n", id);
-        return pages[i];
-
-      }
+      printf("threadID is %d\n", id);
+      return pages[i];
 
     }
   }
@@ -874,10 +863,10 @@ Page* findPage(int id, Block* block){
   return NULL;
 }
 
-// swaps two pages in memory and in the page table that corresponds to those pages 
+// swaps two pages in memory and in the page table that corresponds to those pages
 static void pageSwap(int initial, int swapTo){
 	int i;
-	char* temp; 
+	char* temp;
 
 	// swap mem
 	memcpy(temp, userSpace + (PAGESIZE * swapTo), PAGESIZE);
@@ -898,8 +887,8 @@ static bool moveToFreeSpace(int index) {
 			memcpy(pages[i], pages[index], PAGESIZE);
 			memcpy(userSpace + (PAGESIZE * i), userSpace + (PAGESIZE * index), PAGESIZE);
 			pages[index]->isFree = true;
-			return true; 
-		}	
+			return true;
+		}
 	}
 
 	return false;
@@ -964,7 +953,11 @@ static bool freeAndMerge(Block* toFree, Page* page, int caller) {
       current = rootBlock;
     }
     else if(caller == THREADREQ){
-      current = (Block*) page->physAddr;
+      int index;
+      for(index = 0; index < MAX_MEMORY/PAGESIZE - 100; index++){
+        break;
+      }
+      current = (Block*) userSpace + (index * PAGESIZE);
     }
 
 
@@ -993,10 +986,6 @@ static bool freeAndMerge(Block* toFree, Page* page, int caller) {
             if (previous != NULL && previous->isFree) {
                 previous->size += current->size + BLOCK_SIZE;
                 previous->next = current->next;
-            }
-
-            if(caller == THREADREQ){
-              page->sizeLeft += toFree->size + BLOCK_SIZE;
             }
 
             return true;
@@ -1041,10 +1030,7 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
         int i;
         for ( i = 0; i < MAX_MEMORY / PAGESIZE; i++) {
             pages[i] = (Page*) myallocate(sizeof(Page), __FILE__, __LINE__, LIBRARYREQ);
-
-            //initializing sizeLeft to indicate that this index in pages hasn't been filled yet
-            pages[i]->sizeLeft = 2 * PAGESIZE;
-	    pages[i]->isFree = true;
+	           pages[i]->isFree = true;
         }
     }
 
@@ -1096,7 +1082,7 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
                         if(timerSet){
                             unpause_timer(scd->timer);
                         }
-			
+
                         return ((char*) current) + BLOCK_SIZE;
                     }
 
@@ -1134,8 +1120,14 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
             return NULL;
         }
 
-        current = (Block*) pg->physAddr;
-	
+        int index;
+        for(index = 0; index < MAX_MEMORY/PAGESIZE - 100; index++){
+          if(pages[index]->pageID == pg->pageID){
+            break;
+          }
+        }
+        current = (Block*) userSpace + (index * PAGESIZE);
+
         do {
 
             // Look for free block with enough space.
@@ -1149,12 +1141,10 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
                     // Mark current block as taken and return it.
                     current->isFree = false;
 
-                    pg->sizeLeft -= size;
-
                     if(timerSet){
                         unpause_timer(scd->timer);
                     }
-			
+
 			return ((char*) current) + BLOCK_SIZE;
                 }
 
@@ -1173,12 +1163,10 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
                     // Mark current block as taken and return it.
                     current->isFree = false;
 
-                    pg->sizeLeft -= sizeWithBlock;
-
                     if(timerSet){
                         unpause_timer(scd->timer);
                     }
-			
+
 			return ((char*) current) + BLOCK_SIZE;
                 }
 
