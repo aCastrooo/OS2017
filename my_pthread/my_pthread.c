@@ -523,8 +523,11 @@ void schedule(){
     scd->timer->it_value.tv_usec = QUANTA_TIME * 1000 * (scd->current->priority + 1);
     setitimer(ITIMER_REAL, scd->timer, NULL);
 
+    printf("current id = %d\n", scd->current->threadID->id);
+    printf("justRun id = %d\n", justRun->threadID->id);
+
     if(scd->current->threadID->id != justRun->threadID->id){
-	protectAllPages(scd->current->threadID->id);
+	      protectAllPages(scd->current->threadID->id);
         swapcontext(justRun->ut, scd->current->ut);
     }
 
@@ -1375,7 +1378,9 @@ void* test(void* arg){
     int* y = (int*) malloc(sizeof(int));
     *y = x;
     printf("I am thread %d and my number is %d\n",*v,*y  );
-    free(y);
+    my_pthread_yield();
+    printf("I am thread %d and my number is %d\n",*v,*y  );
+    //free(y);
     return NULL;
 }
 
