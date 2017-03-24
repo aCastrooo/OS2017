@@ -94,9 +94,8 @@ static mutex_list *mutexList = NULL;
 
 static const unsigned short BLOCK_SIZE = sizeof(Block);
 static char* memory;
-static char* disk;
+//static char* disk;
 static bool firstMalloc = true;
-static bool firstThreadMalloc = true;
 static Block* rootBlock;
 
 static char* userSpace = NULL;
@@ -446,7 +445,7 @@ void maintenance(){
       }
     }
   }
-  free(arr);
+  mydeallocate(arr, __FILE__, __LINE__, LIBRARYREQ);
   arr = NULL;
 }
 
@@ -539,7 +538,7 @@ void schedule(){
     printf("scd %p\n",scd );
     printf("scd->current %p\n",scd->current );
     printf("scd->current->threadID %p\n",scd->current->threadID );
-    printf("scd->current->threadID->id %p\n",scd->current->threadID->id );
+    printf("scd->current->threadID->id %d\n",scd->current->threadID->id );
     //printf("%d\n",justRun->threadID->id );
     if(scd->current->threadID->id != justRun->threadID->id){
       printf("got here 6\n" );
@@ -675,7 +674,7 @@ int my_pthread_create( my_pthread_t * thread, my_pthread_attr_t * attr, void *(*
 
     makecontext(newCxt, (void (*) (void))function, 1, arg);
 
-    //my_pthread_t* newthread = (my_pthread_t*)myallocate(sizeof(my_pthread_t), __FILE__, __LINE__, LIBRARYREQ);
+    my_pthread_t* newthread;
     newthread = thread;
     newthread->id = scd->threadNum;
     scd->threadNum++;
@@ -831,9 +830,9 @@ void pageSwap(int initial, int swapTo){
 
   	// swap pages data
   	Page tempPage;
-  	memcpy(&tempPage, pages[swapTo], PAGESIZE);
-  	memcpy(pages[swapTo], pages[initial], PAGESIZE);
-  	memcpy(pages[initial], &tempPage, PAGESIZE);
+  	memcpy(&tempPage, pages[swapTo], sizeof(Page));
+  	memcpy(pages[swapTo], pages[initial], sizeof(Page));
+  	memcpy(pages[initial], &tempPage, sizeof(Page));
 
   	//protect the memory pages again
   	mprotect(userSpace + (PAGESIZE * swapTo), PAGESIZE, PROT_NONE);
@@ -1053,13 +1052,13 @@ static bool freeAndMerge(Block* toFree, Page* page, int caller) {
     }
     else if(caller == THREADREQ){
       int index;
-      for(index = 0; index < MAX_MEMORY/PAGESIZE - 100; index++){
-        break;
+      for(index = 0; index < (MAX_MEMORY/PAGESIZE) - 100; index++){
+        if(pages[index]->threadID == page->threadID){
+          current = (Block*) userSpace + (index * PAGESIZE);
+          break;
+        }
       }
-      current = (Block*) userSpace + (index * PAGESIZE);
     }
-
-
 
     if(current == NULL){
       printf("couldnt get block\n");
@@ -1127,11 +1126,11 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
 
         //allocate memory for the page table which will be addressed as an array
         //each index in this array will translate to the memory block as &(where user space starts) + (i * PAGESIZE)
-        pages = (Page**) myallocate(sizeof(Page*) * (MAX_MEMORY / PAGESIZE) - 100, __FILE__, __LINE__, LIBRARYREQ);
+        pages = (Page**) myallocate(sizeof(Page*) * ((MAX_MEMORY / PAGESIZE) - 100), __FILE__, __LINE__, LIBRARYREQ);
         int i;
         for ( i = 0; i < (MAX_MEMORY / PAGESIZE) - 100; i++) {
             pages[i] = (Page*) myallocate(sizeof(Page), __FILE__, __LINE__, LIBRARYREQ);
-	           pages[i]->isFree = true;
+	          pages[i]->isFree = true;
         }
     }
 
@@ -1206,10 +1205,6 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
         //do page stuff for threads
 
         int thread = (scd == NULL) ? 1 : scd->current->threadID->id;
-
-        if(firstThreadMalloc){
-             firstThreadMalloc = false;
-        }
 
         alignPages();
 printf("cp2\n" );
@@ -1436,31 +1431,22 @@ void mydeallocate(void* ptr, const char* file, int line, int caller) {
             printf("scd null\n");
             page = findPage(1, block);
 
-            if(page == NULL){
-
-                printf("Error at line %d of %s: unable to find page with id %d.\n", line, file, 0);
-
-                if(timerSet){
-                    unpause_timer(scd->timer);
-                }
-
-                return;
-            }
         }else{
 
             printf("scd init\n");
             page = findPage(scd->current->threadID->id, block);
 
-            if(page == NULL){
+        }
 
-                printf("Error at line %d of %s: unable to find page with id %d.\n", line, file, scd->current->threadID->id);
+        if(page == NULL){
 
-                if(timerSet){
-                    unpause_timer(scd->timer);
-                }
+            printf("Error at line %d of %s: unable to find page with id %d.\n", line, file, scd->current->threadID->id);
 
-                return;
+            if(timerSet){
+                unpause_timer(scd->timer);
             }
+
+            return;
         }
 
         printf("got the page\n");
@@ -1527,12 +1513,10 @@ void* test(void* arg){
 int main(){
   //malloc(5);
   puts("didnt fail yet");
-  my_pthread_t th[10];
-  my_pthread_t* th1 = malloc(sizeof(my_pthread_t));
-  int i;
-    int* x = (int*) malloc(sizeof(int));
-    *x = 1;
-  my_pthread_create(th1, NULL,test,(void*)x);
+  my_pthread_t th1;
+  int* x = (int*) malloc(sizeof(int));
+  *x = 1;
+  my_pthread_create(&th1, NULL,test,(void*)x);
   printPages();
   /*
   for ( i = 0; i < 10; i++) {
