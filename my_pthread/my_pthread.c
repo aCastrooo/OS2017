@@ -103,6 +103,16 @@ static int mainPageNum = 0;
 static Page** pages;//this will be the array of pages in memory block
 /********************functions*******************/
 
+void printhreads(){
+    my_pthread_t* ptr;
+    for ( ptr = scd->threads->head; ptr != NULL; ptr=ptr->next) {
+        printf("thread %d at addr %p\n",ptr->id,ptr );
+    }
+}
+
+
+
+
 //pause the timer for use in "blocking calls" so that if a
 //function is using shared data (scheduler/queues/etc) it doesnt
 //fuck with it
@@ -473,6 +483,8 @@ void schedule(){
     printf("got here 2\n" );
     pause_timer(scd->timer);
 
+    printhreads();
+
     scd->cycles++;
     /*
     //uncomment this block if you would like to see our benchmark function in action
@@ -524,10 +536,18 @@ void schedule(){
     node* nextNode = getNextNode();
     printf("got here 4\n" );
 
+    printf("got here 5\n" );
+    printf("scd %p\n",scd );
+    printf("scd->current %p\n",scd->current );
+    printf("scd->current->threadID %p\n",scd->current->threadID );
+    printf("scd->current->threadID->id %p\n",scd->current->threadID->id );
+
     if(nextNode == NULL){
+      printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n" );
         //nothing left to run, only thing left to do is exit
         return;
     }
+
 
     scd->current = nextNode;
 
@@ -566,6 +586,7 @@ void timerHandler(int signum){
 
 void terminationHandler(){
     while(1){
+      printf("I DIED\n" );
         scd->current->status = EXITING;
         schedule();
     }
@@ -629,7 +650,9 @@ void initialize(){
     mainthread->exitArg = NULL;
     mainthread->next = NULL;
     mainthread->pageNum = mainPageNum;
+    printf("mainthread's thread address is %p\n",mainthread );
     node* mainNode = createNode(mainCxt, mainthread);
+    printf("mainthread's node address is %p\n",mainNode );
 
     scd->current = mainNode;
 
@@ -674,7 +697,7 @@ int my_pthread_create( my_pthread_t * thread, my_pthread_attr_t * attr, void *(*
 
     makecontext(newCxt, (void (*) (void))function, 1, arg);
 
-    my_pthread_t* newthread;
+    my_pthread_t* newthread;//= (my_pthread_t*)myallocate(sizeof(my_pthread_t), __FILE__, __LINE__, LIBRARYREQ);
     newthread = thread;
     newthread->id = scd->threadNum;
     scd->threadNum++;
@@ -696,7 +719,7 @@ int my_pthread_create( my_pthread_t * thread, my_pthread_attr_t * attr, void *(*
 
 //tekes the thread that called this function and requeues it at the end of the current priority queue
 void my_pthread_yield(){
-
+    printf("in yield\n" );
     if(scd == NULL){
         return;
     }
@@ -1120,9 +1143,11 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
     if (firstMalloc) {
         posix_memalign((void **)&memory, PAGESIZE, MAX_MEMORY);
       	userSpace = &memory[100 * PAGESIZE];
-        printf("%p\n",userSpace );
+
       	setUpSignal();
         initializeRoot();
+
+        printf("memory starts at %p\nuser space starts at %p\nmemory ends at %p",memory, userSpace, memory+MAX_MEMORY );
 
         //allocate memory for the page table which will be addressed as an array
         //each index in this array will translate to the memory block as &(where user space starts) + (i * PAGESIZE)
@@ -1507,13 +1532,19 @@ void* test(void* arg){
     my_pthread_yield();
     printf("I am thread %d and my number is %d\n",*v,*y  );
     //free(y);
+    while (1) {
+      /* code */
+    }
     return NULL;
 }
 
 int main(){
   //malloc(5);
   puts("didnt fail yet");
+  my_pthread_t th[10];
   my_pthread_t th1;
+  printf("th1's address is %p\n",&th1 );
+  int i;
   int* x = (int*) malloc(sizeof(int));
   *x = 1;
   my_pthread_create(&th1, NULL,test,(void*)x);
