@@ -18,11 +18,11 @@
 #define QUANTA_TIME 50
 #define NUM_CYCLES 10
 
-#define MAX_MEMORY 8388608
+//#define MAX_MEMORY 8388608
 #define LIBRARYREQ 0
 #define THREADREQ 1
 #define PAGESIZE sysconf(_SC_PAGE_SIZE)
-#define STACK_SIZE 1024
+//#define STACK_SIZE 1024
 
 #define pthread_t my_pthread_t
 #define pthread_attr_t my_pthread_attr_t
