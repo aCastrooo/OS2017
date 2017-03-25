@@ -1582,10 +1582,10 @@ int main(){
   puts("didnt fail yet");
   my_pthread_t th[10];
   my_pthread_t* th1 = malloc(sizeof(my_pthread_t));
-	int i;
+
    // int* x = (int*) malloc(sizeof(int));
     //*x = 1;
-  my_pthread_t th1;
+  
   printf("th1's address is %p\n",&th1 );
   int i;
   printPages();
