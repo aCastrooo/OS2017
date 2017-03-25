@@ -570,7 +570,7 @@ void schedule(){
     //printf("%d\n",justRun->threadID->id );
     if(scd->current->threadID->id != justRun->threadID->id){
       printf("got here 6\n" );
-	 //protectAllPages(justRun->threadID->id);
+	 protectAllPages(justRun->threadID->id);
 	 //protectAllPages(scd->current->threadID->id);
         printf("got here 7\n" );
 
@@ -861,33 +861,38 @@ int my_pthread_mutex_destroy(my_pthread_mutex_t *mutex) {
 
 // swaps two pages in memory and in the page table that corresponds to those pages
 void pageSwap(int initial, int swapTo){
-  	char temp;
+  	char temp[PAGESIZE];
 
   	//un-protect so we can write to the new spots
   	mprotect(userSpace + (PAGESIZE * swapTo), PAGESIZE, PROT_READ | PROT_WRITE);
   	mprotect(userSpace + (PAGESIZE * initial), PAGESIZE, PROT_READ | PROT_WRITE);
 
-  	// swap mem
-  	memcpy(&temp, userSpace + (PAGESIZE * swapTo), PAGESIZE);
-  	memcpy(userSpace + (PAGESIZE * swapTo), userSpace + (PAGESIZE * initial), PAGESIZE);
-  	memcpy(userSpace + (PAGESIZE * initial), &temp, PAGESIZE);
 	
-	puts("\n\n\n");
-	printf("page in initial, %d location: %p\n", initial, pages[initial]);
-	printf("page in swapto, %d location: %p\n", swapTo, pages[swapTo]);
+  	// swap mem
+  	memcpy(temp, userSpace + (PAGESIZE * swapTo), PAGESIZE);
+	printf("tempstuff: %p", temp);
+  	printf("swapto: %p", userSpace + (PAGESIZE * swapTo));
+	printf("swapto: %p", userSpace + (PAGESIZE * initial));
+	memcpy(userSpace + (PAGESIZE * swapTo), userSpace + (PAGESIZE * initial), PAGESIZE);
+	printf("tempstuff: %p", temp);
+  	printf("swapto: %p", userSpace + (PAGESIZE * swapTo));
+	printf("swapto: %p", userSpace + (PAGESIZE * initial));
 
+  	memcpy(userSpace + (PAGESIZE * initial), temp, PAGESIZE);
+	printf("tempstuff: %p", temp);
+  	printf("swapto: %p", userSpace + (PAGESIZE * swapTo));
+	printf("swapto: %p", userSpace + (PAGESIZE * initial));
+  	// swap page table data
+  	Page* tempPage;
+	
+	tempPage = pages[swapTo];
+	pages[swapTo] = pages[initial];
+	pages[initial] = tempPage;
 
-  	// swap pages data
-  	Page tempPage;
-  	memcpy(&tempPage, pages[swapTo], sizeof(Page));
-  	memcpy(pages[swapTo], pages[initial], sizeof(Page));
-  	memcpy(pages[initial], &tempPage, sizeof(Page));
-
-
-	printf("page in initial, %d location: %p\n", initial, pages[initial]);
+	printf("page in initial, %d locati %p\n", initial, pages[initial]);
 	printf("page in swapto, %d location: %p\n\n\n", swapTo, pages[swapTo]);
 
-
+	
 
 
   	//protect the memory pages again
@@ -1049,6 +1054,13 @@ static void gatherPages(int pagesNeeded, Block* lastBlock){
 
 // this handler is called when a thread attempts to access data that does not belong to it. The handler will find the correct data and swap it
 static void sigHandler(int sig, siginfo_t *si, void *unused){
+
+	
+    	if(timerSet){
+        	pause_timer(scd->timer);
+    	}
+	
+
  
 	printf("Got SIGSEGV at address: 0x%lx\n", (long) si->si_addr);
 
@@ -1063,14 +1075,26 @@ static void sigHandler(int sig, siginfo_t *si, void *unused){
 	}
 	else{
     puts("Swapping correct pages...");
-		int index = (int)((char *)si->si_addr - userSpace)/PAGESIZE;
+		unsigned long long int diff = (char *)si->si_addr - userSpace;
+		printf("si: %p\nus: %p\ndiff:%lld\n",si->si_addr, userSpace, diff);
+		int index = (int)diff/PAGESIZE;
+		printf("index is %d\n",index);
 		int i;
 		for(i = 0; i < (MAX_MEMORY / PAGESIZE) - 100; i++){
+			//printf("pages thread: %d\ncurr thread: %d", pages[i]->threadID, scd->current->threadID->id);
 			if(pages[i]->threadID == scd->current->threadID->id && pages[i]->pageID == index){
-				pageSwap(index, i);
+				puts("inside the first if");
+				if(i != index){
+					pageSwap(index, i);	
+				}				
 
 				// Un-protect the page we just swapped in
 				mprotect(userSpace + (index * PAGESIZE), PAGESIZE, PROT_READ | PROT_WRITE);
+		
+    				if(timerSet){
+        				unpause_timer(scd->timer);
+    				}
+	
 			}
 		}
 	}
@@ -1195,7 +1219,7 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
     }
 
     Block* current;
-    const unsigned short sizeWithBlock = size + BLOCK_SIZE; // Include extra space for metadata.
+    const unsigned long long int sizeWithBlock = size + BLOCK_SIZE; // Include extra space for metadata.
 
 
     if(caller == LIBRARYREQ){
@@ -1562,13 +1586,15 @@ void printPages(){
 void* test(void* arg){
     printf("got here\n" );
     int* v = (int*) arg;
+    puts("didnt break yet");
     int x = *v;
+	puts("still workin");
     printf("in thread x is %d\n",x );
     int* y = (int*) malloc(sizeof(int));
     *y = x;
     printf("I am thread %d and my number is %d\n",*v,*y  );
     //printPages();
-    my_pthread_yield();
+   // my_pthread_yield();
     printf("I am thread %d and my number is %d\n",*v,*y  );
     free(y);
     //while (1) {
@@ -1578,27 +1604,30 @@ void* test(void* arg){
 }
 
 int main(){
-  //malloc(5);
-  puts("didnt fail yet");
+
   my_pthread_t th[10];
   my_pthread_t* th1 = malloc(sizeof(my_pthread_t));
 
-   // int* x = (int*) malloc(sizeof(int));
-    //*x = 1;
+    int* x = (int*) malloc(sizeof(int));
+    *x = 1;
   
-  printf("th1's address is %p\n",&th1 );
+int gg = 69;
+ // printf("th1's address is %p\n",&th1 );
   int i;
-  printPages();
-  //my_pthread_create(th1, NULL,test,(void*)x);
+  //int* x;
   //printPages();
-  for ( i = 0; i < 10; i++) {
-      int* x = (int*) malloc(sizeof(int));
+  //my_pthread_create(th1, NULL,test,(void*)&gg);
+  //printPages();
+  
+for ( i = 0; i < 10; i++) {
+      x = (int*) malloc(sizeof(int));
       *x = i;
       printf("x is %d\n",*x );
-      my_pthread_create(&th[i], NULL,test,(void*)x);
+      my_pthread_create(&th[i], NULL,test,(void*)&gg);
       printf("thread #%d made\n",i );
       printPages();
   }
+
   long long int j = 0;
   while (j < 100000000) {
     if(j%1000 == 0){
@@ -1606,7 +1635,9 @@ int main(){
     }
     j++;
   }
+  *x = 123;
   printPages();
+
   printf("gonna exit\n" );
   return 0;
 }
