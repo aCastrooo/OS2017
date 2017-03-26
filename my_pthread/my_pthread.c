@@ -867,21 +867,11 @@ void pageSwap(int initial, int swapTo){
   	mprotect(userSpace + (PAGESIZE * swapTo), PAGESIZE, PROT_READ | PROT_WRITE);
   	mprotect(userSpace + (PAGESIZE * initial), PAGESIZE, PROT_READ | PROT_WRITE);
 
-	
   	// swap mem
   	memcpy(temp, userSpace + (PAGESIZE * swapTo), PAGESIZE);
-	printf("tempstuff: %p", temp);
-  	printf("swapto: %p", userSpace + (PAGESIZE * swapTo));
-	printf("swapto: %p", userSpace + (PAGESIZE * initial));
 	memcpy(userSpace + (PAGESIZE * swapTo), userSpace + (PAGESIZE * initial), PAGESIZE);
-	printf("tempstuff: %p", temp);
-  	printf("swapto: %p", userSpace + (PAGESIZE * swapTo));
-	printf("swapto: %p", userSpace + (PAGESIZE * initial));
-
   	memcpy(userSpace + (PAGESIZE * initial), temp, PAGESIZE);
-	printf("tempstuff: %p", temp);
-  	printf("swapto: %p", userSpace + (PAGESIZE * swapTo));
-	printf("swapto: %p", userSpace + (PAGESIZE * initial));
+
   	// swap page table data
   	Page* tempPage;
 	
@@ -889,7 +879,7 @@ void pageSwap(int initial, int swapTo){
 	pages[swapTo] = pages[initial];
 	pages[initial] = tempPage;
 
-	printf("page in initial, %d locati %p\n", initial, pages[initial]);
+	printf("page in initial, %d location %p\n", initial, pages[initial]);
 	printf("page in swapto, %d location: %p\n\n\n", swapTo, pages[swapTo]);
 
 	
