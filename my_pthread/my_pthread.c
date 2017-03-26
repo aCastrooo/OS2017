@@ -486,14 +486,11 @@ void protectAllPages(int threadID){
 //scheduler context function
 void schedule(){
 
-    printf("got here 2\n" );
     pause_timer(scd->timer);
-	puts("????\n");
 
     //printhreads();
 
     scd->cycles++;
-	puts("yes????");
     /*
     //uncomment this block if you would like to see our benchmark function in action
     if(scd->cycles % NUM_CYCLES == 0){
@@ -501,14 +498,10 @@ void schedule(){
     }
     */
     if(scd->cycles > 100){
-	puts("get to maintenence?");
       scd->cycles = 0;
-	puts("cycles now 0");
       maintenance();
     }
-	puts("just run to null");
     node* justRun = NULL;
-	puts("just run is null");
 
         //context finished within its allotted time and linked back to scheduler
         //or it yielded and has time left
@@ -518,7 +511,6 @@ void schedule(){
         enQ(scd->runQ[requeuepriority], scd->current);
         scd->current->status = NEUTRAL;
     }else if(scd->current->status == EXITING){
-        puts("handling death");
         threadDied(scd->current->threadID);
 
         node* jptr = scd->joinList->head;
@@ -539,61 +531,35 @@ void schedule(){
 
     }else{
         //context ran out of time and should be requeued
-        puts("DEMOTING?\n");
         demoteNode(scd->current);
     }
-    printf("got here 3\n" );
     justRun = scd->current;
 
     node* nextNode = getNextNode();
-    printf("got here 4\n" );
-
-    printf("got here 5\n" );
-    printf("scd %p\n",scd );
-    printf("scd->current %p\n",scd->current );
-    printf("scd->current->threadID %p\n",scd->current->threadID );
-    printf("scd->current->threadID->id %p\n",scd->current->threadID->id );
 
     if(nextNode == NULL){
-	printf("got to nextnode null\n");
         //nothing left to run, only thing left to do is exit
         return;
     }
 
-    if(scd->current->threadID->id == nextNode->threadID->id){
-        printf("yerrrrrrrrrrrrrrrrrrrrrrrrrrp");
-    }
+
     scd->current = nextNode;
 
     //run time is 50ms * (level of priority + 1)
     scd->timer->it_value.tv_usec = QUANTA_TIME * 1000 * (scd->current->priority + 1);
     setitimer(ITIMER_REAL, scd->timer, NULL);
-    printf("got here 5\n" );
-    printf("scd %p\n",scd );
-    printf("scd->current %p\n",scd->current );
-    printf("scd->current->threadID %p\n",scd->current->threadID );
-    printf("scd->current->threadID->id %d\n",scd->current->threadID->id );
-    //printf("%d\n",justRun->threadID->id );
     if(scd->current->threadID->id != justRun->threadID->id){
-      printf("got here 6\n" );
 	 protectAllPages(justRun->threadID->id);
-	 //protectAllPages(scd->current->threadID->id);
-        printf("got here 7\n" );
 
         swapcontext(justRun->ut, scd->current->ut);
-        printf("got here 8\n" );
 
     }
-
-    printf("got here ayy\n" );
-
 
 }
 
 
 //alarm signal handler that will set to the scheduler context which will change what is running
 void timerHandler(int signum){
-    printf("got here\n" );
     scd->timer->it_value.tv_usec = 0;
     schedule();
 }
@@ -612,7 +578,6 @@ void freePages(){
 
 void terminationHandler(){
 
-      printf("I DIED\n" );
       scd->current->status = EXITING;
       freePages();
       schedule();
@@ -677,9 +642,7 @@ void initialize(){
     mainthread->exitArg = NULL;
     mainthread->next = NULL;
     mainthread->pageNum = mainPageNum;
-    printf("mainthread's thread address is %p\n",mainthread );
     node* mainNode = createNode(mainCxt, mainthread);
-    printf("mainthread's node address is %p\n",mainNode );
 
     scd->current = mainNode;
 
@@ -696,7 +659,6 @@ void printThreads(){
 	my_pthread_t* ptr;
 	ptr = scd->threads->head;
 	while(ptr != NULL){
-		printf("thread at: %p is %d\n\n\n", ptr, ptr->id);
 		ptr = ptr->next;
 	}
 
@@ -746,9 +708,6 @@ int my_pthread_create( my_pthread_t * thread, my_pthread_attr_t * attr, void *(*
 
     addThread(newthread);
 
-	printThreads();
-
-
     node* newNode = createNode(newCxt, thread);
 
     enQ(scd->runQ[0], newNode);
@@ -759,7 +718,6 @@ int my_pthread_create( my_pthread_t * thread, my_pthread_attr_t * attr, void *(*
 
 //tekes the thread that called this function and requeues it at the end of the current priority queue
 void my_pthread_yield(){
-    printf("in yield\n" );
     if(scd == NULL){
         return;
     }
@@ -772,19 +730,12 @@ void my_pthread_yield(){
 
 //exits the thread that called this function and passes on value_ptr as an argument for whatever might join on this thread
 void my_pthread_exit(void * value_ptr){
-  puts("got here");
     if(scd == NULL){
         return;
     }
 
     scd->current->status = EXITING;
-    puts("and here");
-    printf("scd %p\n",scd );
-    printf("scd->current %p\n",scd->current );
-    printf("scd->current->threadID %p\n",scd->current->threadID );
-    printf("scd->current->threadID->exitArg %p\n",scd->current->threadID->exitArg );
     scd->current->threadID->exitArg = value_ptr;
-puts("here too");
     freePages();
 
     schedule();
@@ -906,8 +857,6 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		pages[swapTo] = pages[initial];
 		pages[initial] = tempPage;
 
-		printf("page in initial, %d location %p\n", initial, pages[initial]);
-		printf("page in swapto, %d location: %p\n\n\n", swapTo, pages[swapTo]);
 
 		//protect the memory pages again
 		mprotect(userSpace + (PAGESIZE * swapTo), PAGESIZE, PROT_NONE);
@@ -934,8 +883,6 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		diskPages[fromDisk] = pages[inMem];
 		pages[inMem] = tempPage;
 
-		printf("page in initial, %d location %p\n", inMem, pages[inMem]);
-		printf("page in swapto, %d location: %p\n\n\n", fromDisk, pages[fromDisk]);
 
 		//protect the pages
 		mprotect(userSpace + (PAGESIZE * inMem), PAGESIZE, PROT_NONE);
@@ -1020,27 +967,19 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 		void initializePage(int index){
 		    //index is the index in the pages array which will be converted to address in memory here
-		printf("ip1\n" );
 
 		    Page* pg = pages[index];
 
 		    pg->threadID = (scd == NULL) ? 1 : scd->current->threadID->id;
 		    pg->pageID = (scd == NULL) ? mainPageNum++ : scd->current->threadID->pageNum++ ;
 		    pg->isFree = false;
-		printf("ip2\n" );
-		printf("we here in initpage fam. thread id: %d", pg->threadID);
 
 		    if(pg->pageID == 0){
-		      printf("ip3\n" );
 			Block* rootBlock = (Block*) userSpace;
-			printf("ip69\n" );
 			rootBlock->isFree = true;
-			printf("ip for the money\n" );
 			rootBlock->size = PAGESIZE - BLOCK_SIZE;
-			printf("ipgg\n" );
 			rootBlock->next = NULL;
 		    }
-		    printf("ip4\n" );
 
 		}
 
@@ -1066,13 +1005,11 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		}
 
 		Page* findPage(int id, Block* block){
-		  puts("got heree");
 		  int i;
 
 		  for(i = 0; i < (MAX_MEMORY / PAGESIZE) - LIBPAGES; i++){
 		    if(pages[i]->threadID == id){
 
-		      printf("threadID is %d\n", id);
 		      return pages[i];
 
 		    }
@@ -1085,7 +1022,6 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 
 		static bool moveToFreeSpace(int index) {
-		  printf("got hereee\n" );
 			int i;
 			for(i = 0; i < (MAX_MEMORY / PAGESIZE) - LIBPAGES; i++){
 				if(pages[i]->isFree){
@@ -1093,11 +1029,6 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 				if(i == index){
 					return true;
 				}
-
-					puts("\n\n\n");
-					printf("threadID in initial location: %d, %d\n", index, pages[index]->threadID);
-
-
 
 					mprotect(userSpace + (PAGESIZE * index), PAGESIZE, PROT_READ | PROT_WRITE);
 
@@ -1107,34 +1038,23 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 					// protect the page where it was moved, unprotect the newly freed spot
 					mprotect(userSpace + (PAGESIZE * i), PAGESIZE, PROT_NONE);
-					printf("threadID in new location: %d, %d\n", i, pages[i]->threadID);
 
-					//mprotect(userSpace + (PAGESIZE * index), PAGESIZE, PROT_READ | PROT_WRITE);
-					printf("got hereeee 2\n");
 					return true;
 				}
 			}
-			printf("got hereeee 3\n" );
 			return false;
 		}
 
 
 		static bool moveToDiskSpace(int index) {
-		  printf("got hereee disk\n" );
 			int i;
 			for(i = 0; i < (DISK_MEMORY / PAGESIZE) - 100; i++){
 
 			if(diskPages[i] != NULL){
 			if(diskPages[i]->isFree){
-				puts("bitchass");
 				if(i == index){
 					return true;
 				}
-
-				puts("\n\n\n");
-				//printf("threadID in initial location: %d, %d\n", index, pages[index]->threadID);
-
-
 
 				mprotect(userSpace + (PAGESIZE * index), PAGESIZE, PROT_READ | PROT_WRITE);
 
@@ -1142,17 +1062,10 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 				memcpy(disk + (PAGESIZE * i), userSpace + (PAGESIZE * index), PAGESIZE);
 				pages[index]->isFree = true;
 
-				// protect the page where it was moved, unprotect the newly freed spot
-				//mprotect(userSpace + (PAGESIZE * i), PAGESIZE, PROT_NONE);
-				//printf("threadID in new location: %d, %d\n", i, pages[i]->threadID);
-
-				//mprotect(userSpace + (PAGESIZE * index), PAGESIZE, PROT_READ | PROT_WRITE);
-				printf("got hereeee 2\n");
 				return true;
 			}
 			}
 		}
-		printf("got hereeee 3\n" );
 		return false;
 	}
 
@@ -1182,7 +1095,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		pause_timer(scd->timer);
 		}
 
-		printf("Got SIGSEGV at address: 0x%lx\n", (long) si->si_addr);
+		//printf("Got SIGSEGV at address: 0x%lx\n", (long) si->si_addr);
 		bool pageSwapped = false;
 		char *addr = si->si_addr;
 		if((addr > memory + MAX_MEMORY || addr < memory) && (addr < userSpaceDisk || addr > disk + DISK_MEMORY)){
@@ -1195,20 +1108,13 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		}
 		else{
 			unsigned long long int diff = (char *)si->si_addr - userSpace;
-			//printf("si: %p\nus: %p\ndiff:%lld\n",si->si_addr, userSpace, diff);
 			int index = (int)diff/PAGESIZE;
-			printf("index is %d\n",index);
 			int i;
 
 			for(i = 0; i < (MAX_MEMORY / PAGESIZE) - LIBPAGES; i++){
-				//printf("pid %p holds %d\n",scd->current->threadID,scd->current->threadID->id);
-				puts("in first loop lel");
-//printf("pages thread: %d\ncurr thread: %d", pages[i]->threadID, scd->current->threadID->id);
 				if(pages[i]->threadID == scd->current->threadID->id && pages[i]->pageID == index){
 
-					puts("inside the first if");
 					if(i != index){
-						puts("Swapping correct pages...");
 						pageSwap(index, i);
 					}
 
@@ -1217,11 +1123,9 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 					pageSwapped = true;
 					break;
 				}
-				printf("i for the first loop: %d\n", i);
 			}
 
 			if(pageSwapped == true){
-				puts("it swapped in mem");
 				if(timerSet){
 					unpause_timer(scd->timer);
 				}
@@ -1229,13 +1133,9 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 			}
 
 			for(i = 0; i < (DISK_MEMORY / PAGESIZE) - 100; i++){
-				puts("in second loop lel");
 				if(diskPages[i] != NULL){
-				//printf("pages thread: %d\ncurr thread: %d", pages[i]->threadID, scd->current->threadID->id);
 					if(diskPages[i]->threadID == scd->current->threadID->id && diskPages[i]->pageID == index){
-						puts("inside the second if");
 
-						puts("Swapping from disk...");
 						swapToMemFromDisk(index, i);
 
 
@@ -1245,7 +1145,6 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 						break;
 					}
 				}
-				printf("i for ssecond loop: %d\n", i);
 			}
 
 		}
@@ -1255,7 +1154,6 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 			exit(1);
 		}
 
-		puts("it swapped from disk");
 		if(timerSet){
 			unpause_timer(scd->timer);
 		}
@@ -1296,15 +1194,14 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 	    else if(caller == THREADREQ){
 	      int index;
 	      for(index = 0; index < (MAX_MEMORY/PAGESIZE) - LIBPAGES; index++){
-		if(pages[index]->threadID == page->threadID){
-		  current = (Block*) userSpace + (index * PAGESIZE);
-		  break;
-		}
+        		if(pages[index]->threadID == page->threadID){
+        		  current = (Block*) userSpace + (index * PAGESIZE);
+        		  break;
+        		}
 	      }
 	    }
 
 	    if(current == NULL){
-	      printf("couldnt get block\n");
 	      return false;
 	    }
 
@@ -1354,7 +1251,6 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 	 * @return void pointer to memory in memory
 	 */
 	void* myallocate(size_t size, const char* file, int line, int caller) {
-		//puts("ast=f==");
 	    if(timerSet){
 		pause_timer(scd->timer);
 	    }
@@ -1368,9 +1264,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		userSpaceDisk = &disk[100 * PAGESIZE];
 
 		initializeRootDisk();
-		printf("size of root block d: %d", rootBlockD->size);
 		int i;
-		//puts("fdas");
 		diskPages = (Page**)myallocate(sizeof(Page*) * ((DISK_MEMORY / PAGESIZE) - 100), __FILE__, __LINE__, DISKREQ);
 
 		// malloc for the disk table
@@ -1383,7 +1277,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		setUpSignal();
 		initializeRoot();
 
-		printf("memory starts at %p\nuser space starts at %p\nmemory ends at %p",memory, userSpace, memory+MAX_MEMORY );
+		//printf("memory starts at %p\nuser space starts at %p\nmemory ends at %p",memory, userSpace, memory+MAX_MEMORY );
 
 		//allocate memory for the page table which will be addressed as an array
 		//each index in this array will translate to the memory block as &(where user space starts) + (i * PAGESIZE)
@@ -1458,7 +1352,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		    printf("Error at line %d of %s: not enough space is available to allocate.\n", line, file);
 
 		    if(timerSet){
-			unpause_timer(scd->timer);
+			      unpause_timer(scd->timer);
 		    }
 
 		    return NULL;
@@ -1523,7 +1417,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		    printf("Error at line %d of %s: not enough space is available to allocate.\n", line, file);
 
 		    if(timerSet){
-			unpause_timer(scd->timer);
+			      unpause_timer(scd->timer);
 		    }
 
 		    return NULL;
@@ -1538,34 +1432,26 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 		alignPages();
 
-		printf("cp2\n" );
 
 		Page* pg = pages[0];
 
 		if(pg->threadID != thread){
 		    //this is the first allocation for this thread so make room for it and start writing
-		    printf("cp3\n" );
 		    if(moveToFreeSpace(0) != true){
-			printf("cp4\n" );
 			//do move to disk stuff and if thats full then return NULL
 
-			if(moveToDiskSpace(0) != true){
-				puts("could not allocate.");
-				return NULL;
-			}
+        			if(moveToDiskSpace(0) != true){
+        				puts("could not allocate.");
+        				return NULL;
+        			}
 
 		     }
 
-		  printf("cp5\n");
 		  initializePage(0);
-		  printf("cp6\n" );
 		}
 
-		printf("cp7\n" );
 		current = (Block*) userSpace;
-		puts("not getting here?");
 		Block* prev = NULL;
-		puts("bleh");
 
 		do {
 		    prev = current;
@@ -1582,7 +1468,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 			    current->isFree = false;
 
 			    if(timerSet){
-				unpause_timer(scd->timer);
+				      unpause_timer(scd->timer);
 			    }
 
 				return ((char*) current) + BLOCK_SIZE;
@@ -1604,7 +1490,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 			    current->isFree = false;
 
 			    if(timerSet){
-				unpause_timer(scd->timer);
+				      unpause_timer(scd->timer);
 			    }
 
 				return ((char*) current) + BLOCK_SIZE;
@@ -1626,7 +1512,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		    printf("Error at line %d of %s: not enough space is available to allocate.\n", line, file);
 
 		    if(timerSet){
-			unpause_timer(scd->timer);
+			      unpause_timer(scd->timer);
 		    }
 
             return NULL;
@@ -1634,11 +1520,9 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
         //this is if the last block isn't the free block pointing to the rest of the free space
         int extraBlock = (prev->isFree == false) ? BLOCK_SIZE : 0;
-        puts("wehh1");
+
 	int pagesNeeded = isEnoughPages(extraBlock + sizeWithBlock - prev->size);
 
-
-	puts("wehhh");
         if(pagesNeeded > 0){
             if(extraBlock > 0){
                 int nextPage = (scd == NULL) ? mainPageNum : scd->current->threadID->pageNum;
@@ -1710,8 +1594,6 @@ void mydeallocate(void* ptr, const char* file, int line, int caller) {
 
     if(caller == LIBRARYREQ){
 
-        printf("caller is library\n");
-
         //called from library
             if (!inMemSpace(ptr)/*inLibrarySpace(ptr)*/) {
                 printf("Error at line %d of %s: pointer was not created using malloc.\n", line, file);
@@ -1722,8 +1604,6 @@ void mydeallocate(void* ptr, const char* file, int line, int caller) {
 
                 return;
             }
-
-
 
         Block* block = (Block*) ((char*) ptr - BLOCK_SIZE);
 
@@ -1749,7 +1629,6 @@ void mydeallocate(void* ptr, const char* file, int line, int caller) {
 
     }else if (caller == THREADREQ){
 
-        printf("caller is thread\n");
         //called from thread
         if(!inMemSpace(ptr)/*inThreadSpace(ptr)*/){
             printf("Error at line %d of %s: pointer was not created using malloc.\n", line, file);
@@ -1761,7 +1640,6 @@ void mydeallocate(void* ptr, const char* file, int line, int caller) {
             return;
         }
 
-        printf("in thread space\n");
 
         Block* block = (Block*) ((char*) ptr - BLOCK_SIZE);
         if (block->isFree) {
@@ -1774,18 +1652,15 @@ void mydeallocate(void* ptr, const char* file, int line, int caller) {
             return;
         }
 
-        printf("got the block\n");
 
         Page* page;
 
         if(scd == NULL){
 
-            printf("scd null\n");
             page = findPage(1, block);
 
         }else{
 
-            printf("scd init\n");
             page = findPage(scd->current->threadID->id, block);
 
         }
@@ -1798,14 +1673,9 @@ void mydeallocate(void* ptr, const char* file, int line, int caller) {
 
             mydeallocate(ptr, __FILE__, __LINE__, LIBRARYREQ);
 
-            //printf("Error at line %d of %s: unable to find page with id %d.\n", line, file, scd->current->threadID->id);
-
-
-
             return;
         }
 
-        printf("got the page\n");
 
         if (!freeAndMerge(block, page, THREADREQ)) {
             printf("Error at line %d of %s: pointer was not created using malloc.\n", line, file);
@@ -1817,7 +1687,6 @@ void mydeallocate(void* ptr, const char* file, int line, int caller) {
             return;
         }
 
-        printf("freeAndMerge successful\n");
 
         if(timerSet){
             unpause_timer(scd->timer);
@@ -1849,491 +1718,8 @@ void printPages(){
     }
 }
 
-
-/*
-void* test(void* arg){
-    printf("got here\n" );
-    printf("v will be holding %p\n",arg );
-    int* v = (int*) arg;
-    puts("didnt break yet");
-    int x = *v;
-	puts("still workin");
-    printf("in thread x is %d\n",x );
-    int* y = (int*) malloc(sizeof(int) * 400000);
-
-	if( y == NULL){
-		printf("oopsie, not enouch spage\n");
-		exit(1);
-	}
-
-    puts("mallocd ints");
- //   long long int* h;
-  //  h = (long long int *)malloc(sizeof(long long int) * 5000);
-
-//	if( h == NULL){
-//		printf("the longs were too long");
-//		exit(1);
-//	}
-
-
-  //  puts("mallocd longs");
-    *y = x;
-    printf("I am thread %d and my number is %d\n",*v,*y  );
-    //printPages();
-    my_pthread_yield();
-    printf("I am thread %d and my number is %d\n",*v,*y  );
-    free(y);
-    //while (1) {
-
-    //}
-    return NULL;
-}
-
 int main(){
-
-  my_pthread_t th[10];
-  my_pthread_t* th1 = malloc(sizeof(my_pthread_t));
-
-    int* x = (int*) malloc(sizeof(int) * 193750);
-
-int gg = 69;
- // printf("th1's address is %p\n",&th1 );
-  int i;
-  //int* x;
-  //printPages();
-  //my_pthread_create(th1, NULL,test,(void*)&gg);
-  //printPages();
-/*
-  int* intarr[10];
-for ( i = 0; i < 10; i++) {
-  intarr[i] = (int*) malloc(sizeof(int));
-  *intarr[i] = i;
-}
-
-for ( i = 0; i < 10; i++) {
-
-
-      printf("x is %d\n",*x );
-      my_pthread_create(&th[i], NULL,test,(void*)intarr[i]);
-      printf("thread #%d made\n",i );
-      printPages();
-  }
-
-  long long int j = 0;
-  while (j < 100000000) {
-    if(j%1000 == 0){
-        //puts("didnt swap yet");
-    }
-    j++;
-  }
-  printPages();
-  *x = 123;
-  printPages();
-
-  printf("gonna exit\n" );
+  int* x =  malloc(sizeof(int));
+  free(x);
   return 0;
-}*/
-
-/*************************test*****************************/
-/*
-#define ITER 1000000
-
-my_pthread_mutex_t lock;
-int c=0;
-
-void* counter(void* a){
-  puts("asdf");
-	int i,temp;
-  puts("a");
-	for(i=0; i<ITER; i++){
-    if(i%10000==0)
-    printf("iter %d\n",i );
-
-		my_pthread_mutex_lock(&lock);
-
-
-		temp = c;
-		temp++;
-		c = temp;
-
-
-		my_pthread_mutex_unlock(&lock);
-
-
-	}
-  puts("f");
-
-	my_pthread_exit( 0 );
-	//never happens
-	return 0;
 }
-
-int main(int argc, char* argv[]){
-    int numThreads=30;
-    int tmp,i;
-    my_pthread_t* threads;
-
-
-    if (argc==2){
-        tmp = atoi(argv[1]);
-        if (tmp>0) numThreads = tmp;
-    }
-    threads = (my_pthread_t*) malloc(numThreads * sizeof(my_pthread_t));
-    //initialize lock
-    if (pthread_mutex_init(&lock, NULL) !=0)
-    {
-        printf("mutex init failed\n");
-        exit(1);
-    }
-    //create threads
-    for(i=0; i<numThreads; i++){
-        my_pthread_create(&threads[i], NULL, counter, NULL);
-    }
-	//my_pthread_create(&t1, NULL, counter, NULL);
-	//my_pthread_create(&t2, NULL, counter, NULL);
-
-    for(i=0; i<numThreads; i++){
-	    my_pthread_join(threads[i], NULL);
-    }
-	//my_pthread_join(t2, NULL);
-	printf("counter final val: %d, expecting %d\n", c, ITER*numThreads);
-	return 0;
- }*/
-
-/*
-#include <sys/types.h>
-#include"my_pthread_t.h"
-
-#define MAX_THREAD 20
-
-#define NDIM 200
-
-double          a[NDIM][NDIM];
-double          b[NDIM][NDIM];
-double          c[NDIM][NDIM];
-
-typedef struct
-{
-	int             id;
-	int             noproc;
-	int             dim;
-	double	(*a)[NDIM][NDIM],(*b)[NDIM][NDIM],(*c)[NDIM][NDIM];
-}               parm;
-
-void mm(int me_no, int noproc, int n, double a[NDIM][NDIM], double b[NDIM][NDIM], double c[NDIM][NDIM])
-{
-	int             i,j,k;
-	double sum;
-	i=me_no;
-	while (i<n) {
-
-		for (j = 0; j < n; j++) {
-			sum = 0.0;
-			for (k = 0; k < n; k++) {
-				sum = sum + a[i][k] * b[k][j];
-			}
-			c[i][j] = sum;
-
-		}
-		i+=noproc;
-	}
-}
-
-void * worker(void *arg)
-{
-	parm           *p = (parm *) arg;
-	mm(p->id, p->noproc, p->dim, *(p->a), *(p->b), *(p->c));
-	my_pthread_exit( 0 );
-	//never happens
-	return NULL;
-}
-
-
-void main(int argc, char *argv[])
-{
-	int             j, k, noproc, me_no;
-	double          sum;
-	double          t1, t2;
-
-	my_pthread_t      *threads;
-
-	parm           *arg;
-	int             n, i;
-
-	for (i = 0; i < NDIM; i++)
-		for (j = 0; j < NDIM; j++)
-		{
-			a[i][j] = i + j;
-			b[i][j] = i + j;
-		}
-
-	if (argc != 2)
-	{
-		printf("Usage: %s n\n  where n is no. of thread\n", argv[0]);
-		exit(1);
-	}
-	n = atoi(argv[1]);
-
-	if ((n < 1) || (n > MAX_THREAD))
-	{
-		printf("The no of thread should between 1 and %d.\n", MAX_THREAD);
-		exit(1);
-	}
-	threads = (my_pthread_t *) malloc(n * sizeof(my_pthread_t));
-
-	arg=(parm *)malloc(sizeof(parm)*n);
-
-	for (i = 0; i < n; i++)
-	{
-		arg[i].id = i;
-		arg[i].noproc = n;
-		arg[i].dim = NDIM;
-		arg[i].a = &a;
-		arg[i].b = &b;
-		arg[i].c = &c;
-		my_pthread_create(&threads[i], NULL, worker, (void *)(arg+i));
-	}
-
-	for (i = 0; i < n; i++)
-	{
-		my_pthread_join(threads[i], NULL);
-
-	}
-	//print_matrix(NDIM);
-	check_matrix(NDIM);
-	free(arg);
-}
-
-print_matrix(dim)
-int dim;
-{
-	int i,j;
-
-	printf("The %d * %d matrix is\n", dim,dim);
-	for(i=0;i<dim;i++){
-		for(j=0;j<dim;j++)
-			printf("%lf ",  c[i][j]);
-		printf("\n");
-	}
-}
-
-check_matrix(dim)
-int dim;
-{
-	int i,j,k;
-	int error=0;
-
-	printf("Now checking the results\n");
-	for(i=0;i<dim;i++)
-		for(j=0;j<dim;j++) {
-			double e=0.0;
-
-			for (k=0;k<dim;k++)
-				e+=a[i][k]*b[k][j];
-
-			if (e!=c[i][j]) {
-				printf("(%d,%d) error\n",i,j);
-				error++;
-			}
-		}
-	if (error)
-		printf("%d elements error\n",error);
-		else
-		printf("success\n");
-}*/
-
-
-/*
-#include <sys/ucontext.h>
-////////////////////////////////////////////////////////////////////////////////
-// Defines
-// Default list size (in terms of number of elements)
-#define LISTSIZE     (32)
-
-struct pthrarg
-{
-    int *num;
-    int size;
-    my_pthread_mutex_t *mtx;
-};
-
-static int quitting = 0;
-
-////////////////////////////////////////////////////////////////////////////////
-// Function prototypes
-void * fnsort( void *arg );
-void * fncheck( void *arg );
-void printList( int *p, int size );
-////////////////////////////////////////////////////////////////////////////////
-
-void *fnsort( void *arg )
-{
-    struct pthrarg *pargs;
-    int *num, swap;
-    my_pthread_mutex_t *mtx0, *mtx1;
-
-    pargs = (struct pthrarg * )arg;
-    num   = pargs->num;
-    mtx0  = pargs->mtx;
-    mtx1  = pargs->mtx+1;
-
-    while( !quitting )
-    {
-        my_pthread_mutex_lock( mtx0 );
-	my_pthread_mutex_lock( mtx1 );
-
-
-        if( num[1] < num[0] )
-        {
-            swap   = num[0];
-            num[0] = num[1];
-            num[1] = swap;
-        }
-
-        my_pthread_mutex_unlock( mtx0 );
-        my_pthread_mutex_unlock( mtx1 );
-
-        my_pthread_yield( );
-    }
-
-    my_pthread_exit( 0 );
-
-    // I will never get here
-    return 0;
-}
-
-void * fncheck( void *arg )
-{
-    struct pthrarg *pargs;
-    int i, j = 0, size, check;
-    my_pthread_mutex_t *mtx;
-
-    pargs = (struct pthrarg * )arg;
-    mtx   = pargs->mtx;
-    size  = pargs->size;
-
-    while( !quitting )
-    {
-        printf( "." );
-        if( (j+1) % 80 == 0 )
-            printf( "\n" );
-
-        //lock all threads
-        for( i = 0; i < size; i++ )
-            my_pthread_mutex_lock( mtx+i );
-
-        check = 1;
-        for( i = 0; i < size-1 && check; i++ )
-        {
-            if( pargs->num[i] > pargs->num[i+1] )
-                check = 0;
-        }
-
-        if( check )
-            printf("\nQuitting...\n");
-        quitting = check;
-
-        //unlock all threads
-        for( i = 0; i < size; i++ )
-            my_pthread_mutex_unlock( mtx+i );
-
-        // j seconds
-        j = j+1;
-#ifndef MYTHREAD
-        sleep( j );
-#endif
-        my_pthread_yield( );
-    }
-
-    my_pthread_exit( 0 );
-
-    return 0;
-}
-
-void printList( int *p, int size )
-{
-    int i;
-    for( i = 0 ; i < size; i++ )
-    {
-        printf( "%4d ", p[i] );
-
-        if( ((i+1) % 10) == 0 )
-            printf("\n");
-    }
-    printf("\n");
-}
-
-int main( int argc, char **argv )
-{
-    int i, *pList = 0, nListSize = LISTSIZE;
-    my_pthread_t *threads, thrcheck;
-    my_pthread_mutex_t *mutexes;
-    struct pthrarg *pthrargs, pthrargcheck;
-
-    if( argc == 2 )
-        nListSize = atoi( argv[1] );
-    nListSize = nListSize > 0 ? nListSize : LISTSIZE;
-
-    // Creating the List of numbers
-    printf( "Number of elements: %d\n", nListSize );
-
-    pList = (int *) malloc( sizeof( int ) * nListSize );
-    for( i = 0; i < nListSize; i++ )
-//        pList[i] = random( ) % (nListSize<<1);   // random list
-        pList[i] = nListSize-i;   // decreasing list  (easier to debug)
-
-    printf( "[BEFORE] The list is NOT sorted:\n" );
-    printList( pList, nListSize );
-
-    threads  = (my_pthread_t *) malloc( sizeof(my_pthread_t) * (nListSize-1) );
-    mutexes  = (my_pthread_mutex_t *)malloc( sizeof(my_pthread_mutex_t) * nListSize );
-    pthrargs = (struct pthrarg *)malloc( sizeof(struct pthrarg) * (nListSize-1) );
-
-    my_pthread_mutex_init( &mutexes[0], 0 );
-    for( i = 0; i < nListSize-1; i++ )
-    {
-        my_pthread_mutex_init( &mutexes[i+1], 0 );
-
-        pthrargs[i].num  = &pList[i];
-        pthrargs[i].mtx  = &mutexes[i];
-        pthrargs[i].size = nListSize;
-        if( my_pthread_create( &threads[i], 0, &fnsort, &pthrargs[i] ) != 0 )
-        {
-            printf( "[FATAL] Could not create thread: %d\n", i );
-            exit( 1 );
-        }
-    }
-
-    pthrargcheck.num  = pList;
-    pthrargcheck.mtx  = mutexes;
-    pthrargcheck.size = nListSize;
-
-    if( my_pthread_create( &thrcheck, 0, &fncheck, &pthrargcheck ) != 0 )
-    {
-        printf( "[FATAL] Could not create thread: fncheck\n" );
-        exit( 1 );
-    }
-
-    ///////////
-    // Waiting the threads to complete the sorting
-    //////////
-    printf( "waiting...\n" );
-
-    for( i = 0; i < nListSize-1; i++ )
-        my_pthread_join( threads[i], 0 );
-    my_pthread_join( thrcheck, 0 );
-
-    for( i = 0; i < nListSize; i++ )
-        my_pthread_mutex_destroy( &mutexes[i] );
-
-    printf( "[AFTER] The list is sorted:\n" );
-    printList( pList, nListSize );
-
-    // Cleaning
-    free( pthrargs );
-    free( mutexes );
-    free( threads );
-    free( pList );
-
-    return 0;
-}*/
