@@ -592,19 +592,23 @@ void timerHandler(int signum){
     schedule();
 }
 
+void freePages(){
+
+  int i;
+  for(i = 0; i < (MAX_MEMORY / PAGESIZE) - 100; i++){
+    if(pages[i]->threadID == scd->current->threadID->id){
+      mprotect(userSpace + (PAGESIZE * i), PAGESIZE, PROT_READ | PROT_WRITE);
+      pages[i]->isFree = true;
+    }
+  }
+
+}
+
 void terminationHandler(){
 
       printf("I DIED\n" );
       scd->current->status = EXITING;
-
-      int i;
-      for(i = 0; i < (MAX_MEMORY / PAGESIZE) - 100; i++){
-        if(pages[i]->threadID == scd->current->threadID->id){
-          mprotect(userSpace + (PAGESIZE * i), PAGESIZE, PROT_READ | PROT_WRITE);
-          pages[i]->isFree = true;
-        }
-      }
-
+      freePages();
       schedule();
 
 }
@@ -768,6 +772,8 @@ void my_pthread_exit(void * value_ptr){
 
     scd->current->status = EXITING;
     scd->current->threadID->exitArg = value_ptr;
+
+    freePages();
 
     schedule();
 }
@@ -1100,13 +1106,13 @@ static void sigHandler(int sig, siginfo_t *si, void *unused){
 				// Un-protect the page we just swapped in
 				mprotect(userSpace + (index * PAGESIZE), PAGESIZE, PROT_READ | PROT_WRITE);
 
-    				if(timerSet){
-        				unpause_timer(scd->timer);
-    				}
-
 			}
 		}
 	}
+
+  if(timerSet){
+      unpause_timer(scd->timer);
+  }
 }
 
 void setUpSignal(){
