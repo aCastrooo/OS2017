@@ -755,10 +755,9 @@ void my_pthread_yield(){
     if(scd == NULL){
         return;
     }
-
     pause_timer(scd->timer);
     scd->current->status = YIELDING;
-
+    unpause_timer(scd->timer);
     schedule();
 }
 
@@ -1765,196 +1764,85 @@ void printPages(){
 
     }
 }
-#include <sys/ucontext.h>
-////////////////////////////////////////////////////////////////////////////////
-// Defines
-// Default list size (in terms of number of elements)
-#define LISTSIZE     (32)
+void* test(void* arg){
+    printf("got here\n" );
+    printf("v will be holding %p\n",arg );
+    int* v = (int*) arg;
+    puts("didnt break yet");
+    int x = *v;
+	puts("still workin");
+    printf("in thread x is %d\n",x );
+    int* y = (int*) malloc(sizeof(int) * 40);
 
-struct pthrarg
-{
-    int *num;
-    int size;
-    my_pthread_mutex_t *mtx;
-};
+	if( y == NULL){
+		printf("oopsie, not enouch spage\n");
+		exit(1);
+	}
 
-static int quitting = 0;
+    puts("mallocd ints");
+ //   long long int* h;
+  //  h = (long long int *)malloc(sizeof(long long int) * 5000);
 
-////////////////////////////////////////////////////////////////////////////////
-// Function prototypes
-void * fnsort( void *arg );
-void * fncheck( void *arg );
-void printList( int *p, int size );
-////////////////////////////////////////////////////////////////////////////////
-
-void *fnsort( void *arg )
-{
-    struct pthrarg *pargs;
-    int *num, swap;
-    my_pthread_mutex_t *mtx0, *mtx1;
-
-    pargs = (struct pthrarg * )arg;
-    num   = pargs->num;
-    mtx0  = pargs->mtx;
-    mtx1  = pargs->mtx+1;
-
-    while( !quitting )
-    {
-        my_pthread_mutex_lock( mtx0 );
-	my_pthread_mutex_lock( mtx1 );
+//	if( h == NULL){
+//		printf("the longs were too long");
+//		exit(1);
+//	}
 
 
-        if( num[1] < num[0] )
-        {
-            swap   = num[0];
-            num[0] = num[1];
-            num[1] = swap;
-        }
+  //  puts("mallocd longs");
+    *y = x;
+    printf("I am thread %d and my number is %d\n",*v,*y  );
+    //printPages();
+    my_pthread_yield();
+    printf("I am thread %d and my number is %d\n",*v,*y  );
+    free(y);
+    //while (1) {
 
-        my_pthread_mutex_unlock( mtx0 );
-        my_pthread_mutex_unlock( mtx1 );
-
-        my_pthread_yield( );
-    }
-
-    my_pthread_exit( 0 );
-
-    // I will never get here
-    return 0;
+    //}
+    return NULL;
 }
 
-void * fncheck( void *arg )
-{
-    struct pthrarg *pargs;
-    int i, j = 0, size, check;
-    my_pthread_mutex_t *mtx;
+int main(){
 
-    pargs = (struct pthrarg * )arg;
-    mtx   = pargs->mtx;
-    size  = pargs->size;
+  my_pthread_t th[10];
+  my_pthread_t* th1 = malloc(sizeof(my_pthread_t));
 
-    while( !quitting )
-    {
-        printf( "." );
-        if( (j+1) % 80 == 0 )
-            printf( "\n" );
+    int* x = (int*) malloc(sizeof(int));
 
-        //lock all threads
-        for( i = 0; i < size; i++ )
-            my_pthread_mutex_lock( mtx+i );
+int gg = 69;
+ // printf("th1's address is %p\n",&th1 );
+  int i;
+  //int* x;
+  //printPages();
+  //my_pthread_create(th1, NULL,test,(void*)&gg);
+  //printPages();
 
-        check = 1;
-        for( i = 0; i < size-1 && check; i++ )
-        {
-            if( pargs->num[i] > pargs->num[i+1] )
-                check = 0;
-        }
-
-        if( check )
-            printf("\nQuitting...\n");
-        quitting = check;
-
-        //unlock all threads
-        for( i = 0; i < size; i++ )
-            my_pthread_mutex_unlock( mtx+i );
-
-        // j seconds
-        j = j+1;
-#ifndef MYTHREAD
-        sleep( j );
-#endif
-        my_pthread_yield( );
-    }
-
-    my_pthread_exit( 0 );
-
-    return 0;
+  int* intarr[10];
+for ( i = 0; i < 10; i++) {
+  intarr[i] = (int*) malloc(sizeof(int));
+  *intarr[i] = i;
 }
 
-void printList( int *p, int size )
-{
-    int i;
-    for( i = 0 ; i < size; i++ )
-    {
-        printf( "%4d ", p[i] );
+for ( i = 0; i < 10; i++) {
 
-        if( ((i+1) % 10) == 0 )
-            printf("\n");
+
+      printf("x is %d\n",*x );
+      my_pthread_create(&th[i], NULL,test,(void*)intarr[i]);
+      printf("thread #%d made\n",i );
+      printPages();
+  }
+
+  long long int j = 0;
+  while (j < 100000000) {
+    if(j%1000 == 0){
+        //puts("didnt swap yet");
     }
-    printf("\n");
-}
+    j++;
+  }
+  printPages();
+  *x = 123;
+  printPages();
 
-int main( int argc, char **argv )
-{
-    int i, *pList = 0, nListSize = LISTSIZE;
-    my_pthread_t *threads, thrcheck;
-    my_pthread_mutex_t *mutexes;
-    struct pthrarg *pthrargs, pthrargcheck;
-
-    if( argc == 2 )
-        nListSize = atoi( argv[1] );
-    nListSize = nListSize > 0 ? nListSize : LISTSIZE;
-
-    // Creating the List of numbers
-    printf( "Number of elements: %d\n", nListSize );
-
-    pList = (int *) malloc( sizeof( int ) * nListSize );
-    for( i = 0; i < nListSize; i++ )
-//        pList[i] = random( ) % (nListSize<<1);   // random list
-        pList[i] = nListSize-i;   // decreasing list  (easier to debug)
-
-    printf( "[BEFORE] The list is NOT sorted:\n" );
-    printList( pList, nListSize );
-
-    threads  = (my_pthread_t *) malloc( sizeof(my_pthread_t) * (nListSize-1) );
-    mutexes  = (my_pthread_mutex_t *)malloc( sizeof(my_pthread_mutex_t) * nListSize );
-    pthrargs = (struct pthrarg *)malloc( sizeof(struct pthrarg) * (nListSize-1) );
-
-    my_pthread_mutex_init( &mutexes[0], 0 );
-    for( i = 0; i < nListSize-1; i++ )
-    {
-        my_pthread_mutex_init( &mutexes[i+1], 0 );
-
-        pthrargs[i].num  = &pList[i];
-        pthrargs[i].mtx  = &mutexes[i];
-        pthrargs[i].size = nListSize;
-        if( my_pthread_create( &threads[i], 0, &fnsort, &pthrargs[i] ) != 0 )
-        {
-            printf( "[FATAL] Could not create thread: %d\n", i );
-            exit( 1 );
-        }
-    }
-
-    pthrargcheck.num  = pList;
-    pthrargcheck.mtx  = mutexes;
-    pthrargcheck.size = nListSize;
-
-    if( my_pthread_create( &thrcheck, 0, &fncheck, &pthrargcheck ) != 0 )
-    {
-        printf( "[FATAL] Could not create thread: fncheck\n" );
-        exit( 1 );
-    }
-
-    ///////////
-    // Waiting the threads to complete the sorting
-    //////////
-    printf( "waiting...\n" );
-
-    for( i = 0; i < nListSize-1; i++ )
-        my_pthread_join( threads[i], 0 );
-    my_pthread_join( thrcheck, 0 );
-
-    for( i = 0; i < nListSize; i++ )
-        my_pthread_mutex_destroy( &mutexes[i] );
-
-    printf( "[AFTER] The list is sorted:\n" );
-    printList( pList, nListSize );
-
-    // Cleaning
-    free( pthrargs );
-    free( mutexes );
-    free( threads );
-    free( pList );
-
-    return 0;
+  printf("gonna exit\n" );
+  return 0;
 }
