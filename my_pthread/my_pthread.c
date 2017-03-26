@@ -593,11 +593,20 @@ void timerHandler(int signum){
 }
 
 void terminationHandler(){
-    while(1){
+
       printf("I DIED\n" );
-        scd->current->status = EXITING;
-        schedule();
-    }
+      scd->current->status = EXITING;
+
+      int i;
+      for(i = 0; i < (MAX_MEMORY / PAGESIZE) - 100; i++){
+        if(pages[i]->threadID == scd->current->threadID->id){
+          mprotect(userSpace + (PAGESIZE * i), PAGESIZE, PROT_READ | PROT_WRITE);
+          pages[i]->isFree = true;
+        }
+      }
+
+      schedule();
+
 }
 
 
@@ -678,7 +687,7 @@ void printThreads(){
 	ptr = scd->threads->head;
 	while(ptr != NULL){
 		printf("thread: %p\n\n\n", ptr);
-		ptr = ptr->next;	
+		ptr = ptr->next;
 	}
 
 }
@@ -874,7 +883,7 @@ void pageSwap(int initial, int swapTo){
 
   	// swap page table data
   	Page* tempPage;
-	
+
 	tempPage = pages[swapTo];
 	pages[swapTo] = pages[initial];
 	pages[initial] = tempPage;
@@ -882,7 +891,7 @@ void pageSwap(int initial, int swapTo){
 	printf("page in initial, %d location %p\n", initial, pages[initial]);
 	printf("page in swapto, %d location: %p\n\n\n", swapTo, pages[swapTo]);
 
-	
+
 
 
   	//protect the memory pages again
@@ -1002,12 +1011,12 @@ static bool moveToFreeSpace(int index) {
       		if(i == index){
           		return true;
       		}
-			
+
 			puts("\n\n\n");
 			printf("threadID in initial location: %d, %d\n", index, pages[index]->threadID);
 
 
-			
+
 			mprotect(userSpace + (PAGESIZE * index), PAGESIZE, PROT_READ | PROT_WRITE);
 
 			memcpy(pages[i], pages[index], sizeof(Page));
@@ -1045,13 +1054,13 @@ static void gatherPages(int pagesNeeded, Block* lastBlock){
 // this handler is called when a thread attempts to access data that does not belong to it. The handler will find the correct data and swap it
 static void sigHandler(int sig, siginfo_t *si, void *unused){
 
-	
+
     	if(timerSet){
         	pause_timer(scd->timer);
     	}
-	
 
- 
+
+
 	printf("Got SIGSEGV at address: 0x%lx\n", (long) si->si_addr);
 
 	char *addr = si->si_addr;
@@ -1075,16 +1084,16 @@ static void sigHandler(int sig, siginfo_t *si, void *unused){
 			if(pages[i]->threadID == scd->current->threadID->id && pages[i]->pageID == index){
 				puts("inside the first if");
 				if(i != index){
-					pageSwap(index, i);	
-				}				
+					pageSwap(index, i);
+				}
 
 				// Un-protect the page we just swapped in
 				mprotect(userSpace + (index * PAGESIZE), PAGESIZE, PROT_READ | PROT_WRITE);
-		
+
     				if(timerSet){
         				unpause_timer(scd->timer);
     				}
-	
+
 			}
 		}
 	}
@@ -1281,9 +1290,9 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
         int thread = (scd == NULL) ? 1 : scd->current->threadID->id;
 
         alignPages();
-	
+
 	printf("cp2\n" );
-        
+
 	Page* pg = pages[0];
 
         if(pg->threadID != thread){
@@ -1293,7 +1302,7 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
                 //do move to disk stuff and if thats full then return NULL
                 printf("cp4\n" );
         	puts("could not allocate.");
-		return NULL;   
+		return NULL;
 	    }
 	    printf("cp5\n" );
             initializePage(0);
@@ -1600,7 +1609,7 @@ int main(){
 
     int* x = (int*) malloc(sizeof(int));
     *x = 1;
-  
+
 int gg = 69;
  // printf("th1's address is %p\n",&th1 );
   int i;
@@ -1608,7 +1617,7 @@ int gg = 69;
   //printPages();
   //my_pthread_create(th1, NULL,test,(void*)&gg);
   //printPages();
-  
+
 for ( i = 0; i < 10; i++) {
       x = (int*) malloc(sizeof(int));
       *x = i;
