@@ -919,7 +919,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 		char temp[PAGESIZE];
 
-		//un-protect the page in memory that will be swapped 
+		//un-protect the page in memory that will be swapped
 		mprotect(userSpace + (PAGESIZE * inMem), PAGESIZE, PROT_READ | PROT_WRITE);
 
 		// swap mem
@@ -976,7 +976,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 			    freeCount++;
 			}
 		    }
-			
+
 		    for(i = 0; i < (DISK_MEMORY / PAGESIZE) - 100; i++){
 			if(diskPages[i] != NULL){
 				if(diskPages[i]->isFree == true){
@@ -985,7 +985,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 			}
 		    }
 
-		   
+
 		    return (freeCount >= pagesNeeded) ? pagesNeeded : 0;
 		}
 
@@ -1123,7 +1123,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		  printf("got hereee disk\n" );
 			int i;
 			for(i = 0; i < (DISK_MEMORY / PAGESIZE) - 100; i++){
-				
+
 			if(diskPages[i] != NULL){
 			if(diskPages[i]->isFree){
 				puts("bitchass");
@@ -1199,19 +1199,19 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 			int index = (int)diff/PAGESIZE;
 			printf("index is %d\n",index);
 			int i;
-			
+
 			for(i = 0; i < (MAX_MEMORY / PAGESIZE) - LIBPAGES; i++){
 				//printf("pid %p holds %d\n",scd->current->threadID,scd->current->threadID->id);
-				puts("in first loop lel");				
+				puts("in first loop lel");
 //printf("pages thread: %d\ncurr thread: %d", pages[i]->threadID, scd->current->threadID->id);
 				if(pages[i]->threadID == scd->current->threadID->id && pages[i]->pageID == index){
-					
+
 					puts("inside the first if");
 					if(i != index){
 						puts("Swapping correct pages...");
 						pageSwap(index, i);
 					}
-					
+
 					// Un-protect the page we just swapped in
 					mprotect(userSpace + (index * PAGESIZE), PAGESIZE, PROT_READ | PROT_WRITE);
 					pageSwapped = true;
@@ -1234,11 +1234,11 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 				//printf("pages thread: %d\ncurr thread: %d", pages[i]->threadID, scd->current->threadID->id);
 					if(diskPages[i]->threadID == scd->current->threadID->id && diskPages[i]->pageID == index){
 						puts("inside the second if");
-					
+
 						puts("Swapping from disk...");
 						swapToMemFromDisk(index, i);
-					
-					
+
+
 						// Un-protect the page we just swapped in
 						mprotect(userSpace + (index * PAGESIZE), PAGESIZE, PROT_READ | PROT_WRITE);
 						pageSwapped = true;
@@ -1247,7 +1247,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 				}
 				printf("i for ssecond loop: %d\n", i);
 			}
-		
+
 		}
 
 		if(pageSwapped == false){
@@ -1366,13 +1366,13 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 		userSpace = &memory[LIBPAGES * PAGESIZE];
 		userSpaceDisk = &disk[100 * PAGESIZE];
-		
+
 		initializeRootDisk();
 		printf("size of root block d: %d", rootBlockD->size);
 		int i;
-		//puts("fdas");	
+		//puts("fdas");
 		diskPages = (Page**)myallocate(sizeof(Page*) * ((DISK_MEMORY / PAGESIZE) - 100), __FILE__, __LINE__, DISKREQ);
-		
+
 		// malloc for the disk table
 		for ( i = 0; i < (DISK_MEMORY / PAGESIZE) - 100; i++) {
 			diskPages[i] = (Page*) myallocate(sizeof(Page), __FILE__, __LINE__, DISKREQ);
@@ -1388,7 +1388,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		//allocate memory for the page table which will be addressed as an array
 		//each index in this array will translate to the memory block as &(where user space starts) + (i * PAGESIZE)
 		pages = (Page**) myallocate(sizeof(Page*) * ((MAX_MEMORY / PAGESIZE) - LIBPAGES), __FILE__, __LINE__, LIBRARYREQ);
-		
+
 		for ( i = 0; i < (MAX_MEMORY / PAGESIZE) - LIBPAGES; i++) {
 		    pages[i] = (Page*) myallocate(sizeof(Page), __FILE__, __LINE__, LIBRARYREQ);
 			  pages[i]->isFree = true;
@@ -1406,7 +1406,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 		    // First fit placement strategy.
 		    do {
-			
+
 			// Look for free block with enough space.
 			if (!current->isFree || current->size < size) {
 			    continue;
@@ -1553,7 +1553,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 				puts("could not allocate.");
 				return NULL;
 			}
-		       
+
 		     }
 
 		  printf("cp5\n");
@@ -1642,14 +1642,14 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
         if(pagesNeeded > 0){
             if(extraBlock > 0){
                 int nextPage = (scd == NULL) ? mainPageNum : scd->current->threadID->pageNum;
-                
+
 		if(moveToFreeSpace(nextPage) != true){
 			if(moveToDiskSpace(nextPage) != true){
 				puts("Disk and memory full. Cannot allocate anymore.");
 				return NULL;
 			}
 		}
-		
+
                 initializePage(nextPage);
                 Block* bl = (Block*)((char*) userSpace + (nextPage * PAGESIZE));
                 bl->isFree = true;
@@ -1860,7 +1860,7 @@ void* test(void* arg){
 	puts("still workin");
     printf("in thread x is %d\n",x );
     int* y = (int*) malloc(sizeof(int) * 400000);
-    
+
 	if( y == NULL){
 		printf("oopsie, not enouch spage\n");
 		exit(1);
@@ -1869,7 +1869,7 @@ void* test(void* arg){
     puts("mallocd ints");
  //   long long int* h;
   //  h = (long long int *)malloc(sizeof(long long int) * 5000);
-    
+
 //	if( h == NULL){
 //		printf("the longs were too long");
 //		exit(1);
