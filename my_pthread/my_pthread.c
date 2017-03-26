@@ -595,12 +595,25 @@ void timerHandler(int signum){
     schedule();
 }
 
-void terminationHandler(){
-    while(1){
-      printf("I DIED\n" );
-        scd->current->status = EXITING;
-        schedule();
+void freePages(){
+
+  int i;
+  for(i = 0; i < (MAX_MEMORY / PAGESIZE) - 100; i++){
+    if(pages[i]->threadID == scd->current->threadID->id){
+      mprotect(userSpace + (PAGESIZE * i), PAGESIZE, PROT_READ | PROT_WRITE);
+      pages[i]->isFree = true;
     }
+  }
+
+}
+
+void terminationHandler(){
+
+      printf("I DIED\n" );
+      scd->current->status = EXITING;
+      freePages();
+      schedule();
+
 }
 
 
@@ -762,6 +775,8 @@ void my_pthread_exit(void * value_ptr){
 
     scd->current->status = EXITING;
     scd->current->threadID->exitArg = value_ptr;
+
+    freePages();
 
     schedule();
 }
@@ -1059,12 +1074,9 @@ static void gatherPages(int pagesNeeded, Block* lastBlock){
 // this handler is called when a thread attempts to access data that does not belong to it. The handler will find the correct data and swap it
 static void sigHandler(int sig, siginfo_t *si, void *unused){
 
-
 	if(timerSet){
     	pause_timer(scd->timer);
 	}
-
-
 
 	printf("Got SIGSEGV at address: 0x%lx\n", (long) si->si_addr);
 
@@ -1091,18 +1103,17 @@ static void sigHandler(int sig, siginfo_t *si, void *unused){
 				puts("inside the first if");
 				if(i != index){
 					pageSwap(index, i);
-
-          // Un-protect the page we just swapped in
-          mprotect(userSpace + (index * PAGESIZE), PAGESIZE, PROT_READ | PROT_WRITE);
-          pageSwapped = true;
-          break;
 				}
+        // Un-protect the page we just swapped in
+        mprotect(userSpace + (index * PAGESIZE), PAGESIZE, PROT_READ | PROT_WRITE);
+        pageSwapped = true;
+        break;
 			}
 		}
 
     if(pageSwapped == false){
         printf("SEGMENTATION FAULT\n");
-        exit(0);
+        exit(1);
     }
 
     if(timerSet){
@@ -1110,6 +1121,10 @@ static void sigHandler(int sig, siginfo_t *si, void *unused){
     }
 
 	}
+
+  if(timerSet){
+      unpause_timer(scd->timer);
+  }
 }
 
 void setUpSignal(){
@@ -1632,7 +1647,9 @@ int gg = 69;
   //my_pthread_create(th1, NULL,test,(void*)&gg);
   //printPages();
 
+
 for ( i = 0; i < 100; i++) {
+
       x = (int*) malloc(sizeof(int));
       *x = i;
       printf("x is %d\n",*x );
