@@ -22,6 +22,7 @@
 #define LIBRARYREQ 0
 #define THREADREQ 1
 #define PAGESIZE sysconf(_SC_PAGE_SIZE)
+#define LIBPAGES 200
 //#define STACK_SIZE 1024
 
 #define pthread_t my_pthread_t
