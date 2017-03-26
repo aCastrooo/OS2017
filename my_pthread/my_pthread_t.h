@@ -21,6 +21,7 @@
 //#define MAX_MEMORY 8388608
 #define LIBRARYREQ 0
 #define THREADREQ 1
+#define DISKREQ 2
 #define PAGESIZE sysconf(_SC_PAGE_SIZE)
 #define LIBPAGES 200
 //#define STACK_SIZE 1024
