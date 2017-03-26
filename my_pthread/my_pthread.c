@@ -94,15 +94,17 @@ static mutex_list *mutexList = NULL;
 
 static const unsigned long long int BLOCK_SIZE = sizeof(Block);
 static const long long int MAX_MEMORY = 8388608;
+static const long long int DISK_MEMORY = 16777216;
 static const long long int STACK_SIZE = 2048;
 static char* memory;
-//static char* disk;
+static char* disk;
 static bool firstMalloc = true;
 static Block* rootBlock;
 
 static char* userSpace = NULL;
 static int mainPageNum = 0;
 static Page** pages;//this will be the array of pages in memory block
+static Page** diskPages[DISK_MEMORY / PAGESIZE]; //for keeping track of pages in disk space
 /********************functions*******************/
 
 void printhreads(){
@@ -897,14 +899,38 @@ void pageSwap(int initial, int swapTo){
 	printf("page in initial, %d location %p\n", initial, pages[initial]);
 	printf("page in swapto, %d location: %p\n\n\n", swapTo, pages[swapTo]);
 
-
-
-
   	//protect the memory pages again
   	mprotect(userSpace + (PAGESIZE * swapTo), PAGESIZE, PROT_NONE);
   	mprotect(userSpace + (PAGESIZE * initial), PAGESIZE, PROT_NONE);
 
 }
+
+void swapToMemFromDisk(int inMem, int fromDisk){
+
+	char temp[PAGESIZE];
+
+  	//un-protect the page in memory that will be swapped 
+  	mprotect(userSpace + (PAGESIZE * inMem), PAGESIZE, PROT_READ | PROT_WRITE);
+
+  	// swap mem
+  	memcpy(temp, disk + (PAGESIZE * fromDisk), PAGESIZE);
+	memcpy(disk + (PAGESIZE * fromDisk), userSpace + (PAGESIZE * inMem), PAGESIZE);
+  	memcpy(userSpace + (PAGESIZE * inMem), temp, PAGESIZE);
+
+  	// swap page table data
+  	Page* tempPage;
+
+	tempPage = diskPages[fromDisk];
+	diskPages[fromDisk] = pages[inMem];
+	pages[inMem] = tempPage;
+
+	printf("page in initial, %d location %p\n", inMem, pages[inMem]);
+	printf("page in swapto, %d location: %p\n\n\n", fromDisk, pages[fromDisk]);
+
+  	//protect the pages
+  	mprotect(userSpace + (PAGESIZE * inMem), PAGESIZE, PROT_NONE);
+}
+
 
 static void alignPages(){
 
@@ -918,6 +944,13 @@ static void alignPages(){
     }
 
     //once disk is in place, now check disk if there are any pages in disk to be aligned into memory
+    for(i = 0; i < (DISK_MEMORY / PAGESIZE); i++){
+	if(diskPages[i]->threadID == thread && i != diskPages[i]->pageID){
+		swapToMemFromDisk(i, diskPages[i]);
+	}
+    }
+
+
 }
 
 //returns the number of pages needed if there is enough room for them, 0 if there are not enough free pages
@@ -1043,6 +1076,40 @@ static bool moveToFreeSpace(int index) {
 }
 
 
+static bool moveToDiskSpace(int index) {
+  printf("got hereee disk\n" );
+	int i;
+	for(i = 0; i < DISK_MEMORY / PAGESIZE; i++){
+		if(diskPages[i]->isFree){
+
+      		if(i == index){
+          		return true;
+      		}
+
+			puts("\n\n\n");
+			//printf("threadID in initial location: %d, %d\n", index, pages[index]->threadID);
+
+
+
+			mprotect(userSpace + (PAGESIZE * index), PAGESIZE, PROT_READ | PROT_WRITE);
+
+			memcpy(diskPages[i], pages[index], sizeof(Page));
+			memcpy(disk + (PAGESIZE * i), userSpace + (PAGESIZE * index), PAGESIZE);
+			pages[index]->isFree = true;
+
+			// protect the page where it was moved, unprotect the newly freed spot
+			//mprotect(userSpace + (PAGESIZE * i), PAGESIZE, PROT_NONE);
+			//printf("threadID in new location: %d, %d\n", i, pages[i]->threadID);
+
+			//mprotect(userSpace + (PAGESIZE * index), PAGESIZE, PROT_READ | PROT_WRITE);
+		        printf("got hereeee 2\n");
+			return true;
+		}
+	}
+	printf("got hereeee 3\n" );
+	return false;
+}
+
 static void gatherPages(int pagesNeeded, Block* lastBlock){
     int nextPage;
 
@@ -1092,13 +1159,41 @@ static void sigHandler(int sig, siginfo_t *si, void *unused){
 				if(i != index){
 					pageSwap(index, i);
 				}
+				
 
+
+				
+				
 				// Un-protect the page we just swapped in
 				mprotect(userSpace + (index * PAGESIZE), PAGESIZE, PROT_READ | PROT_WRITE);
 
 			}
 		}
-	}
+	
+
+
+		for(i = 0; i < DISK_MEMORY / PAGESIZE; i++){
+			//printf("pages thread: %d\ncurr thread: %d", pages[i]->threadID, scd->current->threadID->id);
+			if(diskPages[i]->threadID == scd->current->threadID->id && diskPages[i]->pageID == index){
+				puts("inside the first if");
+				if(i != index){
+					swapToMemFromDisk(index, i);
+				}
+				
+
+
+				
+				
+				// Un-protect the page we just swapped in
+				mprotect(userSpace + (index * PAGESIZE), PAGESIZE, PROT_READ | PROT_WRITE);
+
+			}
+		}
+
+
+
+
+  }
 
   if(timerSet){
       unpause_timer(scd->timer);
@@ -1206,7 +1301,9 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
     // If it is the first time this function has been called, then initialize the root block.
     if (firstMalloc) {
         posix_memalign((void **)&memory, PAGESIZE, MAX_MEMORY);
-      	userSpace = &memory[100 * PAGESIZE];
+      	posix_memalign((void **)&disk, PAGESIZE, DISK_MEMORY);
+
+	userSpace = &memory[100 * PAGESIZE];
 
       	setUpSignal();
         initializeRoot();
@@ -1305,10 +1402,13 @@ void* myallocate(size_t size, const char* file, int line, int caller) {
             //this is the first allocation for this thread so make room for it and start writing
 	    printf("cp3\n" );
             if(moveToFreeSpace(0) != true){
+		printf("cp4\n" );
                 //do move to disk stuff and if thats full then return NULL
-                printf("cp4\n" );
-        	puts("could not allocate.");
-		return NULL;
+               if(moveToDiskSpace(0) != true){
+        		puts("could not allocate.");
+			return NULL;
+		}
+               
 	    }
 	    printf("cp5\n" );
             initializePage(0);
@@ -1599,7 +1699,7 @@ void* test(void* arg){
     *y = x;
     printf("I am thread %d and my number is %d\n",*v,*y  );
     //printPages();
-   // my_pthread_yield();
+    my_pthread_yield();
     printf("I am thread %d and my number is %d\n",*v,*y  );
     free(y);
     //while (1) {
