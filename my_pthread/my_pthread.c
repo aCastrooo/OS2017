@@ -86,15 +86,15 @@ static bool timerSet = false;
 static int currMutexID = 0;
 static mutex_list *mutexList = NULL;
 
-static const unsigned long long int BLOCK_SIZE = sizeof(Block);
+static const unsigned long long int BLOCK_SIZE = sizeof(unsigned int);
 static const long long int MAX_MEMORY = 8388608;
 static const long long int DISK_MEMORY = 16777216;
 static const long long int STACK_SIZE = 18192;
 static char* memory;
 static char* disk;
 static bool firstMalloc = true;
-static Block* rootBlock;
-static Block* rootBlockD;
+static unsigned int* rootBlock;
+static unsigned int* rootBlockD;
 
 static char* userSpace = NULL;
 static char* userSpaceDisk = NULL;
@@ -110,9 +110,48 @@ void printhreads(){
     }
 }
 
+unsigned int setBlockSize(unsigned int block, unsigned int size){
+  unsigned int temp = block & 0x000000FF;
+  block = (size << 8) | temp;
+  return block;
+}
+
+unsigned int getBlockSize(unsigned int block){
+  return (block & 0xFFFFFF00) >> 8;
+}
+
+unsigned int setBlockIsNext(unsigned int block, unsigned int isNext){
+  unsigned int temp = block & 0xFFFFFF0F;
+  block = (isNext << 4) | temp;
+  return block;
+}
+
+unsigned int getBlockIsNext(unsigned int block){
+  return (block & 0x000000F0) >> 4;
+}
+
+unsigned int setBlockIsF(unsigned int block, unsigned int isF){
+  unsigned int temp = block & 0xFFFFFFF0;
+  block = temp | isF;
+  return block;
+}
+
+unsigned int getBlockIsF(unsigned int block){
+  return block & 0x0000000F;
+}
+
+unsigned int* getNextBlock(unsigned int* block){
+  unsigned int isNext = getBlockIsNext(*block);
+  if(isNext == 0){
+    return NULL;
+  }
+  unsigned int size = getBlockSize(*block);
+  return (unsigned int*)block + size;
+}
+
 unsigned int setPagePgID(unsigned int pg, unsigned int id){
 
-    unsigned int temp = pg & 0xFFFF;
+    unsigned int temp = pg & 0x0000FFFF;
     pg = (id << 16) | temp;
     return pg;
 
@@ -120,7 +159,7 @@ unsigned int setPagePgID(unsigned int pg, unsigned int id){
 
 unsigned int getPagePgID(unsigned int pg){
 
-    return (pg >> 16) & 0x0000FFFF;
+    return (pg & 0xFFFF0000) >> 16;
 
 }
 
@@ -936,7 +975,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 	    //once disk is in place, now check disk if there are any pages in disk to be aligned into memory
 	    for(i = 0; i < (DISK_MEMORY / PAGESIZE) - 100; i++){
-      		if(diskPages[i] != 0){
+      		if(getPageIsF(diskPages[i]) == 0){
         			if(getPageThID(diskPages[i]) == thread && i != getPagePgID(diskPages[i])){
         				swapToMemFromDisk(i, getPagePgID(diskPages[i]));
         			}
@@ -958,11 +997,11 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		    }
 
 		    for(i = 0; i < (DISK_MEMORY / PAGESIZE) - 100; i++){
-			if(diskPages[i] != 0){
+			//if(diskPages[i] != 0){
 				if(getPageIsF(diskPages[i]) == 1){
 					freeCount++;
 				}
-			}
+			//}
 		    }
 
 
@@ -975,19 +1014,21 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		 * Initialize the root block. This is only called the first time that mymalloc is used.
 		 */
 		static void initializeRoot() {
-		    rootBlock = (Block*) memory;
-		    rootBlock->isFree = true;
-		    rootBlock->size = (LIBPAGES * PAGESIZE) - BLOCK_SIZE;
-		    rootBlock->next = NULL;
+		    rootBlock = (unsigned int*) memory;
+        *rootBlock = setBlockIsF(*rootBlock, 1);
+        *rootBlock = setBlockSize(*rootBlock, (unsigned int) ((LIBPAGES * PAGESIZE) - BLOCK_SIZE));
+        *rootBlock = setBlockIsNext(*rootBlock, 0);
+
 		    firstMalloc = false;
 		}
 
 
 		static void initializeRootDisk() {
-		    rootBlockD = (Block*) disk;
-		    rootBlockD->isFree = true;
-		    rootBlockD->size = (4096 * PAGESIZE) - BLOCK_SIZE;
-		    rootBlockD->next = NULL;
+        rootBlockD = (unsigned int*) disk;
+        *rootBlockD = setBlockIsF(*rootBlockD, 1);
+        *rootBlockD = setBlockSize(*rootBlockD, (unsigned int) ((4096 * PAGESIZE) - BLOCK_SIZE));
+        *rootBlockD = setBlockIsNext(*rootBlockD, 0);
+
 		    firstMalloc = false;
 		}
 
@@ -1003,7 +1044,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 		    unsigned int pg = pages[index];
 
-        if(scd == NULL){
+        if(scd != NULL){
           pg = setPagePgID(pg, scd->current->threadID->pageNum++);
           pg = setPageThID(pg, scd->current->threadID->id);
         }
@@ -1015,10 +1056,11 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
         pg = setPageIsF(pg, 0);
 
 		    if(getPagePgID(pg) == 0){
-    			Block* rootBlock = (Block*) userSpace;
-    			rootBlock->isFree = true;
-    			rootBlock->size = PAGESIZE - BLOCK_SIZE;
-    			rootBlock->next = NULL;
+    			unsigned int* pageRoot = (unsigned int*) userSpace;
+
+          *pageRoot = setBlockIsF(*pageRoot, 1);
+          *pageRoot = setBlockSize(*pageRoot, (unsigned int)(PAGESIZE - BLOCK_SIZE));
+          *pageRoot = setBlockIsNext(*pageRoot, 0);
 		    }
 
 		}
@@ -1042,11 +1084,11 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		    return (char*) ptr >= userSpace && (char*) ptr < &memory[MAX_MEMORY];
 		}
     */
-		static bool inMemSpace(Block* ptr){
+		static bool inMemSpace(unsigned int* ptr){
 		    return (char*) ptr >= &memory[0] && (char*) ptr < &memory[MAX_MEMORY];
 		}
 
-		unsigned int findPage(int id, Block* block){
+		unsigned int findPage(int id){
 		  int i;
 
 		  for(i = 0; i < (MAX_MEMORY / PAGESIZE) - LIBPAGES; i++){
@@ -1095,29 +1137,26 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 			int i;
 			for(i = 0; i < (DISK_MEMORY / PAGESIZE) - 100; i++){
 
-			if(diskPages[i] != 0){
+			//if(diskPages[i] != 0){
 			if(getPageIsF(diskPages[i]) == 1){
-				if(i == index){
-					return true;
-				}
 
 				mprotect(userSpace + (PAGESIZE * index), PAGESIZE, PROT_READ | PROT_WRITE);
 
         unsigned int temp = diskPages[i];
-        diskPages[i] = diskPages[index];
-        diskPages[index] = temp;
+        diskPages[i] = pages[index];
+        pages[index] = temp;
 
 				memcpy(disk + (PAGESIZE * i), userSpace + (PAGESIZE * index), PAGESIZE);
         pages[index] = setPageIsF(pages[index], 1);
 
 				return true;
 			}
-			}
+			//}
 		}
 		return false;
 	}
 
-	static void gatherPages(int pagesNeeded, Block* lastBlock){
+	static void gatherPages(int pagesNeeded, unsigned int* lastBlock){
 	    unsigned int nextPage = 0;
 
 	    while(pagesNeeded > 0){
@@ -1130,7 +1169,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 			}
 		}
 		initializePage(nextPage);
-		lastBlock->size += PAGESIZE;
+    *lastBlock = setBlockSize(*lastBlock, (unsigned int) (getBlockSize(*lastBlock) + PAGESIZE));
 
 		pagesNeeded--;
 	    }
@@ -1182,7 +1221,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 			}
 
 			for(i = 0; i < (DISK_MEMORY / PAGESIZE) - 100; i++){
-				if(diskPages[i] != 0){
+				if(getPageIsF(diskPages[i]) == 0){
 					if(getPageThID(diskPages[i]) == scd->current->threadID->id && getPagePgID(diskPages[i]) == index){
 
 						swapToMemFromDisk(index, i);
@@ -1232,10 +1271,11 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 	 * @param toFree the Block to be freed.
 	 * @return true if toFree was freed, false otherwise.
 	 */
-	static bool freeAndMerge(Block* toFree, unsigned int page, int caller) {
+	static bool freeAndMerge(unsigned int* toFree, unsigned int page, int caller) {
 
-	    Block* previous = NULL;
-	    Block* current = NULL;
+	    unsigned int* previous = NULL;
+	    unsigned int* current = NULL;
+      unsigned int* next = NULL;
 
 	    if(caller == LIBRARYREQ){
 	      current = rootBlock;
@@ -1244,13 +1284,14 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 	      int index;
 	      for(index = 0; index < (MAX_MEMORY/PAGESIZE) - LIBPAGES; index++){
         		if(getPageThID(pages[index]) == getPageThID(page)){
-        		  current = (Block*) userSpace + (index * PAGESIZE);
+        		  current = (unsigned int*) userSpace + (index * PAGESIZE);
         		  break;
         		}
 	      }
 	    }
 
 	    if(current == NULL){
+        printf("gg no re\n");
 	      return false;
 	    }
 
@@ -1259,20 +1300,20 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 	    do {
 
 		if (current == toFree) {
-
-		    current->isFree = true;
-		    Block* next = current->next;
+      printf("found tofree");
+        *current = setBlockIsF(*current, 1);
+		    next = getNextBlock(current);
 
 		    // Merge current with next if next is free.
-		    if (next != NULL && next->isFree) {
-			current->size += next->size + BLOCK_SIZE;
-			current->next = next->next;
+		    if (next != NULL && getBlockIsF(*next) == 1) {
+          *current = setBlockSize(*current, (unsigned int)(getBlockSize(*current) + getBlockSize(*next) + BLOCK_SIZE));
+          *current = setBlockIsNext(*current, getBlockIsNext(*next));
 		    }
 
 		    // Merge previous with current if previous is free.
-		    if (previous != NULL && previous->isFree) {
-			previous->size += current->size + BLOCK_SIZE;
-			previous->next = current->next;
+		    if (previous != NULL && getBlockIsF(*previous) == 1) {
+          *previous = setBlockSize(*previous, (unsigned int)(getBlockSize(*current) + getBlockSize(*previous) + BLOCK_SIZE));
+          *previous = setBlockIsNext(*previous, getBlockIsNext(*current));
 		    }
 
 		    return true;
@@ -1282,7 +1323,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		    previous = current;
 		}
 
-	    } while ((current = current->next) != NULL);
+  } while ((current = getNextBlock(current)) != NULL);
 
 	    // Return false if toFree was not found.
 	    return false;
@@ -1318,7 +1359,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 		// malloc for the disk table
 		for ( i = 0; i < (DISK_MEMORY / PAGESIZE) - 100; i++) {
-			 diskPages[i] = setPageIsF(diskPages[i], 1);
+      diskPages[i] = 1;
 		}
 
 
@@ -1332,12 +1373,12 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		pages = (unsigned int*) myallocate(sizeof(unsigned int) * ((MAX_MEMORY / PAGESIZE) - LIBPAGES), __FILE__, __LINE__, LIBRARYREQ);
 
 		for ( i = 0; i < (MAX_MEMORY / PAGESIZE) - LIBPAGES; i++) {
-			  pages[i] = setPageIsF(pages[i], 1);
+			  pages[i] = 1;
 		}
 	    }
 
-	    Block* current;
-	    const unsigned long long int sizeWithBlock = size + BLOCK_SIZE; // Include extra space for metadata.
+	    unsigned int* current;
+	    const unsigned int sizeWithBlock = size + BLOCK_SIZE; // Include extra space for metadata.
 
 
 	    if(caller == DISKREQ){
@@ -1349,15 +1390,15 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		    do {
 
 			// Look for free block with enough space.
-			if (!current->isFree || current->size < size) {
+			if (getBlockIsF(*current) == 0 || getBlockSize(*current) < size) {
 			    continue;
 			}
 
-			else if (current->isFree) {
+			else if (getBlockIsF(*current) == 1) {
 
-			    if (current->size == size) {
+			    if (getBlockSize(*current) == size) {
 				// Mark current block as taken and return it.
-				current->isFree = false;
+        *current = setBlockIsF(*current, 0);
 
 				if(timerSet){
 				    unpause_timer(scd->timer);
@@ -1367,19 +1408,17 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 			    }
 
 			    // If a free block has more than enough space, create new free block to take up the rest of the space.
-			    else if (current->size >= sizeWithBlock) {
+			    else if (getBlockSize(*current) >= sizeWithBlock) {
 
-				Block* newBlock = (Block*) ((char*) current + sizeWithBlock);
+				unsigned int* newBlock = (unsigned int*) ((char*) current + sizeWithBlock);
 
-				newBlock->isFree = true;
-				newBlock->size = current->size - sizeWithBlock;
-				newBlock->next = current->next;
+        *newBlock = setBlockIsF(*newBlock, 1);
+        *newBlock = setBlockSize(*newBlock, (unsigned int) getBlockSize(*current) - sizeWithBlock);
+        *newBlock = setBlockIsNext(*newBlock, getBlockIsNext(*current));
 
-				current->next = newBlock;
-				current->size = size;
-
-				// Mark current block as taken and return it.
-				current->isFree = false;
+				*current = setBlockSize(*current, size);
+        *current = setBlockIsNext(*current, 1);
+        *current = setBlockIsF(*current, 0);
 
 				if(timerSet){
 				    unpause_timer(scd->timer);
@@ -1393,7 +1432,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 			     * so we continue the search. */
 			}
 
-		    } while ((current = current->next) != NULL);
+    } while ((current = getNextBlock(current)) != NULL);
 
 		    // If no suitable free block is found, print an error message and return NULL pointer.
 		    printf("Error at line %d of %s: not enough space is available to allocate.\n", line, file);
@@ -1414,15 +1453,15 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		    do {
 
 			// Look for free block with enough space.
-			if (!current->isFree || current->size < size) {
+			if (getBlockIsF(*current) == 0 || getBlockSize(*current) < size) {
 			    continue;
 			}
 
-			else if (current->isFree) {
+			else if (getBlockIsF(*current) == 1) {
 
-			    if (current->size == size) {
+			    if (getBlockSize(*current) == size) {
 				// Mark current block as taken and return it.
-				current->isFree = false;
+        *current = setBlockIsF(*current, 0);
 
 				if(timerSet){
 				    unpause_timer(scd->timer);
@@ -1432,19 +1471,17 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 			    }
 
 			    // If a free block has more than enough space, create new free block to take up the rest of the space.
-			    else if (current->size >= sizeWithBlock) {
+			    else if (getBlockSize(*current) >= sizeWithBlock) {
 
-				Block* newBlock = (Block*) ((char*) current + sizeWithBlock);
+				unsigned int* newBlock = (unsigned int*) ((char*) current + sizeWithBlock);
 
-				newBlock->isFree = true;
-				newBlock->size = current->size - sizeWithBlock;
-				newBlock->next = current->next;
+        *newBlock = setBlockIsF(*newBlock, 1);
+        *newBlock = setBlockSize(*newBlock, (unsigned int) getBlockSize(*current) - sizeWithBlock);
+        *newBlock = setBlockIsNext(*newBlock, getBlockIsNext(*current));
 
-				current->next = newBlock;
-				current->size = size;
-
-				// Mark current block as taken and return it.
-				current->isFree = false;
+				*current = setBlockSize(*current, size);
+        *current = setBlockIsNext(*current, 1);
+        *current = setBlockIsF(*current, 0);
 
 				if(timerSet){
 				    unpause_timer(scd->timer);
@@ -1458,7 +1495,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 			     * so we continue the search. */
 			}
 
-		    } while ((current = current->next) != NULL);
+    } while ((current = getNextBlock(current)) != NULL);
 
 		    // If no suitable free block is found, print an error message and return NULL pointer.
 		    printf("Error at line %d of %s: not enough space is available to allocate.\n", line, file);
@@ -1497,22 +1534,22 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		  initializePage(0);
 		}
 
-		current = (Block*) userSpace;
-		Block* prev = NULL;
+		current = (unsigned int*) userSpace;
+		unsigned int* prev = NULL;
 
 		do {
 		    prev = current;
 
 		    // Look for free block with enough space.
-		    if (!current->isFree || current->size < size) {
+		    if (getBlockIsF(*current) == 0 || getBlockSize(*current) < size) {
 			continue;
 		    }
 
-		    else if (current->isFree) {
+		    else if (getBlockIsF(*current) == 1) {
 
-			if (current->size == size) {
+			if (getBlockSize(*current) == size) {
 			    // Mark current block as taken and return it.
-			    current->isFree = false;
+          *current = setBlockIsF(*current, 0);
 
 			    if(timerSet){
 				      unpause_timer(scd->timer);
@@ -1522,19 +1559,18 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 			}
 
 			// If a free block has more than enough space, create new free block to take up the rest of the space.
-			else if (current->size >= sizeWithBlock) {
+			else if (getBlockSize(*current) >= sizeWithBlock) {
 
-			    Block* newBlock = (Block*) ((char*) current + sizeWithBlock);
+        unsigned int* newBlock = (unsigned int*) ((char*) current + sizeWithBlock);
 
-			    newBlock->isFree = true;
-			    newBlock->size = current->size - sizeWithBlock;
-			    newBlock->next = current->next;
+        *newBlock = setBlockIsF(*newBlock, 1);
+        *newBlock = setBlockSize(*newBlock, (unsigned int) getBlockSize(*current) - sizeWithBlock);
+        *newBlock = setBlockIsNext(*newBlock, getBlockIsNext(*current));
 
-			    current->next = newBlock;
-			    current->size = size;
+        *current = setBlockSize(*current, size);
+        *current = setBlockIsNext(*current, 1);
+        *current = setBlockIsF(*current, 0);
 
-			    // Mark current block as taken and return it.
-			    current->isFree = false;
 
 			    if(timerSet){
 				      unpause_timer(scd->timer);
@@ -1548,7 +1584,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 			 * so we continue the search. */
 		    }
 
-		} while ((current = current->next) != NULL);
+		} while ((current = getNextBlock(current)) != NULL);
 		//there is no more room left in the current amount of pages so make a new one if possible
 
 		//if theres no room left in memory to make the allocation happen then return NULL
@@ -1566,9 +1602,9 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
         }
 
         //this is if the last block isn't the free block pointing to the rest of the free space
-        int extraBlock = (prev->isFree == false) ? BLOCK_SIZE : 0;
+        int extraBlock = (getBlockIsF(*prev) == 0) ? BLOCK_SIZE : 0;
 
-	int pagesNeeded = isEnoughPages(extraBlock + sizeWithBlock - prev->size);
+	int pagesNeeded = isEnoughPages(extraBlock + sizeWithBlock - getBlockSize(*prev));
 
         if(pagesNeeded > 0){
             if(extraBlock > 0){
@@ -1582,11 +1618,13 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		}
 
                 initializePage(nextPage);
-                Block* bl = (Block*)((char*) userSpace + (nextPage * PAGESIZE));
-                bl->isFree = true;
-                bl->size = PAGESIZE - BLOCK_SIZE;
-                bl->next = NULL;
-                prev->next = bl;
+                unsigned int* bl = (unsigned int*)((char*) userSpace + (nextPage * PAGESIZE));
+                *bl = setBlockIsF(*bl, 1);
+                *bl = setBlockSize(*bl, (unsigned int) PAGESIZE - BLOCK_SIZE);
+                *bl = setBlockIsNext(*bl, 0);
+
+                *prev = setBlockSize(*prev, (unsigned int) (((char*)bl) - ((char*)prev) - BLOCK_SIZE));
+                *prev = setBlockIsNext(*prev, 1);
                 prev = bl;
 
                 gatherPages(pagesNeeded - 1, prev);
@@ -1596,17 +1634,15 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
             current = prev;
 
-            Block* newBlock = (Block*) ((char*) current + sizeWithBlock);
+            unsigned int* newBlock = (unsigned int*) ((char*) current + sizeWithBlock);
 
-            newBlock->isFree = true;
-            newBlock->size = current->size - sizeWithBlock;
-            newBlock->next = current->next;
+            *newBlock = setBlockIsF(*newBlock, 1);
+            *newBlock = setBlockSize(*newBlock, (unsigned int) getBlockSize(*current) - sizeWithBlock);
+            *newBlock = setBlockIsNext(*newBlock, getBlockIsNext(*current));
 
-            current->next = newBlock;
-            current->size = size;
-
-            // Mark current block as taken and return it.
-            current->isFree = false;
+            *current = setBlockSize(*current, size);
+            *current = setBlockIsNext(*current, 1);
+            *current = setBlockIsF(*current, 0);
 
             if(timerSet){
                 unpause_timer(scd->timer);
@@ -1643,7 +1679,7 @@ void mydeallocate(void* ptr, const char* file, int line, int caller) {
 
         //called from library
             if (!inMemSpace(ptr)/*inLibrarySpace(ptr)*/) {
-                printf("Error at line %d of %s: pointer was not created using malloc.\n", line, file);
+                printf("libreq not in mem Error at line %d of %s: pointer was not created using malloc.\n", line, file);
 
                 if(timerSet){
                     unpause_timer(scd->timer);
@@ -1652,9 +1688,9 @@ void mydeallocate(void* ptr, const char* file, int line, int caller) {
                 return;
             }
 
-        Block* block = (Block*) ((char*) ptr - BLOCK_SIZE);
+        unsigned int* block = (unsigned int*) ((char*) ptr - BLOCK_SIZE);
 
-        if (block->isFree) {
+        if (getBlockIsF(*block) == 1) {
             printf("Error at line %d of %s: pointer has already been freed.\n", line, file);
 
             if(timerSet){
@@ -1665,7 +1701,7 @@ void mydeallocate(void* ptr, const char* file, int line, int caller) {
         }
 
         if(!freeAndMerge(block, 0, LIBRARYREQ)) {
-            printf("Error at line %d of %s: pointer was not created using malloc.\n", line, file);
+            printf("lib req no merge Error at line %d of %s: pointer was not created using malloc.\n", line, file);
         }
 
         if(timerSet){
@@ -1678,7 +1714,7 @@ void mydeallocate(void* ptr, const char* file, int line, int caller) {
 
         //called from thread
         if(!inMemSpace(ptr)/*inThreadSpace(ptr)*/){
-            printf("Error at line %d of %s: pointer was not created using malloc.\n", line, file);
+            printf("thread req not in mem Error at line %d of %s: pointer was not created using malloc.\n", line, file);
 
             if(timerSet){
                 unpause_timer(scd->timer);
@@ -1688,8 +1724,8 @@ void mydeallocate(void* ptr, const char* file, int line, int caller) {
         }
 
 
-        Block* block = (Block*) ((char*) ptr - BLOCK_SIZE);
-        if (block->isFree) {
+        unsigned int* block = (unsigned int*) ((char*) ptr - BLOCK_SIZE);
+        if (getBlockIsF(*block) == 1) {
             printf("Error at line %d of %s: pointer has already been freed.\n", line, file);
 
             if(timerSet){
@@ -1704,11 +1740,11 @@ void mydeallocate(void* ptr, const char* file, int line, int caller) {
 
         if(scd == NULL){
 
-            page = findPage(1, block);
+            page = findPage(1);
 
         }else{
 
-            page = findPage(scd->current->threadID->id, block);
+            page = findPage(scd->current->threadID->id);
 
         }
 
@@ -1725,7 +1761,7 @@ void mydeallocate(void* ptr, const char* file, int line, int caller) {
 
 
         if (!freeAndMerge(block, page, THREADREQ)) {
-            printf("Error at line %d of %s: pointer was not created using malloc.\n", line, file);
+            printf("thread req no merge Error at line %d of %s: pointer was not created using malloc.\n", line, file);
 
             if(timerSet){
                 unpause_timer(scd->timer);
@@ -1764,85 +1800,196 @@ void printPages(){
 
     }
 }
-void* test(void* arg){
-    printf("got here\n" );
-    printf("v will be holding %p\n",arg );
-    int* v = (int*) arg;
-    puts("didnt break yet");
-    int x = *v;
-	puts("still workin");
-    printf("in thread x is %d\n",x );
-    int* y = (int*) malloc(sizeof(int) * 40);
+#include <sys/ucontext.h>
+////////////////////////////////////////////////////////////////////////////////
+// Defines
+// Default list size (in terms of number of elements)
+#define LISTSIZE     (32)
 
-	if( y == NULL){
-		printf("oopsie, not enouch spage\n");
-		exit(1);
-	}
+struct pthrarg
+{
+    int *num;
+    int size;
+    my_pthread_mutex_t *mtx;
+};
 
-    puts("mallocd ints");
- //   long long int* h;
-  //  h = (long long int *)malloc(sizeof(long long int) * 5000);
+static int quitting = 0;
 
-//	if( h == NULL){
-//		printf("the longs were too long");
-//		exit(1);
-//	}
+////////////////////////////////////////////////////////////////////////////////
+// Function prototypes
+void * fnsort( void *arg );
+void * fncheck( void *arg );
+void printList( int *p, int size );
+////////////////////////////////////////////////////////////////////////////////
 
+void *fnsort( void *arg )
+{
+    struct pthrarg *pargs;
+    int *num, swap;
+    my_pthread_mutex_t *mtx0, *mtx1;
 
-  //  puts("mallocd longs");
-    *y = x;
-    printf("I am thread %d and my number is %d\n",*v,*y  );
-    //printPages();
-    my_pthread_yield();
-    printf("I am thread %d and my number is %d\n",*v,*y  );
-    free(y);
-    //while (1) {
+    pargs = (struct pthrarg * )arg;
+    num   = pargs->num;
+    mtx0  = pargs->mtx;
+    mtx1  = pargs->mtx+1;
 
-    //}
-    return NULL;
-}
-
-int main(){
-
-  my_pthread_t th[10];
-  my_pthread_t* th1 = malloc(sizeof(my_pthread_t));
-
-    int* x = (int*) malloc(sizeof(int));
-
-int gg = 69;
- // printf("th1's address is %p\n",&th1 );
-  int i;
-  //int* x;
-  //printPages();
-  //my_pthread_create(th1, NULL,test,(void*)&gg);
-  //printPages();
-
-  int* intarr[10];
-for ( i = 0; i < 10; i++) {
-  intarr[i] = (int*) malloc(sizeof(int));
-  *intarr[i] = i;
-}
-
-for ( i = 0; i < 10; i++) {
+    while( !quitting )
+    {
+        my_pthread_mutex_lock( mtx0 );
+	my_pthread_mutex_lock( mtx1 );
 
 
-      printf("x is %d\n",*x );
-      my_pthread_create(&th[i], NULL,test,(void*)intarr[i]);
-      printf("thread #%d made\n",i );
-      printPages();
-  }
+        if( num[1] < num[0] )
+        {
+            swap   = num[0];
+            num[0] = num[1];
+            num[1] = swap;
+        }
 
-  long long int j = 0;
-  while (j < 100000000) {
-    if(j%1000 == 0){
-        //puts("didnt swap yet");
+        my_pthread_mutex_unlock( mtx0 );
+        my_pthread_mutex_unlock( mtx1 );
+
+        my_pthread_yield( );
     }
-    j++;
-  }
-  printPages();
-  *x = 123;
-  printPages();
 
-  printf("gonna exit\n" );
-  return 0;
+    my_pthread_exit( 0 );
+
+    // I will never get here
+    return 0;
+}
+
+void * fncheck( void *arg )
+{
+    struct pthrarg *pargs;
+    int i, j = 0, size, check;
+    my_pthread_mutex_t *mtx;
+
+    pargs = (struct pthrarg * )arg;
+    mtx   = pargs->mtx;
+    size  = pargs->size;
+
+    while( !quitting )
+    {
+        printf( "." );
+        if( (j+1) % 80 == 0 )
+            printf( "\n" );
+
+        //lock all threads
+        for( i = 0; i < size; i++ )
+            my_pthread_mutex_lock( mtx+i );
+
+        check = 1;
+        for( i = 0; i < size-1 && check; i++ )
+        {
+            if( pargs->num[i] > pargs->num[i+1] )
+                check = 0;
+        }
+
+        if( check )
+            printf("\nQuitting...\n");
+        quitting = check;
+
+        //unlock all threads
+        for( i = 0; i < size; i++ )
+            my_pthread_mutex_unlock( mtx+i );
+
+        // j seconds
+        j = j+1;
+#ifndef MYTHREAD
+        sleep( j );
+#endif
+        my_pthread_yield( );
+    }
+
+    my_pthread_exit( 0 );
+
+    return 0;
+}
+
+void printList( int *p, int size )
+{
+    int i;
+    for( i = 0 ; i < size; i++ )
+    {
+        printf( "%4d ", p[i] );
+
+        if( ((i+1) % 10) == 0 )
+            printf("\n");
+    }
+    printf("\n");
+}
+
+int main( int argc, char **argv )
+{
+    int i, *pList = 0, nListSize = LISTSIZE;
+    my_pthread_t *threads, thrcheck;
+    my_pthread_mutex_t *mutexes;
+    struct pthrarg *pthrargs, pthrargcheck;
+
+    if( argc == 2 )
+        nListSize = atoi( argv[1] );
+    nListSize = nListSize > 0 ? nListSize : LISTSIZE;
+
+    // Creating the List of numbers
+    printf( "Number of elements: %d\n", nListSize );
+
+    pList = (int *) malloc( sizeof( int ) * nListSize );
+    for( i = 0; i < nListSize; i++ )
+//        pList[i] = random( ) % (nListSize<<1);   // random list
+        pList[i] = nListSize-i;   // decreasing list  (easier to debug)
+
+    printf( "[BEFORE] The list is NOT sorted:\n" );
+    printList( pList, nListSize );
+
+    threads  = (my_pthread_t *) malloc( sizeof(my_pthread_t) * (nListSize-1) );
+    mutexes  = (my_pthread_mutex_t *)malloc( sizeof(my_pthread_mutex_t) * nListSize );
+    pthrargs = (struct pthrarg *)malloc( sizeof(struct pthrarg) * (nListSize-1) );
+
+    my_pthread_mutex_init( &mutexes[0], 0 );
+    for( i = 0; i < nListSize-1; i++ )
+    {
+        my_pthread_mutex_init( &mutexes[i+1], 0 );
+
+        pthrargs[i].num  = &pList[i];
+        pthrargs[i].mtx  = &mutexes[i];
+        pthrargs[i].size = nListSize;
+        if( my_pthread_create( &threads[i], 0, &fnsort, &pthrargs[i] ) != 0 )
+        {
+            printf( "[FATAL] Could not create thread: %d\n", i );
+            exit( 1 );
+        }
+    }
+
+    pthrargcheck.num  = pList;
+    pthrargcheck.mtx  = mutexes;
+    pthrargcheck.size = nListSize;
+
+    if( my_pthread_create( &thrcheck, 0, &fncheck, &pthrargcheck ) != 0 )
+    {
+        printf( "[FATAL] Could not create thread: fncheck\n" );
+        exit( 1 );
+    }
+
+    ///////////
+    // Waiting the threads to complete the sorting
+    //////////
+    printf( "waiting...\n" );
+
+    for( i = 0; i < nListSize-1; i++ )
+        my_pthread_join( threads[i], 0 );
+    my_pthread_join( thrcheck, 0 );
+
+    for( i = 0; i < nListSize; i++ )
+        my_pthread_mutex_destroy( &mutexes[i] );
+
+    printf( "[AFTER] The list is sorted:\n" );
+    printList( pList, nListSize );
+
+    // Cleaning
+    free( pthrargs );
+    free( mutexes );
+    free( threads );
+    free( pList );
+
+    return 0;
 }
