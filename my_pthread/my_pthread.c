@@ -74,12 +74,6 @@ typedef struct mutex_list_ {
   struct my_pthread_mutex_t_ *head;
 }mutex_list;
 
-typedef struct Block {
-    bool isFree;
-    unsigned int size; // We use short instead of size_t to save space
-    struct Block* next;
-} Block;
-
 /******************globals***********************/
 static scheduler* scd = NULL;
 static bool timerSet = false;
