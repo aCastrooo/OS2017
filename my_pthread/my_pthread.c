@@ -111,7 +111,7 @@ unsigned int setBlockSize(unsigned int block, unsigned int size){
 }
 
 unsigned int getBlockSize(unsigned int block){
-  return (block & 0xFFFFFF00) >> 8;
+  return (block >> 8) & 0xFFFFFF00;
 }
 
 unsigned int setBlockIsNext(unsigned int block, unsigned int isNext){
@@ -121,7 +121,7 @@ unsigned int setBlockIsNext(unsigned int block, unsigned int isNext){
 }
 
 unsigned int getBlockIsNext(unsigned int block){
-  return (block & 0x000000F0) >> 4;
+  return (block >> 4) & 0x000000F0;
 }
 
 unsigned int setBlockIsF(unsigned int block, unsigned int isF){
@@ -153,7 +153,7 @@ unsigned int setPagePgID(unsigned int pg, unsigned int id){
 
 unsigned int getPagePgID(unsigned int pg){
 
-    return (pg & 0xFFFF0000) >> 16;
+    return (pg >> 16) & 0xFFFF0000;
 
 }
 
@@ -167,7 +167,7 @@ unsigned int setPageThID(unsigned int pg, unsigned int id){
 
 unsigned int getPageThID(unsigned int pg){
 
-    return (pg & 0x0000FF00) >> 8;
+    return (pg >> 8) & 0x0000FF00;
 
 }
 
