@@ -80,10 +80,10 @@ static bool timerSet = false;
 static int currMutexID = 0;
 static mutex_list *mutexList = NULL;
 
-static const unsigned long long int BLOCK_SIZE = sizeof(unsigned int);
-static const long long int MAX_MEMORY = 8388608;
-static const long long int DISK_MEMORY = 16777216;
-static const long long int STACK_SIZE = 18192;
+static const unsigned short BLOCK_SIZE = sizeof(unsigned int);
+static const unsigned int MAX_MEMORY = 8388608;
+static const unsigned int DISK_MEMORY = 16777216;
+static const unsigned short STACK_SIZE = 18192;
 static char* memory;
 static char* disk;
 static bool firstMalloc = true;
@@ -111,7 +111,7 @@ unsigned int setBlockSize(unsigned int block, unsigned int size){
 }
 
 unsigned int getBlockSize(unsigned int block){
-  return (block >> 8) & 0xFFFFFF00;
+  return (block >> 8) & 0x00FFFFFF;
 }
 
 unsigned int setBlockIsNext(unsigned int block, unsigned int isNext){
@@ -121,7 +121,7 @@ unsigned int setBlockIsNext(unsigned int block, unsigned int isNext){
 }
 
 unsigned int getBlockIsNext(unsigned int block){
-  return (block >> 4) & 0x000000F0;
+  return (block >> 4) & 0x0000000F;
 }
 
 unsigned int setBlockIsF(unsigned int block, unsigned int isF){
@@ -140,7 +140,7 @@ unsigned int* getNextBlock(unsigned int* block){
     return NULL;
   }
   unsigned int size = getBlockSize(*block);
-  return (unsigned int*)block + size;
+  return (unsigned int*)((char*)block + size + BLOCK_SIZE);
 }
 
 unsigned int setPagePgID(unsigned int pg, unsigned int id){
@@ -153,7 +153,7 @@ unsigned int setPagePgID(unsigned int pg, unsigned int id){
 
 unsigned int getPagePgID(unsigned int pg){
 
-    return (pg >> 16) & 0xFFFF0000;
+    return (pg >> 16) & 0x0000FFFF;
 
 }
 
@@ -167,7 +167,7 @@ unsigned int setPageThID(unsigned int pg, unsigned int id){
 
 unsigned int getPageThID(unsigned int pg){
 
-    return (pg >> 8) & 0x0000FF00;
+    return (pg >> 8) & 0x000000FF;
 
 }
 
@@ -185,8 +185,19 @@ unsigned int getPageIsF(unsigned int pg){
 
 }
 
+void freePages(){
 
-//pause the timer for use in "blocking calls" so that if a
+  int i;
+  for(i = 0; i < (MAX_MEMORY / PAGESIZE) - LIBPAGES; i++){
+    if(getPageThID(pages[i]) == scd->current->threadID->id){
+      mprotect(userSpace + (PAGESIZE * i), PAGESIZE, PROT_READ | PROT_WRITE);
+      pages[i] = setPageIsF(pages[i], 1);
+    }
+  }
+
+}
+
+//pause the timer for 1use in "blocking calls" so that if a
 //function is using shared data (scheduler/queues/etc) it doesnt
 //fuck with it
 void pause_timer(struct itimerval* timer){
@@ -590,6 +601,7 @@ void schedule(){
                 jptr = jptr->next;
             }
         }
+        freePages();
     }else if(scd->current->status == JOINING){
 
         //current is waiting on another running thread to finish
@@ -631,22 +643,9 @@ void timerHandler(int signum){
     schedule();
 }
 
-void freePages(){
-
-  int i;
-  for(i = 0; i < (MAX_MEMORY / PAGESIZE) - LIBPAGES; i++){
-    if(getPageThID(pages[i]) == scd->current->threadID->id){
-      mprotect(userSpace + (PAGESIZE * i), PAGESIZE, PROT_READ | PROT_WRITE);
-      pages[i] = setPageIsF(pages[i], 1);
-    }
-  }
-
-}
-
 void terminationHandler(){
 
       scd->current->status = EXITING;
-      freePages();
       schedule();
 
 }
@@ -799,10 +798,10 @@ void my_pthread_exit(void * value_ptr){
     if(scd == NULL){
         return;
     }
-
+    pause_timer(scd->timer);
     scd->current->status = EXITING;
     scd->current->threadID->exitArg = value_ptr;
-    freePages();
+    unpause_timer(scd->timer);
 
     schedule();
 }
@@ -812,7 +811,7 @@ int my_pthread_join(my_pthread_t thread, void ** value_ptr){
     if(scd == NULL){
         return 1;
     }
-
+    pause_timer(scd->timer);
 
     my_pthread_t* ptr = scd->threads->head;
     while (ptr != NULL) {
@@ -826,25 +825,26 @@ int my_pthread_join(my_pthread_t thread, void ** value_ptr){
                   *value_ptr = ptr->exitArg;
 
                 }
-
+                unpause_timer(scd->timer);
                 return 0;
             }else{
                 //thread hasn't died yet, put this thread on a waitlist until that thread dies
-                pause_timer(scd->timer);
                 scd->current->status = JOINING;
                 scd->current->joinee = ptr;
+                unpause_timer(scd->timer);
                 schedule();
-
+                pause_timer(scd->timer);
                 if(value_ptr != NULL){
                   *value_ptr = ptr->exitArg;
 
                 }
-
+                unpause_timer(scd->timer);
                 return 0;
             }
         }
         ptr = ptr->next;
     }
+    unpause_timer(scd->timer);
     return 1;
 }
 
@@ -958,11 +958,13 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 	static void alignPages(){
 
 	    int thread = (scd == NULL) ? 1 : scd->current->threadID->id;
-
+      int realIndex;
 	    int i;
 	    for (i = 0; i < (MAX_MEMORY / PAGESIZE) - LIBPAGES; i++) {
     		  if(getPageThID(pages[i]) == thread && i != getPagePgID(pages[i])){
-    		      pageSwap(i, getPagePgID(pages[i]));
+              realIndex = getPagePgID(pages[i]);
+              pageSwap(i, realIndex);
+              mprotect(userSpace + (PAGESIZE * realIndex), PAGESIZE, PROT_READ | PROT_WRITE);
     		  }
       }
 
@@ -971,7 +973,9 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 	    for(i = 0; i < (DISK_MEMORY / PAGESIZE) - 100; i++){
       		if(getPageIsF(diskPages[i]) == 0){
         			if(getPageThID(diskPages[i]) == thread && i != getPagePgID(diskPages[i])){
-        				swapToMemFromDisk(i, getPagePgID(diskPages[i]));
+                realIndex = getPagePgID(diskPages[i]);
+                swapToMemFromDisk(i, realIndex);
+                mprotect(userSpace + (PAGESIZE * realIndex), PAGESIZE, PROT_READ | PROT_WRITE);
         			}
       		}
 
@@ -1020,7 +1024,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		static void initializeRootDisk() {
         rootBlockD = (unsigned int*) disk;
         *rootBlockD = setBlockIsF(*rootBlockD, 1);
-        *rootBlockD = setBlockSize(*rootBlockD, (unsigned int) ((4096 * PAGESIZE) - BLOCK_SIZE));
+        *rootBlockD = setBlockSize(*rootBlockD, (unsigned int) ((100 * PAGESIZE) - BLOCK_SIZE));
         *rootBlockD = setBlockIsNext(*rootBlockD, 0);
 
 		    firstMalloc = false;
@@ -1039,12 +1043,13 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		    unsigned int pg = pages[index];
 
         if(scd != NULL){
-          pg = setPagePgID(pg, scd->current->threadID->pageNum++);
-          pg = setPageThID(pg, scd->current->threadID->id);
-        }
-        else{
           pg = setPagePgID(pg, mainPageNum++);
           pg = setPageThID(pg, 1);
+
+        }
+        else{
+          pg = setPagePgID(pg, scd->current->threadID->pageNum++);
+          pg = setPageThID(pg, scd->current->threadID->id);
         }
 
         pg = setPageIsF(pg, 0);
@@ -1110,9 +1115,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 					mprotect(userSpace + (PAGESIZE * index), PAGESIZE, PROT_READ | PROT_WRITE);
 
-          unsigned int temp = pages[i];
           pages[i] = pages[index];
-          pages[index] = temp;
 
 					memcpy(userSpace + (PAGESIZE * i), userSpace + (PAGESIZE * index), PAGESIZE);
 					pages[index] = setPageIsF(pages[index], 1);
@@ -1136,11 +1139,9 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 				mprotect(userSpace + (PAGESIZE * index), PAGESIZE, PROT_READ | PROT_WRITE);
 
-        unsigned int temp = diskPages[i];
         diskPages[i] = pages[index];
-        pages[index] = temp;
 
-				memcpy(disk + (PAGESIZE * i), userSpace + (PAGESIZE * index), PAGESIZE);
+				memcpy(userSpaceDisk + (PAGESIZE * i), userSpace + (PAGESIZE * index), PAGESIZE);
         pages[index] = setPageIsF(pages[index], 1);
 
 				return true;
@@ -1617,7 +1618,6 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
                 *bl = setBlockSize(*bl, (unsigned int) PAGESIZE - BLOCK_SIZE);
                 *bl = setBlockIsNext(*bl, 0);
 
-                *prev = setBlockSize(*prev, (unsigned int) (((char*)bl) - ((char*)prev) - BLOCK_SIZE));
                 *prev = setBlockIsNext(*prev, 1);
                 prev = bl;
 
