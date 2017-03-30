@@ -483,6 +483,18 @@ void protectAllPages(int threadID){
 }
 
 
+void freePages(){
+
+  int i;
+  for(i = 0; i < (MAX_MEMORY / PAGESIZE) - LIBPAGES; i++){
+    if(pages[i]->threadID == scd->current->threadID->id){
+      mprotect(userSpace + (PAGESIZE * i), PAGESIZE, PROT_READ | PROT_WRITE);
+      pages[i]->isFree = true;
+    }
+  }
+
+}
+
 //scheduler context function
 void schedule(){
 
@@ -565,17 +577,6 @@ void timerHandler(int signum){
     schedule();
 }
 
-void freePages(){
-
-  int i;
-  for(i = 0; i < (MAX_MEMORY / PAGESIZE) - LIBPAGES; i++){
-    if(pages[i]->threadID == scd->current->threadID->id){
-      mprotect(userSpace + (PAGESIZE * i), PAGESIZE, PROT_READ | PROT_WRITE);
-      pages[i]->isFree = true;
-    }
-  }
-
-}
 
 void terminationHandler(){
 
@@ -899,7 +900,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
       		if(pages[i]->threadID == thread && i != pages[i]->pageID){
               realIndex = pages[i]->pageID;
       		    pageSwap(i, realIndex);
-              mprotect(userSpace + (PAGESIZE * realIndex), PAGESIZE, PROT_READ | PROT_WRITE);
+              //mprotect(userSpace + (PAGESIZE * realIndex), PAGESIZE, PROT_READ | PROT_WRITE);
       		}
 	    }
 
@@ -910,7 +911,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
       			if(diskPages[i]->threadID == thread && i != diskPages[i]->pageID){
               realIndex = diskPages[i]->pageID;
               swapToMemFromDisk(i, realIndex);
-              mprotect(userSpace + (PAGESIZE * realIndex), PAGESIZE, PROT_READ | PROT_WRITE);
+              //mprotect(userSpace + (PAGESIZE * realIndex), PAGESIZE, PROT_READ | PROT_WRITE);
       			}
       		}
 
@@ -958,7 +959,7 @@ puts("finished aligning");
 		static void initializeRootDisk() {
 		    rootBlockD = (Block*) disk;
 		    rootBlockD->isFree = true;
-		    rootBlockD->size = (4096 * PAGESIZE) - BLOCK_SIZE;
+		    rootBlockD->size = (100 * PAGESIZE) - BLOCK_SIZE;
 		    rootBlockD->next = NULL;
 		    firstMalloc = false;
 		}
@@ -1031,9 +1032,9 @@ puts("finished aligning");
 			for(i = 0; i < (MAX_MEMORY / PAGESIZE) - LIBPAGES; i++){
 				if(pages[i]->isFree){
 
-				if(i == index){
-					return true;
-				}
+  				if(i == index){
+  					return true;
+  				}
 
 					mprotect(userSpace + (PAGESIZE * index), PAGESIZE, PROT_READ | PROT_WRITE);
 
@@ -1057,9 +1058,6 @@ puts("finished aligning");
 
     			if(diskPages[i] != NULL){
         			if(diskPages[i]->isFree){
-          				if(i == index){
-          					     return true;
-          				}
 
         				mprotect(userSpace + (PAGESIZE * index), PAGESIZE, PROT_READ | PROT_WRITE);
 
@@ -1078,17 +1076,17 @@ puts("finished aligning");
 	    int nextPage;
 
 	    while(pagesNeeded > 0){
-		nextPage = (scd == NULL) ? mainPageNum : scd->current->threadID->pageNum;
-		if(moveToFreeSpace(nextPage) != true){
-			if(moveToDiskSpace(nextPage) != true){
-				puts("Out of disk and memory space.");
-				return;
-			}
-		}
-		initializePage(nextPage);
-		lastBlock->size += PAGESIZE;
+      		nextPage = (scd == NULL) ? mainPageNum : scd->current->threadID->pageNum;
+      		if(moveToFreeSpace(nextPage) != true){
+        			if(moveToDiskSpace(nextPage) != true){
+          				puts("Out of disk and memory space.");
+          				return;
+        			}
+      		}
+      		initializePage(nextPage);
+      		lastBlock->size += PAGESIZE;
 
-		pagesNeeded--;
+      		pagesNeeded--;
 	    }
 
 	}
@@ -1447,8 +1445,8 @@ printf("bouta swap from disk\n" );
 			//do move to disk stuff and if thats full then return NULL
 
         			if(moveToDiskSpace(0) != true){
-        				puts("could not allocate.");
-        				return NULL;
+          				puts("could not allocate.");
+          				return NULL;
         			}
 
 		     }
@@ -1534,10 +1532,10 @@ printf("bouta swap from disk\n" );
                 int nextPage = (scd == NULL) ? mainPageNum : scd->current->threadID->pageNum;
 
 		if(moveToFreeSpace(nextPage) != true){
-			if(moveToDiskSpace(nextPage) != true){
-				puts("Disk and memory full. Cannot allocate anymore.");
-				return NULL;
-			}
+  			if(moveToDiskSpace(nextPage) != true){
+    				puts("Disk and memory full. Cannot allocate anymore.");
+    				return NULL;
+  			}
 		}
 
                 initializePage(nextPage);
@@ -1755,7 +1753,7 @@ void* test(void* arg){
     printf("I am thread %d and my number is %d\n",*v,*y  );
     //printPages();
     my_pthread_yield();
-    malloc(4);
+    malloc(1);
     printf("I am thread %d and my number is %d\n",*v,*y  );
     free(y);
     //while (1) {
