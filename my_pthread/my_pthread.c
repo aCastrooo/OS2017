@@ -590,7 +590,6 @@ void schedule(){
         enQ(scd->runQ[requeuepriority], scd->current);
         scd->current->status = NEUTRAL;
     }else if(scd->current->status == EXITING){
-        //freePages();
         threadDied(scd->current->threadID);
 
         node* jptr = scd->joinList->head;
