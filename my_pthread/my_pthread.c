@@ -79,19 +79,20 @@ static scheduler* scd = NULL;
 static bool timerSet = false;
 static int currMutexID = 0;
 static mutex_list *mutexList = NULL;
+FILE *swpFile;
 
 static const unsigned short BLOCK_SIZE = sizeof(unsigned int);
 static const unsigned int MAX_MEMORY = 8388608;
 static const unsigned int DISK_MEMORY = 16777216;
 static const unsigned short STACK_SIZE = 18192;
 static char* memory;
-static char* disk;
+//static char* disk;
 static bool firstMalloc = true;
 static unsigned int* rootBlock;
 static unsigned int* rootBlockD;
 
 static char* userSpace = NULL;
-static char* userSpaceDisk = NULL;
+//static char* userSpaceDisk = NULL;
 static int mainPageNum = 0;
 static unsigned int* pages;//this will be the array of pages in memory block
 static unsigned int* diskPages;
@@ -178,6 +179,14 @@ unsigned int getPageIsF(unsigned int pg){
     return pg & 0x000000FF;
 
 }
+
+
+//On exit, close the file
+void closeFile(){
+	fclose(swpFile);
+}
+
+
 
 
 //pause the timer for 1use in "blocking calls" so that if a
@@ -923,14 +932,24 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 	void swapToMemFromDisk(int inMem, int fromDisk){
 
 		char temp[PAGESIZE];
-
+		//what is coming from the file
+		char *fromFile;
+    swpFile = fopen("swpfile", "w+");
+		//move to the part of the file where the page is stored
+		fseek(swpFile, (PAGESIZE * fromDisk), 0);
+		//swpFile = fopen("swpfile", "r+");
+		fread(fromFile, PAGESIZE, 1, swpFile);
 		//un-protect the page in memory that will be swapped
 		mprotect(userSpace + (PAGESIZE * inMem), PAGESIZE, PROT_READ | PROT_WRITE);
 
 		// swap mem
-		memcpy(temp, userSpaceDisk + (PAGESIZE * fromDisk), PAGESIZE);
-		memcpy(userSpaceDisk + (PAGESIZE * fromDisk), userSpace + (PAGESIZE * inMem), PAGESIZE);
-		memcpy(userSpace + (PAGESIZE * inMem), temp, PAGESIZE);
+		memcpy(temp, fromFile, PAGESIZE);
+		memcpy(fromFile, userSpace + (PAGESIZE * inMem), PAGESIZE);
+		memcpy(fromFile, temp, PAGESIZE);
+
+		//Write to the new spot in the file
+		fseek(swpFile, (PAGESIZE * fromDisk), 0);
+		fwrite(fromFile, PAGESIZE, 1, swpFile);
 
 		// swap page table data
 		unsigned int tempPage;
@@ -942,6 +961,8 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 		//protect the pages
 		mprotect(userSpace + (PAGESIZE * inMem), PAGESIZE, PROT_NONE);
+
+    fclose(swpFile);
 	}
 
 
@@ -1006,7 +1027,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		    firstMalloc = false;
 		}
 
-
+/*
 		static void initializeRootDisk() {
         rootBlockD = (unsigned int*) disk;
         *rootBlockD = setBlockIsF(*rootBlockD, 1);
@@ -1017,6 +1038,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		}
 
 
+*/
 
 
 
@@ -1121,21 +1143,25 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
   static bool moveToDiskSpace(int index) {
 			int i;
-			for(i = 0; i < (DISK_MEMORY / PAGESIZE) - 100; i++){
-
+			for(i = 0; i < (DISK_MEMORY / PAGESIZE); i++){
+      swpFile = fopen("swpfile", "w+");
 			if(getPageIsF(diskPages[i]) == 1){
+       				mprotect(userSpace + (PAGESIZE * index), PAGESIZE, PROT_READ | PROT_WRITE);
 
+        			diskPages[i] = pages[index];
 
-        				mprotect(userSpace + (PAGESIZE * index), PAGESIZE, PROT_READ | PROT_WRITE);
+				fseek(swpFile, (PAGESIZE * i), 0);
+				char *toFile = NULL;
 
-        diskPages[i] = pages[index];
+				memcpy(toFile, userSpace + (PAGESIZE * index), PAGESIZE);
 
-				memcpy(userSpaceDisk + (PAGESIZE * i), userSpace + (PAGESIZE * index), PAGESIZE);
-        pages[index] = setPageIsF(pages[index], 1);
-
+				fwrite(toFile, PAGESIZE, 1, swpFile);
+			  pages[index] = setPageIsF(pages[index], 1);
+        fclose(swpFile);
 				return true;
 			}
 		}
+    fclose(swpFile);
 		return false;
 	}
 
@@ -1168,11 +1194,11 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		//printf("Got SIGSEGV at address: 0x%lx\n", (long) si->si_addr);
 		bool pageSwapped = false;
 		char *addr = si->si_addr;
-		if((addr > memory + MAX_MEMORY || addr < memory) && (addr < userSpaceDisk || addr > disk + DISK_MEMORY)){
+		if((addr > memory + MAX_MEMORY || addr < memory)){
 			puts("trying to access out of bounds stuff.\nexiting\n");
 			exit(1);
 		}
-		else if((addr < userSpace && addr >= memory) && (addr < userSpaceDisk && addr >= disk )){
+		else if((addr < userSpace && addr >= memory)){
 			puts("trying to access library stuff.\nexiting\n");
 			exit(1);
 		}
@@ -1181,7 +1207,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 			int index = (int)diff/PAGESIZE;
 			int i;
 			for(i = 0; i < (MAX_MEMORY / PAGESIZE) - LIBPAGES; i++){
-        if(getPageThID(pages[i]) == scd->current->threadID->id && getPagePgID(pages[i]) == index){
+			        if(getPageThID(pages[i]) == scd->current->threadID->id && getPagePgID(pages[i]) == index){
 
 					if(i != index){
 						pageSwap(index, i);
@@ -1200,7 +1226,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 				}
 				return;
 			}
-			for(i = 0; i < (DISK_MEMORY / PAGESIZE) - 100; i++){
+			for(i = 0; i < (DISK_MEMORY / PAGESIZE); i++){
 				if(getPageIsF(diskPages[i]) == 0){
 					if(getPageThID(diskPages[i]) == scd->current->threadID->id && getPagePgID(diskPages[i]) == index){
 
@@ -1325,24 +1351,29 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 	    // If it is the first time this function has been called, then initialize the root block.
 	    if (firstMalloc) {
       		posix_memalign((void **)&memory, PAGESIZE, MAX_MEMORY);
-      		posix_memalign((void **)&disk, PAGESIZE, DISK_MEMORY);
 
       		userSpace = &memory[LIBPAGES * PAGESIZE];
-      		userSpaceDisk = &disk[100 * PAGESIZE];
 
-      		initializeRootDisk();
-      		int i;
-      		diskPages = (unsigned int*)myallocate(sizeof(unsigned int) * ((DISK_MEMORY / PAGESIZE) - 100), __FILE__, __LINE__, DISKREQ);
-
-      		// malloc for the disk table
-      		for ( i = 0; i < (DISK_MEMORY / PAGESIZE) - 100; i++) {
-            diskPages[i] = 1;
-      		}
-
+		      //init swap file
+          //this keeps looping? it honestly makes no sense
+          swpFile = fopen("swpfile", "w+");
+          puts("init'ed the swp");
+          //atexit(closeFile);
+          //set the swap size 16MB
+          ftruncate(fileno(swpFile), 16777216);
+          fclose(swpFile);
+	        puts("truncated done");
 
       		setUpSignal();
       		initializeRoot();
 
+          diskPages = (unsigned int*)myallocate(sizeof(unsigned int) * ((DISK_MEMORY / PAGESIZE)), __FILE__, __LINE__, LIBRARYREQ);
+          puts("diskPages mallocd");
+          // malloc for the disk table
+          int i;
+          for ( i = 0; i < (DISK_MEMORY / PAGESIZE); i++) {
+                diskPages[i] = 1;
+          }
 
       		//allocate memory for the page table which will be addressed as an array
       		//each index in this array will translate to the memory block as &(where user space starts) + (i * PAGESIZE)
@@ -1351,6 +1382,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
       		for ( i = 0; i < (MAX_MEMORY / PAGESIZE) - LIBPAGES; i++) {
       			  pages[i] = 1;
       		}
+          printf("firstmalloc = %d", firstMalloc);
 	    }
 
 	    unsigned int* current;
@@ -1758,4 +1790,95 @@ void mydeallocate(void* ptr, const char* file, int line, int caller) {
     }
 
     return;
+}
+
+void* test(void* arg) {
+	printf("got here\n");
+	printf("v will be holding %p\n", arg);
+	int* v = (int*)arg;
+	puts("didnt break yet");
+	int x = *v;
+	puts("still workin");
+	printf("in thread x is %d\n", x);
+	int* y = (int*)malloc(sizeof(int) * 400000);
+
+	if (y == NULL) {
+		printf("oopsie, not enouch spage\n");
+		exit(1);
+
+	}
+
+		puts("mallocd ints");
+	 //   long long int* h;
+		  //  h = (long long int *)malloc(sizeof(long long int) * 5000);
+
+		//	if( h == NULL){
+		//		printf("the longs were too long");
+		//		exit(1);
+		//	}
+
+
+		  //  puts("mallocd longs");
+		*y = x;
+	printf("I am thread %d and my number is %d\n", *v, *y);
+	    //printPages();
+		my_pthread_yield();
+	malloc(1);
+	printf("I am thread %d and my number is %d\n", *v, *y);
+	    //free(y);
+		    //while (1) {
+
+		    //}
+		return NULL;
+
+}
+
+int main() {
+
+	my_pthread_t th[10];
+	my_pthread_t* th1 = malloc(sizeof(my_pthread_t));
+
+	int* x = (int*)malloc(sizeof(int) * 150);
+
+	int gg = 69;
+	printf("th1's address is %p\n",&th1 );
+	int i;
+	  //int* x;
+		  //printPages();
+		  //my_pthread_create(th1, NULL,test,(void*)&gg);
+		  //printPages();
+
+	int* intarr[10];
+	for (i = 0; i < 10; i++) {
+		intarr[i] = (int*)malloc(sizeof(int));
+		*intarr[i] = i;
+
+	}
+
+	for (i = 0; i < 10; i++) {
+
+
+		printf("x is %d\n", *x);
+		my_pthread_create(&th[i], NULL, test, (void*)intarr[i]);
+		printf("thread #%d made\n", i);
+		//printPages();
+
+	}
+
+	long long int j = 0;
+	while (j < 100000000) {
+		if (j % 1000 == 0) {
+		        //puts("didnt swap yet");
+
+		}
+		j++;
+
+	}
+	//printPages();
+	*x = 123;
+	//printPages();
+
+		printf("gonna exit\n");
+	return 0;
+
 }
