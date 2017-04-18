@@ -181,6 +181,18 @@ unsigned int getPageIsF(unsigned int pg){
 }
 
 
+//deletes the swpfile on program exit
+void deleteFile(){
+	int done = remove(swpFile);
+	if(!done){
+		puts("file deleted");
+	}
+}
+
+
+
+
+
 //pause the timer for 1use in "blocking calls" so that if a
 //function is using shared data (scheduler/queues/etc) it doesnt
 //fuck with it
@@ -892,9 +904,9 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 	// swaps two pages in memory and in the page table that corresponds to those pages
 	void pageSwap(int initial, int swapTo){
-    if(initial == swapTo){
-        return;
-    }
+    		if(initial == swapTo){
+        		return;
+    		}
 
 		char temp[PAGESIZE];
 
@@ -926,9 +938,9 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		char temp[PAGESIZE];
 		//what is coming from the file
 		char *fromFile;
-    swpFile = fopen("swpfile", "w+");
+    		swpFile = fopen("swpfile", "w+");
 		//move to the part of the file where the page is stored
-		fseek(swpFile, (PAGESIZE * fromDisk), 0);
+		fseek(swpFile, (PAGESIZE * fromDisk), SEEK_SET);
 		//swpFile = fopen("swpfile", "r+");
 		fread(fromFile, PAGESIZE, 1, swpFile);
 		//un-protect the page in memory that will be swapped
@@ -940,7 +952,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		memcpy(userSpace + (PAGESIZE * inMem), temp, PAGESIZE);
 
 		//Write to the new spot in the file
-		fseek(swpFile, (PAGESIZE * fromDisk), 0);
+		fseek(swpFile, (PAGESIZE * fromDisk), SEEK_SET);
 		fwrite(fromFile, PAGESIZE, 1, swpFile);
 
 		// swap page table data
@@ -954,7 +966,8 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		//protect the pages
 		mprotect(userSpace + (PAGESIZE * inMem), PAGESIZE, PROT_NONE);
 
-    fclose(swpFile);
+    		fclose(swpFile);
+		swpFile = -1;
 	}
 
 
@@ -968,7 +981,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
          	     pageSwap(i, realIndex);
          	     mprotect(userSpace + (PAGESIZE * realIndex), PAGESIZE, PROT_READ | PROT_WRITE);
     		  }
-      }
+      	    }
 
 
 	    //once disk is in place, now check disk if there are any pages in disk to be aligned into memory
@@ -1142,7 +1155,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
         			diskPages[i] = pages[index];
 	
-				fseek(swpFile, (PAGESIZE * i), 0);
+				fseek(swpFile, (PAGESIZE * i), SEEK_SET);
 				char toFile[PAGESIZE];
 	
 				memcpy(toFile, userSpace + (PAGESIZE * index), PAGESIZE);
@@ -1150,10 +1163,12 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 				fwrite(toFile, PAGESIZE, 1, swpFile);		
 				pages[index] = setPageIsF(pages[index], 1);
        				fclose(swpFile);
+				swpFile = -1;
 				return true;
 			}
 		}
     		fclose(swpFile);
+		swpFile = -1;
 		return false;
 	}
 
@@ -1340,6 +1355,10 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		      pause_timer(scd->timer);
 	    }
 
+	    // deletes the swpfile at the end of program execution
+	    atexit(deleteFile);
+
+
 	    // If it is the first time this function has been called, then initialize the root block.
 	    if (firstMalloc) {
       		posix_memalign((void **)&memory, PAGESIZE, MAX_MEMORY);
@@ -1352,8 +1371,9 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
           puts("init'ed the swp");
           
           //set the swap size 16MB
-          ftruncate(fileno(swpFile), 16777216);
+          ftruncate(fileno(swpFile), DISK_MEMORY);
           fclose(swpFile);
+		swpFile = -1;
 	        puts("truncated done");
 
       		setUpSignal();
