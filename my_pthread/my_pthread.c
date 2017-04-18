@@ -181,14 +181,6 @@ unsigned int getPageIsF(unsigned int pg){
 }
 
 
-//On exit, close the file
-void closeFile(){
-	fclose(swpFile);
-}
-
-
-
-
 //pause the timer for 1use in "blocking calls" so that if a
 //function is using shared data (scheduler/queues/etc) it doesnt
 //fuck with it
@@ -945,7 +937,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		// swap mem
 		memcpy(temp, fromFile, PAGESIZE);
 		memcpy(fromFile, userSpace + (PAGESIZE * inMem), PAGESIZE);
-		memcpy(fromFile, temp, PAGESIZE);
+		memcpy(userSpace + (PAGESIZE * inMem), temp, PAGESIZE);
 
 		//Write to the new spot in the file
 		fseek(swpFile, (PAGESIZE * fromDisk), 0);
@@ -968,25 +960,25 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 	static void alignPages(){
 	    int thread = (scd == NULL) ? 1 : scd->current->threadID->id;
-      int realIndex;
+    	    int realIndex;
 	    int i;
 	    for (i = 0; i < (MAX_MEMORY / PAGESIZE) - LIBPAGES; i++) {
     		  if(getPageThID(pages[i]) == thread && i == getPagePgID(pages[i])){
-              realIndex = getPagePgID(pages[i]);
-              pageSwap(i, realIndex);
-              mprotect(userSpace + (PAGESIZE * realIndex), PAGESIZE, PROT_READ | PROT_WRITE);
+         	     realIndex = getPagePgID(pages[i]);
+         	     pageSwap(i, realIndex);
+         	     mprotect(userSpace + (PAGESIZE * realIndex), PAGESIZE, PROT_READ | PROT_WRITE);
     		  }
       }
 
 
 	    //once disk is in place, now check disk if there are any pages in disk to be aligned into memory
-	    for(i = 0; i < (DISK_MEMORY / PAGESIZE) - 100; i++){
+	    for(i = 0; i < (DISK_MEMORY / PAGESIZE); i++){
       		if(getPageIsF(diskPages[i]) == 0){
-        			if(getPageThID(diskPages[i]) == thread && i == getPagePgID(diskPages[i])){
-                realIndex = getPagePgID(diskPages[i]);
-                swapToMemFromDisk(i, realIndex);
-                mprotect(userSpace + (PAGESIZE * realIndex), PAGESIZE, PROT_READ | PROT_WRITE);
-        			}
+        		if(getPageThID(diskPages[i]) == thread && i == getPagePgID(diskPages[i])){
+                		realIndex = getPagePgID(diskPages[i]);
+                		swapToMemFromDisk(i, realIndex);
+               			mprotect(userSpace + (PAGESIZE * realIndex), PAGESIZE, PROT_READ | PROT_WRITE);
+        		}
       		}
 
 	    }
@@ -1003,7 +995,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 			}
 		    }
 
-		    for(i = 0; i < (DISK_MEMORY / PAGESIZE) - 100; i++){
+		    for(i = 0; i < (DISK_MEMORY / PAGESIZE); i++){
 				if(getPageIsF(diskPages[i]) == 1){
 					freeCount++;
 				}
@@ -1142,26 +1134,26 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 
   static bool moveToDiskSpace(int index) {
-			int i;
-			for(i = 0; i < (DISK_MEMORY / PAGESIZE); i++){
-      swpFile = fopen("swpfile", "w+");
+		int i;
+		swpFile = fopen("swpfile", "w+");
+		for(i = 0; i < (DISK_MEMORY / PAGESIZE); i++){
 			if(getPageIsF(diskPages[i]) == 1){
        				mprotect(userSpace + (PAGESIZE * index), PAGESIZE, PROT_READ | PROT_WRITE);
 
         			diskPages[i] = pages[index];
-
+	
 				fseek(swpFile, (PAGESIZE * i), 0);
-				char *toFile = NULL;
-
+				char toFile[PAGESIZE];
+	
 				memcpy(toFile, userSpace + (PAGESIZE * index), PAGESIZE);
 
-				fwrite(toFile, PAGESIZE, 1, swpFile);
-			  pages[index] = setPageIsF(pages[index], 1);
-        fclose(swpFile);
+				fwrite(toFile, PAGESIZE, 1, swpFile);		
+				pages[index] = setPageIsF(pages[index], 1);
+       				fclose(swpFile);
 				return true;
 			}
 		}
-    fclose(swpFile);
+    		fclose(swpFile);
 		return false;
 	}
 
@@ -1354,11 +1346,11 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
       		userSpace = &memory[LIBPAGES * PAGESIZE];
 
-		      //init swap file
-          //this keeps looping? it honestly makes no sense
+	        //init swap file
+          
           swpFile = fopen("swpfile", "w+");
           puts("init'ed the swp");
-          //atexit(closeFile);
+          
           //set the swap size 16MB
           ftruncate(fileno(swpFile), 16777216);
           fclose(swpFile);
