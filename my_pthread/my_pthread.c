@@ -5,6 +5,14 @@
 //ilab machines used: cd.cs.rutgers.edu
 #include "my_pthread_t.h"
 
+
+/**
+NOTE:FIXME: time quanta changed to 100ms because threads were timing out when it came to allocations and swapping with a real file.
+in addition, rather than opening and closing every time we want to read/write to a file, we made it so that it opens once at the beginning
+and closes at exit.  we may want to change this back to opening/closing every time we want to read/write but its not TOO important.
+
+**/
+
 /******************************structs**************************/
 
 typedef struct scheduler_ {
@@ -183,7 +191,8 @@ unsigned int getPageIsF(unsigned int pg){
 
 //deletes the swpfile on program exit
 void deleteFile(){
-	int done = remove(swpFile);
+  fclose(swpFile);
+	int done = remove("swpfile");
 	if(!done){
 		puts("file deleted");
 	}
@@ -934,15 +943,15 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 	}
 
 	void swapToMemFromDisk(int inMem, int fromDisk){
-
 		char temp[PAGESIZE];
 		//what is coming from the file
-		char *fromFile;
-    		swpFile = fopen("swpfile", "w+");
+		char fromFile[PAGESIZE];
+    		/////swpFile = fopen("swpfile", "w+");
 		//move to the part of the file where the page is stored
 		fseek(swpFile, (PAGESIZE * fromDisk), SEEK_SET);
-		//swpFile = fopen("swpfile", "r+");
-		fread(fromFile, PAGESIZE, 1, swpFile);
+		//fread(fromFile, PAGESIZE, 1, swpFile);
+    fread(fromFile, 1, PAGESIZE, swpFile);
+
 		//un-protect the page in memory that will be swapped
 		mprotect(userSpace + (PAGESIZE * inMem), PAGESIZE, PROT_READ | PROT_WRITE);
 
@@ -953,8 +962,8 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 		//Write to the new spot in the file
 		fseek(swpFile, (PAGESIZE * fromDisk), SEEK_SET);
-		fwrite(fromFile, PAGESIZE, 1, swpFile);
-
+		//fwrite(fromFile, PAGESIZE, 1, swpFile);
+    fwrite(fromFile, 1, PAGESIZE, swpFile);
 		// swap page table data
 		unsigned int tempPage;
 
@@ -966,8 +975,8 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		//protect the pages
 		mprotect(userSpace + (PAGESIZE * inMem), PAGESIZE, PROT_NONE);
 
-    		fclose(swpFile);
-		swpFile = -1;
+    		/////fclose(swpFile);
+		/////swpFile = -1;
 	}
 
 
@@ -1031,23 +1040,6 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 		    firstMalloc = false;
 		}
-
-/*
-		static void initializeRootDisk() {
-        rootBlockD = (unsigned int*) disk;
-        *rootBlockD = setBlockIsF(*rootBlockD, 1);
-        *rootBlockD = setBlockSize(*rootBlockD, (unsigned int) ((100 * PAGESIZE) - BLOCK_SIZE));
-        *rootBlockD = setBlockIsNext(*rootBlockD, 0);
-
-		    firstMalloc = false;
-		}
-
-
-*/
-
-
-
-
 
 
 		void initializePage(int index){
@@ -1148,27 +1140,28 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
   static bool moveToDiskSpace(int index) {
 		int i;
-		swpFile = fopen("swpfile", "w+");
+		/////swpFile = fopen("swpfile", "w+");
 		for(i = 0; i < (DISK_MEMORY / PAGESIZE); i++){
 			if(getPageIsF(diskPages[i]) == 1){
        				mprotect(userSpace + (PAGESIZE * index), PAGESIZE, PROT_READ | PROT_WRITE);
 
         			diskPages[i] = pages[index];
-	
+
 				fseek(swpFile, (PAGESIZE * i), SEEK_SET);
 				char toFile[PAGESIZE];
-	
+
 				memcpy(toFile, userSpace + (PAGESIZE * index), PAGESIZE);
 
-				fwrite(toFile, PAGESIZE, 1, swpFile);		
+				//fwrite(toFile, PAGESIZE, 1, swpFile);
+        fwrite(toFile, 1, PAGESIZE, swpFile);
 				pages[index] = setPageIsF(pages[index], 1);
-       				fclose(swpFile);
-				swpFile = -1;
+       				/////fclose(swpFile);
+				/////swpFile = -1;
 				return true;
 			}
 		}
-    		fclose(swpFile);
-		swpFile = -1;
+    		/////fclose(swpFile);
+		/////swpFile = -1;
 		return false;
 	}
 
@@ -1355,9 +1348,6 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		      pause_timer(scd->timer);
 	    }
 
-	    // deletes the swpfile at the end of program execution
-	    atexit(deleteFile);
-
 
 	    // If it is the first time this function has been called, then initialize the root block.
 	    if (firstMalloc) {
@@ -1366,15 +1356,20 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
       		userSpace = &memory[LIBPAGES * PAGESIZE];
 
 	        //init swap file
-          
+
           swpFile = fopen("swpfile", "w+");
           puts("init'ed the swp");
-          
+
           //set the swap size 16MB
           ftruncate(fileno(swpFile), DISK_MEMORY);
-          fclose(swpFile);
-		swpFile = -1;
+          /////fclose(swpFile);
+		      /////swpFile = -1;
 	        puts("truncated done");
+
+
+    	    // deletes the swpfile at the end of program execution
+    	    atexit(deleteFile);
+
 
       		setUpSignal();
       		initializeRoot();
