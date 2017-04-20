@@ -23,10 +23,27 @@
 // maintain bbfs state in here
 #include <limits.h>
 #include <stdio.h>
+
+
+typedef struct inode_{
+    short id;
+    char path[256];
+
+    //size in bytes of the file so far. size in blocks can be calculated using BLOCK_SIZE
+    int size;
+
+    //32768 blocks can hold 16MB, enough to hold the memallocator's file
+    int data[32768];
+} inode;
+
 struct sfs_state {
     FILE *logfile;
     char *diskfile;
+    char* bmap;
+    char* imap;
+    inode* ilist;
 };
+
 #define SFS_DATA ((struct sfs_state *) fuse_get_context()->private_data)
 
 #endif

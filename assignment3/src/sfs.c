@@ -30,41 +30,20 @@
 #include "log.h"
 
 
-//start is the block the structure is starting on
-//size is how many bytes the structure takes up
-
 //these numbers correspond to blocks of size 512
 
-//bit map for free inodes
-//size accounts for 128 inodes
-#define IMAP_START 0
+//size in bytes accounts for 128 inodes
 #define IMAP_SIZE 16
 
-//bit map for free blocks
-//size accounts for 131072 blocks
-#define BMAP_START 1
+//size in bytes accounts for 131072 blocks
 #define BMAP_SIZE 16384
 
-//area of disk where inodes are stored
-//size accounts for 128 inodes
-#define INODE_LIST_START (1 + BMAP_START + (BMAP_SIZE / BLOCK_SIZE))
-#define INODE_LIST_SIZE (128 * sizeof(struct inode_))
+//number of inodes
+#define INODE_LIST_SIZE 128
 
-//are of disk where data blocks are stored
-//size accounts for 131072 blocks of size 512, aka 2^26 bytes, aka 67108864 bytes
-#define BLOCK_LIST_START (1 + INODES_START + (INODES_SIZE / BLOCK_SIZE))
-#define BLOCK_LIST_SIZE (131072 * BLOCK_SIZE)
+//number of blocks of size 512, aka 2^26 bytes, aka 67108864 bytes
+#define BLOCK_LIST_SIZE 131072
 
-typedef struct inode_{
-    short id;
-    char path[256];
-
-    //size in bytes of the file so far. size in blocks can be calculated using BLOCK_SIZE
-    int size;
-
-    //32768 blocks can hold 16MB, enough to hold the memallocator's file
-    int data[32768];
-} inode;
 
 ///////////////////////////////////////////////////////////
 //
@@ -89,6 +68,21 @@ void *sfs_init(struct fuse_conn_info *conn)
 
     log_conn(conn);
     log_fuse_context(fuse_get_context());
+
+    SFS_DATA->bmap = (char*) malloc(BMAP_SIZE / 8);
+    SFS_DATA->imap = (char*) malloc(16);
+    SFS_DATA->ilist = (inode*) malloc(128 * sizeof(inode));
+
+    int i;
+    //set all block free bits to 1
+    for (i = 0; i < BMAP_SIZE; i++) {
+        SFS_DATA->bmap[i] = 0xFF;
+    }
+    //set all inode free bits to 1
+    for (i = 0; i < IMAP_SIZE; i++) {
+        SFS_DATA->imap[i] = 0xFF;
+    }
+
 
     return SFS_DATA;
 }
