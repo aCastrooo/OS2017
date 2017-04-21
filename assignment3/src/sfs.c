@@ -61,6 +61,7 @@
  * Introduced in version 2.3
  * Changed in version 2.6
  */
+
 void *sfs_init(struct fuse_conn_info *conn)
 {
     fprintf(stderr, "in bb-init\n");
@@ -299,7 +300,10 @@ int sfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offse
 	       struct fuse_file_info *fi)
 {
     int retstat = 0;
+    DIR* dir = (DIR*) fi->fh;
+    struct dirent* dirstruct;
 
+    for(inode* ptr = SFS_DATA->ilist; ptr != null; ptr =
 
     return retstat;
 }

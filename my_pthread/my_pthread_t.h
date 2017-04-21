@@ -16,7 +16,7 @@
 #include <sys/mman.h>
 
 #define RUN_QUEUE_SIZE 5
-#define QUANTA_TIME 100
+#define QUANTA_TIME 50
 #define NUM_CYCLES 10
 
 //#define MAX_MEMORY 8388608
