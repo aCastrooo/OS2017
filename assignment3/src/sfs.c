@@ -173,6 +173,18 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
     log_msg("\nsfs_create(path=\"%s\", mode=0%03o, fi=0x%08x)\n",
 	    path, mode, fi);
 
+    int i;
+    for(i = 0; i < INODE_LIST_SIZE; i++){
+        if(isInodeFree(i) == 1){
+            setInode(i, 0);
+            SFS_DATA->ilist[i].id = i;
+            SFS_DATA->ilist[i].size = 0;
+            SFS_DATA->ilist[i].mode = mode;
+            SFS_DATA->ilist[i].path = (char*) malloc(256);
+            SFS_DATA->ilist[i].data = (int*) malloc(sizeof(int) * 32768);
+        }
+    }
+
 
     return retstat;
 }

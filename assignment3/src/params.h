@@ -27,13 +27,15 @@
 
 typedef struct inode_{
     short id;
-    char path[256];
+    char* path;
+
+    mode_t mode;
 
     //size in bytes of the file so far. size in blocks can be calculated using BLOCK_SIZE
     int size;
 
     //32768 blocks can hold 16MB, enough to hold the memallocator's file
-    int data[32768];
+    int* data;
 } inode;
 
 struct sfs_state {
