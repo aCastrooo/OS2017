@@ -943,6 +943,10 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 	}
 
 	void swapToMemFromDisk(int inMem, int fromDisk){
+		
+		pause_timer(scd->timer);
+
+
 		char temp[PAGESIZE];
 		//what is coming from the file
 		char fromFile[PAGESIZE];
@@ -975,6 +979,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 		//protect the pages
 		mprotect(userSpace + (PAGESIZE * inMem), PAGESIZE, PROT_NONE);
 
+		unpause_timer(scd->timer);
     		/////fclose(swpFile);
 		/////swpFile = -1;
 	}
@@ -1139,6 +1144,9 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 
   static bool moveToDiskSpace(int index) {
+		
+		pause_timer(scd->timer);
+
 		int i;
 		/////swpFile = fopen("swpfile", "w+");
 		for(i = 0; i < (DISK_MEMORY / PAGESIZE); i++){
@@ -1157,9 +1165,15 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 				pages[index] = setPageIsF(pages[index], 1);
        				/////fclose(swpFile);
 				/////swpFile = -1;
+				
+				unpause_timer(scd->timer);
+				
 				return true;
 			}
 		}
+
+		unpause_timer(scd->timer);
+		
     		/////fclose(swpFile);
 		/////swpFile = -1;
 		return false;
@@ -1847,7 +1861,7 @@ int main() {
 
 	int* x = (int*)malloc(sizeof(int) * 150);
 
-	int gg = 69;
+	//int gg = 69;
 	printf("th1's address is %p\n",&th1 );
 	int i;
 	  //int* x;
