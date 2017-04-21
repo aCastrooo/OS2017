@@ -44,6 +44,33 @@
 //number of blocks of size 512, aka 2^26 bytes, aka 67108864 bytes
 #define BLOCK_LIST_SIZE 131072
 
+//1 if block n is free, 0 o/w
+int isBlockFree(int n){
+    return (SFS_DATA->bmap[n / 8] >> n % 8) & 1;
+}
+
+//sets block n to 1 (free) or 0 (not free)
+void setBlock(int n, int setting){
+    if(setting == 1){
+        SFS_DATA->bmap[n / 8] |= 1 << n % 8;
+    }else{
+        SFS_DATA->bmap[n / 8] &= ~(1 << n % 8);
+    }
+}
+
+//1 if inode n is free, 0 o/w
+int isInodeFree(int n){
+    return (SFS_DATA->imap[n / 8] >> n % 8) & 1;
+}
+
+//sets inode n to 1 (free) or 0 (not free)
+void setInode(int n, int setting){
+    if(setting == 1){
+        SFS_DATA->imap[n / 8] |= 1 << n % 8;
+    }else{
+        SFS_DATA->imap[n / 8] &= ~(1 << n % 8);
+    }
+}
 
 ///////////////////////////////////////////////////////////
 //
@@ -69,19 +96,25 @@ void *sfs_init(struct fuse_conn_info *conn)
     log_conn(conn);
     log_fuse_context(fuse_get_context());
 
-    SFS_DATA->bmap = (char*) malloc(BMAP_SIZE / 8);
-    SFS_DATA->imap = (char*) malloc(16);
-    SFS_DATA->ilist = (inode*) malloc(128 * sizeof(inode));
+    disk_open(SFS_DATA->diskfile);
+
+    char* bmap = (char*) malloc(BMAP_SIZE);
+    char* imap = (char*) malloc(16);
+    inode* ilist = (inode*) malloc(128 * sizeof(inode));
 
     int i;
     //set all block free bits to 1
     for (i = 0; i < BMAP_SIZE; i++) {
-        SFS_DATA->bmap[i] = 0xFF;
+        bmap[i] = 0xFF;
     }
     //set all inode free bits to 1
     for (i = 0; i < IMAP_SIZE; i++) {
-        SFS_DATA->imap[i] = 0xFF;
+        imap[i] = 0xFF;
     }
+
+    SFS_DATA->bmap = bmap;
+    SFS_DATA->imap = imap;
+    SFS_DATA->ilist = ilist;
 
 
     return SFS_DATA;
@@ -97,6 +130,12 @@ void *sfs_init(struct fuse_conn_info *conn)
 void sfs_destroy(void *userdata)
 {
     log_msg("\nsfs_destroy(userdata=0x%08x)\n", userdata);
+
+    disk_close();
+
+    free(SFS_DATA->bmap);
+    free(SFS_DATA->imap);
+    free(SFS_DATA->ilist);
 }
 
 /** Get file attributes.
