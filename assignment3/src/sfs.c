@@ -72,6 +72,32 @@ void setInode(int n, int setting){
     }
 }
 
+//checks whether the path to a file is legit by comaring it to iNodes.
+//if an iNode exists for the file, returns that inode*
+inode* checkiNodePathName(char *path){
+    for(i = 0; i < INODE_LIST_SIZE; i++){
+	if(!isInodeFree(i)){
+	    if(strcmp(path, SFS_DATA->ilist[i]->path) == 0){
+		return &SFS_DATA->ilist[i];
+	    }	
+	}
+    }
+
+    return NULL;
+}
+
+struct stat* fillStatBuff(struct stat *statbuf, struct inode *iNode){
+    statbuf->st_mode = S_IFREG | 0644;
+    statbuf->st_uid = 0;
+    statbuf->st_gid = 0;
+    statbuf->st_nlink = 1;
+    statbuf->st_size = iNode->size;
+    statbuf->st_blocks = iNode->size / BLOCK_SIZE + 1;	
+   
+
+    return &statbuf;
+}
+
 ///////////////////////////////////////////////////////////
 //
 // Prototypes for all these functions, and the C-style comments,
@@ -138,6 +164,7 @@ void sfs_destroy(void *userdata)
     free(SFS_DATA->ilist);
 }
 
+
 /** Get file attributes.
  *
  * Similar to stat().  The 'st_dev' and 'st_blksize' fields are
@@ -147,8 +174,17 @@ void sfs_destroy(void *userdata)
 int sfs_getattr(const char *path, struct stat *statbuf)
 {
     int retstat = 0;
-    char fpath[PATH_MAX];
+    
+    if(strcmp(path, "/") == 0){
+	statbuf->st_mode = S_IFDIR | 0755;
+	statbuf->st_nlink = 2;
+    }
 
+    inode *n = checkiNodePathName(path);
+    if(n != NULL){
+	statbuf = fillStatBuff(statbuf, n);
+    }
+   
     log_msg("\nsfs_getattr(path=\"%s\", statbuf=0x%08x)\n",
 	  path, statbuf);
 
