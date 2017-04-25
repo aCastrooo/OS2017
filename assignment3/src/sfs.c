@@ -176,7 +176,7 @@ int sfs_getattr(const char *path, struct stat *statbuf)
     int retstat = 0;
     
     if(strcmp(path, "/") == 0){
-	statbuf->st_mode = S_IFDIR | 0755;
+	statbuf->st_mode = S_IFDIR | 0777;
 	statbuf->st_nlink = 2;
     }
 
@@ -231,6 +231,24 @@ int sfs_unlink(const char *path)
     int retstat = 0;
     log_msg("sfs_unlink(path=\"%s\")\n", path);
 
+    inode *file = checkiNodePathName(path);
+    if(!file){
+	return -1;
+    }	
+
+    //remove a hardlink from the specified inode
+    file->hardlink -= 1;
+    if(file->hardlink < 1){
+	int i;
+	//set all the blocks that the file uses to free, so other files can use the space if needed
+	for(i = 0; i <= file->size / BLOCK_SIZE; i++){
+	    setBlock(file->data[i], 1);
+        }
+    }
+
+    free(file->data);
+    free(file->path);
+    setInode(file->id, 1);	
 
     return retstat;
 }

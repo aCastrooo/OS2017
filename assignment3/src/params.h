@@ -36,6 +36,9 @@ typedef struct inode_{
 
     //32768 blocks can hold 16MB, enough to hold the memallocator's file
     int* data;
+
+    //number of hard links to the file
+    int hardlinks;
 } inode;
 
 struct sfs_state {
