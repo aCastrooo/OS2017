@@ -72,6 +72,32 @@ void setInode(int n, int setting){
     }
 }
 
+//checks whether the path to a file is legit by comaring it to iNodes.
+//if an iNode exists for the file, returns that inode*
+inode* checkiNodePathName(char *path){
+    for(i = 0; i < INODE_LIST_SIZE; i++){
+	if(!isInodeFree(i)){
+	    if(strcmp(path, SFS_DATA->ilist[i]->path) == 0){
+		return &SFS_DATA->ilist[i];
+	    }	
+	}
+    }
+
+    return NULL;
+}
+
+struct stat* fillStatBuff(struct stat *statbuf, struct inode *iNode){
+    statbuf->st_mode = S_IFREG | 0644;
+    statbuf->st_uid = 0;
+    statbuf->st_gid = 0;
+    statbuf->st_nlink = 1;
+    statbuf->st_size = iNode->size;
+    statbuf->st_blocks = iNode->size / BLOCK_SIZE + 1;	
+   
+
+    return &statbuf;
+}
+
 ///////////////////////////////////////////////////////////
 //
 // Prototypes for all these functions, and the C-style comments,
@@ -139,6 +165,7 @@ void sfs_destroy(void *userdata)
     free(SFS_DATA->ilist);
 }
 
+
 /** Get file attributes.
  *
  * Similar to stat().  The 'st_dev' and 'st_blksize' fields are
@@ -148,8 +175,17 @@ void sfs_destroy(void *userdata)
 int sfs_getattr(const char *path, struct stat *statbuf)
 {
     int retstat = 0;
-    char fpath[PATH_MAX];
+    
+    if(strcmp(path, "/") == 0){
+	statbuf->st_mode = S_IFDIR | 0777;
+	statbuf->st_nlink = 2;
+    }
 
+    inode *n = checkiNodePathName(path);
+    if(n != NULL){
+	statbuf = fillStatBuff(statbuf, n);
+    }
+   
     log_msg("\nsfs_getattr(path=\"%s\", statbuf=0x%08x)\n",
 	  path, statbuf);
 
@@ -174,6 +210,18 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
     log_msg("\nsfs_create(path=\"%s\", mode=0%03o, fi=0x%08x)\n",
 	    path, mode, fi);
 
+    int i;
+    for(i = 0; i < INODE_LIST_SIZE; i++){
+        if(isInodeFree(i) == 1){
+            setInode(i, 0);
+            SFS_DATA->ilist[i].id = i;
+            SFS_DATA->ilist[i].size = 0;
+            SFS_DATA->ilist[i].mode = mode;
+            SFS_DATA->ilist[i].path = (char*) malloc(256);
+            SFS_DATA->ilist[i].data = (int*) malloc(sizeof(int) * 32768);
+        }
+    }
+
 
     return retstat;
 }
@@ -184,6 +232,24 @@ int sfs_unlink(const char *path)
     int retstat = 0;
     log_msg("sfs_unlink(path=\"%s\")\n", path);
 
+    inode *file = checkiNodePathName(path);
+    if(!file){
+	return -1;
+    }	
+
+    //remove a hardlink from the specified inode
+    file->hardlink -= 1;
+    if(file->hardlink < 1){
+	int i;
+	//set all the blocks that the file uses to free, so other files can use the space if needed
+	for(i = 0; i <= file->size / BLOCK_SIZE; i++){
+	    setBlock(file->data[i], 1);
+        }
+    }
+
+    free(file->data);
+    free(file->path);
+    setInode(file->id, 1);	
 
     return retstat;
 }
