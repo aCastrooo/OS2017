@@ -203,9 +203,17 @@ int sfs_open(const char *path, struct fuse_file_info *fi)
     int retstat = 0;
     log_msg("\nsfs_open(path\"%s\", fi=0x%08x)\n",
 	    path, fi);
+    int flags = fcntl(fi->fh, F_GETFL);
+    if(flags == -1){
+      return -1;
+    }
+    for(int i = 0; i < INODE_LIST_SIZE; i++){
+      if(strcmp(path, SFS_DATA->ilist[i].path) == 0){
+        return 0;
+      }
+    }
 
-
-    return retstat;
+    return -1;
 }
 
 /** Release an open file
@@ -339,10 +347,14 @@ int sfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offse
 	       struct fuse_file_info *fi)
 {
     int retstat = 0;
-    DIR* dir = (DIR*) fi->fh;
-    struct dirent* dirstruct;
+    char filename[255];
 
-    for(inode* ptr = SFS_DATA->ilist; ptr != null; ptr =
+    for(int i = 0; i < INODE_LIST_SIZE; i++){
+      if(isInodeFree(i) == 0){
+        memcpy(filename, SFS_DATA->ilist[i].path + 1, 255);
+        filler(buf, filename, NULL, 0);
+      }
+    }
 
     return retstat;
 }
