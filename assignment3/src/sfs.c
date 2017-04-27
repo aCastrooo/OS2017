@@ -79,7 +79,7 @@ inode* checkiNodePathName(char *path){
 	if(!isInodeFree(i)){
 	    if(strcmp(path, SFS_DATA->ilist[i]->path) == 0){
 		return &SFS_DATA->ilist[i];
-	    }	
+	    }
 	}
     }
 
@@ -92,8 +92,8 @@ struct stat* fillStatBuff(struct stat *statbuf, struct inode *iNode){
     statbuf->st_gid = 0;
     statbuf->st_nlink = 1;
     statbuf->st_size = iNode->size;
-    statbuf->st_blocks = iNode->size / BLOCK_SIZE + 1;	
-   
+    statbuf->st_blocks = iNode->size / BLOCK_SIZE + 1;
+
 
     return &statbuf;
 }
@@ -175,7 +175,7 @@ void sfs_destroy(void *userdata)
 int sfs_getattr(const char *path, struct stat *statbuf)
 {
     int retstat = 0;
-    
+
     if(strcmp(path, "/") == 0){
 	statbuf->st_mode = S_IFDIR | 0777;
 	statbuf->st_nlink = 2;
@@ -185,7 +185,7 @@ int sfs_getattr(const char *path, struct stat *statbuf)
     if(n != NULL){
 	statbuf = fillStatBuff(statbuf, n);
     }
-   
+
     log_msg("\nsfs_getattr(path=\"%s\", statbuf=0x%08x)\n",
 	  path, statbuf);
 
@@ -235,7 +235,7 @@ int sfs_unlink(const char *path)
     inode *file = checkiNodePathName(path);
     if(!file){
 	return -1;
-    }	
+    }
 
     //remove a hardlink from the specified inode
     file->hardlink -= 1;
@@ -249,7 +249,7 @@ int sfs_unlink(const char *path)
 
     free(file->data);
     free(file->path);
-    setInode(file->id, 1);	
+    setInode(file->id, 1);
 
     return retstat;
 }
@@ -267,14 +267,15 @@ int sfs_unlink(const char *path)
 int sfs_open(const char *path, struct fuse_file_info *fi)
 {
     int retstat = 0;
+    int i;
     log_msg("\nsfs_open(path\"%s\", fi=0x%08x)\n",
 	    path, fi);
     int flags = fcntl(fi->fh, F_GETFL);
     if(flags == -1){
       return -1;
     }
-    for(int i = 0; i < INODE_LIST_SIZE; i++){
-      if(strcmp(path, SFS_DATA->ilist[i].path) == 0){
+    for(i = 0; i < INODE_LIST_SIZE; i++){
+      if(isInodeFree(i) == 0 && strcmp(path, SFS_DATA->ilist[i].path) == 0){
         return 0;
       }
     }
