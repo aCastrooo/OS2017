@@ -143,7 +143,10 @@ inode checkiNodePathName(const char *path){
 
     }
 
-    return (inode) -1;
+    inode badresult;
+    badresult.id = -1;
+
+    return badresult;
 }
 
 void fillStatBuff(struct stat *statbuf, inode iNode){
@@ -271,7 +274,7 @@ int sfs_getattr(const char *path, struct stat *statbuf)
 	  path, statbuf);
 
     if(strcmp(path, "/") == 0){
-	     statbuf->st_mode = S_IFDIR | 0755;
+	     statbuf->st_mode = S_IFDIR | 0777;
 	     statbuf->st_nlink = 2;
        log_stat(statbuf);
 
@@ -279,7 +282,7 @@ int sfs_getattr(const char *path, struct stat *statbuf)
     }
 
     inode n = checkiNodePathName(path);
-    if(n != (inode) -1){
+    if(n.id != -1){
 	     fillStatBuff(statbuf, n);
        log_stat(statbuf);
        return retstat;
@@ -336,23 +339,23 @@ int sfs_unlink(const char *path)
     log_msg("sfs_unlink(path=\"%s\")\n", path);
 
     inode file = checkiNodePathName(path);
-    if(file == -1){
+    if(file.id == -1){
 	      return -1;
     }
 
     //remove a hardlink from the specified inode
-    file->hardlink -= 1;
-    if(file->hardlink < 1){
+    file.hardlinks -= 1;
+    if(file.hardlinks < 1){
       	int i;
       	//set all the blocks that the file uses to free, so other files can use the space if needed
-      	for(i = 0; i <= file->size / BLOCK_SIZE; i++){
-      	    setBlock(file->data[i], 1);
+      	for(i = 0; i <= file.size / BLOCK_SIZE; i++){
+      	    setBlock(file.data[i], 1);
         }
     }
 
-    free(file->data);
-    free(file->path);
-    setInode(file->id, 1);
+    free(file.data);
+    free(file.path);
+    setInode(file.id, 1);
 
     return retstat;
 }
@@ -378,7 +381,7 @@ int sfs_open(const char *path, struct fuse_file_info *fi)
       return -1;
     }
     for(i = 0; i < INODE_LIST_SIZE; i++){
-      if(isInodeFree(i) == 0 && strcmp(path, SFS_DATA->ilist[i].path) == 0){
+      if(isInodeFree(i) == 0 && strcmp(path, readInode(i).path) == 0){
         return 0;
       }
     }
@@ -522,10 +525,10 @@ int sfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offse
 	  path, fi);
 
     char filename[255];
-
-    for(int i = 0; i < INODE_LIST_SIZE; i++){
+    int i;
+    for(i = 0; i < INODE_LIST_SIZE; i++){
       if(isInodeFree(i) == 0){
-        memcpy(filename, SFS_DATA->ilist[i].path + 1, 255);
+        memcpy(filename, readInode(i).path + 1, 255);
         filler(buf, filename, NULL, 0);
       }
     }
@@ -557,12 +560,12 @@ struct fuse_operations sfs_oper = {
   .read = sfs_read,
   .write = sfs_write,
 
-  .rmdir = sfs_rmdir,
-  .mkdir = sfs_mkdir,
+  //.rmdir = sfs_rmdir,
+  //.mkdir = sfs_mkdir,
 
-  .opendir = sfs_opendir,
+  //.opendir = sfs_opendir,
   .readdir = sfs_readdir,
-  .releasedir = sfs_releasedir
+  //.releasedir = sfs_releasedir
 };
 
 void sfs_usage()
