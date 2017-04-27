@@ -145,7 +145,7 @@ inode checkiNodePathName(const char *path){
 }
 
 void fillStatBuff(struct stat *statbuf, inode iNode){
-    statbuf->st_ino = iNode.
+    statbuf->st_ino = iNode.id;
     statbuf->st_mode = iNode.mode; //S_IFREG | 0644;
     statbuf->st_nlink = 1;
     statbuf->st_size = iNode.size;
