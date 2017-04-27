@@ -410,10 +410,10 @@ int sfs_release(const char *path, struct fuse_file_info *fi)
 	  path, fi);
 
 
-    inode *file = checkINodePathName(path);
-    if(!file){
-	//couldn't find the file 
-	return -1;
+    inode file = checkiNodePathName(path);
+    if(file.id == -1){
+      	//couldn't find the file
+      	return -1;
     }
 
     fi->fh = -1;
@@ -440,14 +440,14 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
 	    path, buf, size, offset, fi);
 
     inode file = checkiNodePathName(path);
-    if(file == NULL){
-	// file doesn't exist to read from
-	return -1;
+    if(file.id == -1){
+      	// file doesn't exist to read from
+      	return -1;
     }
-    if(fi.fh == -1){
-	//file has been closed, can't read from it anymore
-	//EBADF error
-	return -1;
+    if(fi->fh == -1){
+      	//file has been closed, can't read from it anymore
+      	//EBADF error
+      	return -1;
     }
     if(offset > file.size || size > file.size){
 	//cant start reading after the EOF, and cant read more than the file has
@@ -457,7 +457,7 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
     if(size == 0){
 	return 0;
     }
-    
+
    int filePointer = 0;
    int bytesWritten = 0;
    if(offset != 0){
