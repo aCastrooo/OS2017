@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <sys/types.h>
 
@@ -156,7 +157,9 @@ void fillStatBuff(struct stat *statbuf, inode iNode){
 
     statbuf->st_size = iNode.size;
     statbuf->st_blocks = iNode.size / BLOCK_SIZE + 1;
-
+    statbuf->st_ctime = time(0);
+    statbuf->st_mtime = time(0);
+    statbuf->st_atime = time(0);
 }
 
 
