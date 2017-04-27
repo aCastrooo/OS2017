@@ -150,12 +150,13 @@ inode checkiNodePathName(const char *path){
 }
 
 void fillStatBuff(struct stat *statbuf, inode iNode){
-    statbuf->st_ino = iNode.id;
     statbuf->st_mode = iNode.mode; //S_IFREG | 0644;
     statbuf->st_nlink = 1;
-
     statbuf->st_size = iNode.size;
     statbuf->st_blocks = iNode.size / BLOCK_SIZE + 1;
+
+    statbuf->st_ino = 0; //iNode.id;
+
 
 }
 
@@ -241,6 +242,17 @@ void *sfs_init(struct fuse_conn_info *conn)
         }
     }
     //bmap spans block 1-32
+
+    //set up root inode
+    setInode(0,0);
+    inode root;
+    root.id = 0;
+    root.path = (char*) malloc(256);
+    memcpy(root.path, "/", 2);
+    root.mode = S_IFDIR | 0777;
+    root.size = 0;
+    root.hardlinks = 2;
+
 
     return SFS_DATA;
 }
@@ -450,25 +462,26 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
       	return -1;
     }
     if(offset > file.size || size > file.size){
-	//cant start reading after the EOF, and cant read more than the file has
-	//for the second, we can actually read what the file has, but we can't read more than that. should we just read all the stuff?
-	return -1;
+      	//cant start reading after the EOF, and cant read more than the file has
+      	//for the second, we can actually read what the file has, but we can't read more than that. should we just read all the stuff?
+      	return -1;
     }
     if(size == 0){
-	return 0;
+	     return 0;
     }
 
    int filePointer = 0;
    int bytesWritten = 0;
    if(offset != 0){
-	filePointer = offset;
+	    filePointer = offset;
    }
 
    for(filePointer; filePointer < file.size; filePointer++){
-	buf[filePointer] = file.data[filePointer];
-	bytesWritten++;
+    	buf[filePointer] = file.data[filePointer];
+    	bytesWritten++;
    }
-    return bytesWritten;
+
+   return bytesWritten;
 }
 
 /** Write data to an open file
