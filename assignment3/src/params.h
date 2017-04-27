@@ -23,11 +23,14 @@
 // maintain bbfs state in here
 #include <limits.h>
 #include <stdio.h>
+#include <sys/stat.h>
 
 
 typedef struct inode_{
     short id;
     char* path;
+
+    short open;
 
     mode_t mode;
 
@@ -44,9 +47,6 @@ typedef struct inode_{
 struct sfs_state {
     FILE *logfile;
     char *diskfile;
-    char* bmap;
-    char* imap;
-    inode* ilist;
 };
 
 #define SFS_DATA ((struct sfs_state *) fuse_get_context()->private_data)
