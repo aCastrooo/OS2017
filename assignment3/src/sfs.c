@@ -29,6 +29,7 @@
 
 #include "log.h"
 
+#define MAGIC_NUM 6942069
 
 //these numbers correspond to blocks of size 512
 
@@ -44,58 +45,134 @@
 //number of blocks of size 512, aka 2^26 bytes, aka 67108864 bytes
 #define BLOCK_LIST_SIZE 131072
 
+#define D_BLOCK_START 50
+
 //1 if block n is free, 0 o/w
 int isBlockFree(int n){
-    return (SFS_DATA->bmap[n / 8] >> n % 8) & 1;
+    char buf[BLOCK_SIZE];
+    int blk = 1 + ((n / BLOCK_SIZE) / 8);
+    block_read(blk, (void*) buf);
+
+    n = n - (((blk - 1) * BLOCK_SIZE) * 8);
+
+    return (buf[n / 8] >> n % 8) & 1;
 }
 
 //sets block n to 1 (free) or 0 (not free)
 void setBlock(int n, int setting){
+    char buf[BLOCK_SIZE];
+    int blk = 1 + ((n / BLOCK_SIZE) / 8);
+    block_read(blk, (void*) buf);
+
+    n = n - (((blk - 1) * BLOCK_SIZE) * 8);
+
     if(setting == 1){
-        SFS_DATA->bmap[n / 8] |= 1 << n % 8;
+        buf[n / 8] |= 1 << n % 8;
     }else{
-        SFS_DATA->bmap[n / 8] &= ~(1 << n % 8);
+        buf[n / 8] &= ~(1 << n % 8);
     }
+
+    block_write(blk, (const void*) buf);
 }
 
 //1 if inode n is free, 0 o/w
 int isInodeFree(int n){
-    return (SFS_DATA->imap[n / 8] >> n % 8) & 1;
+    char buf[BLOCK_SIZE];
+    block_read(0, (void*) buf);
+
+    return (buf[sizeof(int) + (n / 8)] >> n % 8) & 1;
 }
 
 //sets inode n to 1 (free) or 0 (not free)
 void setInode(int n, int setting){
+    char buf[BLOCK_SIZE];
+    block_read(0, (void*) buf);
+
     if(setting == 1){
-        SFS_DATA->imap[n / 8] |= 1 << n % 8;
+        buf[sizeof(int) + (n / 8)] |= 1 << n % 8;
     }else{
-        SFS_DATA->imap[n / 8] &= ~(1 << n % 8);
+        buf[sizeof(int) + (n / 8)] &= ~(1 << n % 8);
     }
+
+    block_write(0, (const void*) buf);
 }
+
+//returns the nth inode in the list
+inode readInode(int n){
+    int numPerBlock = BLOCK_SIZE / sizeof(inode);
+    int block = 33 + (n / numPerBlock);
+    char buf[BLOCK_SIZE];
+
+    block_read(block, (void*) buf);
+
+    inode* rp = (inode*) buf + (n % numPerBlock);
+    inode result = *rp;
+
+    return result;
+}
+
+void writeInode(inode nd){
+    int n = nd.id;
+    int numPerBlock = BLOCK_SIZE / sizeof(inode);
+    int block = 33 + (n / numPerBlock);
+    char buf[BLOCK_SIZE];
+
+    block_read(block, (void*) buf);
+
+    inode* rp = (inode*) buf + (n % numPerBlock);
+    *rp = nd;
+
+    block_write(block, (const void*) buf);
+}
+
 
 //checks whether the path to a file is legit by comaring it to iNodes.
 //if an iNode exists for the file, returns that inode*
-inode* checkiNodePathName(char *path){
+inode checkiNodePathName(const char *path){
+    int i;
     for(i = 0; i < INODE_LIST_SIZE; i++){
-	if(!isInodeFree(i)){
-	    if(strcmp(path, SFS_DATA->ilist[i]->path) == 0){
-		return &SFS_DATA->ilist[i];
-	    }	
-	}
+      	if(!isInodeFree(i)){
+            inode in = readInode(i);
+            log_msg("path = %s, node's path = %s\n",path, in.path);
+
+      	    if(strcmp(path, in.path) == 0){
+      		      return in;
+      	    }
+      	}
     }
 
-    return NULL;
+    return (inode) -1;
 }
 
-struct stat* fillStatBuff(struct stat *statbuf, struct inode *iNode){
-    statbuf->st_mode = S_IFREG | 0644;
-    statbuf->st_uid = 0;
-    statbuf->st_gid = 0;
+void fillStatBuff(struct stat *statbuf, inode iNode){
+    statbuf->st_ino = iNode.
+    statbuf->st_mode = iNode.mode; //S_IFREG | 0644;
     statbuf->st_nlink = 1;
-    statbuf->st_size = iNode->size;
-    statbuf->st_blocks = iNode->size / BLOCK_SIZE + 1;	
-   
+    statbuf->st_size = iNode.size;
+    statbuf->st_blocks = iNode.size / BLOCK_SIZE + 1;
 
-    return &statbuf;
+}
+
+
+int checkIfInit(){
+    char buf[BLOCK_SIZE];
+    block_read(0, (void *) buf);
+
+    int* magicNumSpace = (int*) buf;
+
+    if(*magicNumSpace == MAGIC_NUM){
+        return 1;
+    }else{
+        return 0;
+    }
+}
+
+void setFileInit(){
+    char buf[BLOCK_SIZE];
+    int* magicNumSpace = (int*) buf;
+    *magicNumSpace = MAGIC_NUM;
+
+    block_write(0, (const void*) buf);
 }
 
 ///////////////////////////////////////////////////////////
@@ -124,24 +201,39 @@ void *sfs_init(struct fuse_conn_info *conn)
 
     disk_open(SFS_DATA->diskfile);
 
-    char* bmap = (char*) malloc(BMAP_SIZE);
-    char* imap = (char*) malloc(16);
-    inode* ilist = (inode*) malloc(128 * sizeof(inode));
+    if(checkIfInit() == 1){
+        return SFS_DATA;
+    }
 
+    setFileInit();
+
+    char buf[BLOCK_SIZE];
+
+    block_read(0, buf);
+
+    //this initializes imap
     int i;
-    //set all block free bits to 1
-    for (i = 0; i < BMAP_SIZE; i++) {
-        bmap[i] = 0xFF;
-    }
-    //set all inode free bits to 1
     for (i = 0; i < IMAP_SIZE; i++) {
-        imap[i] = 0xFF;
+        buf[i + sizeof(int)] = 0xFF;
     }
 
-    SFS_DATA->bmap = bmap;
-    SFS_DATA->imap = imap;
-    SFS_DATA->ilist = ilist;
+    block_write(0, (const void*) buf);
+    //magic num and imap span block 0
 
+    //this looks stupid and complicated...and it is,
+    //but it sets bmap which spans multiple blocks
+    char bmbuf[BMAP_SIZE / BLOCK_SIZE][BLOCK_SIZE];
+    int blk = 1;
+    i = 0;
+    for (blk = 1; blk <= BMAP_SIZE / BLOCK_SIZE; i++) {
+        bmbuf[blk][i] = 0xFF;
+        if(i % BLOCK_SIZE == 0 && i != 0){
+            block_write(blk, (const void*) bmbuf[blk]);
+            blk++;
+            i = 0;
+        }
+    }
+    //bmap spans block 1-32
 
     return SFS_DATA;
 }
@@ -158,10 +250,6 @@ void sfs_destroy(void *userdata)
     log_msg("\nsfs_destroy(userdata=0x%08x)\n", userdata);
 
     disk_close();
-
-    free(SFS_DATA->bmap);
-    free(SFS_DATA->imap);
-    free(SFS_DATA->ilist);
 }
 
 
@@ -174,21 +262,28 @@ void sfs_destroy(void *userdata)
 int sfs_getattr(const char *path, struct stat *statbuf)
 {
     int retstat = 0;
-    
-    if(strcmp(path, "/") == 0){
-	statbuf->st_mode = S_IFDIR | 0755;
-	statbuf->st_nlink = 2;
-    }
 
-    inode *n = checkiNodePathName(path);
-    if(n != NULL){
-	statbuf = fillStatBuff(statbuf, n);
-    }
-   
     log_msg("\nsfs_getattr(path=\"%s\", statbuf=0x%08x)\n",
 	  path, statbuf);
 
-    return retstat;
+    if(strcmp(path, "/") == 0){
+	     statbuf->st_mode = S_IFDIR | 0755;
+	     statbuf->st_nlink = 2;
+       log_stat(statbuf);
+
+       return retstat;
+    }
+
+    inode n = checkiNodePathName(path);
+    if(n != (inode) -1){
+	     fillStatBuff(statbuf, n);
+       log_stat(statbuf);
+       return retstat;
+    }
+
+    //*statbuf = (struct stat) {0};
+    log_stat(statbuf);
+    return -1;
 }
 
 /**
@@ -213,11 +308,16 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
     for(i = 0; i < INODE_LIST_SIZE; i++){
         if(isInodeFree(i) == 1){
             setInode(i, 0);
-            SFS_DATA->ilist[i].id = i;
-            SFS_DATA->ilist[i].size = 0;
-            SFS_DATA->ilist[i].mode = mode;
-            SFS_DATA->ilist[i].path = (char*) malloc(256);
-            SFS_DATA->ilist[i].data = (int*) malloc(sizeof(int) * 32768);
+            inode in = readInode(i);
+            in.id = i;
+            in.size = 0;
+            in.mode = mode;
+            in.open = 1;
+            in.path = (char*) malloc(256);
+            in.data = (int*) malloc(sizeof(int) * 32768);
+            writeInode(in);
+            //fi->fh = in.id;
+            return retstat;
         }
     }
 
@@ -231,6 +331,16 @@ int sfs_unlink(const char *path)
     int retstat = 0;
     log_msg("sfs_unlink(path=\"%s\")\n", path);
 
+    int i;
+    for(i = 0; i < INODE_LIST_SIZE; i++){
+        inode in = readInode(i);
+        log_msg("path = %s, node's path = %s\n",path, in.path);
+
+        if(isInodeFree(i) == 0 && strcmp(path, in.path) == 0){
+            setInode(i, 1);
+            return retstat;
+        }
+    }
 
     return retstat;
 }
@@ -386,6 +496,8 @@ int sfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offse
 	       struct fuse_file_info *fi)
 {
     int retstat = 0;
+    log_msg("\nsfs_readdir(path=\"%s\", fi=0x%08x)\n",
+	  path, fi);
 
 
     return retstat;
