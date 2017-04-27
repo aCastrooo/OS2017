@@ -39,6 +39,7 @@ typedef struct inode_{
 
     //number of hard links to the file
     int hardlinks;
+
 } inode;
 
 struct sfs_state {

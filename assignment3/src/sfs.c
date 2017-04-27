@@ -294,6 +294,15 @@ int sfs_release(const char *path, struct fuse_file_info *fi)
 	  path, fi);
 
 
+    inode *file = checkINodePathName(path);
+    if(!file){
+	//couldn't find the file 
+	return -1;
+    }
+
+    fi->fh = -1;
+    fi->flags = fi->flags ^ fi->flags;
+
     return retstat;
 }
 
@@ -314,8 +323,36 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
     log_msg("\nsfs_read(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
 	    path, buf, size, offset, fi);
 
+    inode file = checkiNodePathName(path);
+    if(file == NULL){
+	// file doesn't exist to read from
+	return -1;
+    }
+    if(fi.fh == -1){
+	//file has been closed, can't read from it anymore
+	//EBADF error
+	return -1;
+    }
+    if(offset > file.size || size > file.size){
+	//cant start reading after the EOF, and cant read more than the file has
+	//for the second, we can actually read what the file has, but we can't read more than that. should we just read all the stuff?
+	return -1;
+    }
+    if(size == 0){
+	return 0;
+    }
+    
+   int filePointer = 0;
+   int bytesWritten = 0;
+   if(offset != 0){
+	filePointer = offset;
+   }
 
-    return retstat;
+   for(filePointer; filePointer < file.size; filePointer++){
+	buf[filePointer] = file.data[filePointer];
+	bytesWritten++;
+   }
+    return bytesWritten;
 }
 
 /** Write data to an open file
