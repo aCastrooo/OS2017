@@ -191,6 +191,7 @@ void setFileInit(){
  * Introduced in version 2.3
  * Changed in version 2.6
  */
+
 void *sfs_init(struct fuse_conn_info *conn)
 {
     fprintf(stderr, "in bb-init\n");
@@ -331,16 +332,25 @@ int sfs_unlink(const char *path)
     int retstat = 0;
     log_msg("sfs_unlink(path=\"%s\")\n", path);
 
-    int i;
-    for(i = 0; i < INODE_LIST_SIZE; i++){
-        inode in = readInode(i);
-        log_msg("path = %s, node's path = %s\n",path, in.path);
 
-        if(isInodeFree(i) == 0 && strcmp(path, in.path) == 0){
-            setInode(i, 1);
-            return retstat;
+    inode file = checkiNodePathName(path);
+    if(file == -1){
+	      return -1;
+    }
+
+    //remove a hardlink from the specified inode
+    file->hardlink -= 1;
+    if(file->hardlink < 1){
+      	int i;
+      	//set all the blocks that the file uses to free, so other files can use the space if needed
+      	for(i = 0; i <= file->size / BLOCK_SIZE; i++){
+      	    setBlock(file->data[i], 1);
         }
     }
+
+    free(file->data);
+    free(file->path);
+    setInode(file->id, 1);
 
     return retstat;
 }
@@ -360,9 +370,17 @@ int sfs_open(const char *path, struct fuse_file_info *fi)
     int retstat = 0;
     log_msg("\nsfs_open(path\"%s\", fi=0x%08x)\n",
 	    path, fi);
+    int flags = fcntl(fi->fh, F_GETFL);
+    if(flags == -1){
+      return -1;
+    }
+    for(int i = 0; i < INODE_LIST_SIZE; i++){
+      if(strcmp(path, SFS_DATA->ilist[i].path) == 0){
+        return 0;
+      }
+    }
 
-
-    return retstat;
+    return -1;
 }
 
 /** Release an open file
@@ -496,9 +514,18 @@ int sfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offse
 	       struct fuse_file_info *fi)
 {
     int retstat = 0;
+
     log_msg("\nsfs_readdir(path=\"%s\", fi=0x%08x)\n",
 	  path, fi);
 
+    char filename[255];
+
+    for(int i = 0; i < INODE_LIST_SIZE; i++){
+      if(isInodeFree(i) == 0){
+        memcpy(filename, SFS_DATA->ilist[i].path + 1, 255);
+        filler(buf, filename, NULL, 0);
+      }
+    }
 
     return retstat;
 }
