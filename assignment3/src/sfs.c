@@ -131,6 +131,7 @@ void writeInode(inode nd){
 inode checkiNodePathName(const char *path){
     int i;
     for(i = 0; i < INODE_LIST_SIZE; i++){
+
       	if(!isInodeFree(i)){
             inode in = readInode(i);
             log_msg("path = %s, node's path = %s\n",path, in.path);
@@ -139,6 +140,7 @@ inode checkiNodePathName(const char *path){
       		      return in;
       	    }
       	}
+
     }
 
     return (inode) -1;
@@ -148,6 +150,7 @@ void fillStatBuff(struct stat *statbuf, inode iNode){
     statbuf->st_ino = iNode.id;
     statbuf->st_mode = iNode.mode; //S_IFREG | 0644;
     statbuf->st_nlink = 1;
+
     statbuf->st_size = iNode.size;
     statbuf->st_blocks = iNode.size / BLOCK_SIZE + 1;
 
@@ -332,7 +335,6 @@ int sfs_unlink(const char *path)
     int retstat = 0;
     log_msg("sfs_unlink(path=\"%s\")\n", path);
 
-
     inode file = checkiNodePathName(path);
     if(file == -1){
 	      return -1;
@@ -368,14 +370,15 @@ int sfs_unlink(const char *path)
 int sfs_open(const char *path, struct fuse_file_info *fi)
 {
     int retstat = 0;
+    int i;
     log_msg("\nsfs_open(path\"%s\", fi=0x%08x)\n",
 	    path, fi);
     int flags = fcntl(fi->fh, F_GETFL);
     if(flags == -1){
       return -1;
     }
-    for(int i = 0; i < INODE_LIST_SIZE; i++){
-      if(strcmp(path, SFS_DATA->ilist[i].path) == 0){
+    for(i = 0; i < INODE_LIST_SIZE; i++){
+      if(isInodeFree(i) == 0 && strcmp(path, SFS_DATA->ilist[i].path) == 0){
         return 0;
       }
     }
