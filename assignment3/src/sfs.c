@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include <sys/types.h>
 
@@ -36,24 +37,24 @@
 //size in bytes accounts for 128 inodes
 #define IMAP_SIZE 16
 
-//size in bytes accounts for 131072 blocks
-#define BMAP_SIZE 16384
+//size in bytes accounts for 4096 blocks
+#define BMAP_SIZE 512
 
 //number of inodes
 #define INODE_LIST_SIZE 128
 
-//number of blocks of size 512, aka 2^26 bytes, aka 67108864 bytes
-#define BLOCK_LIST_SIZE 131072
+//number of blocks of size 16384, aka 2^26 bytes, aka 67108864 bytes
+#define BLOCK_LIST_SIZE 4096
 
 #define D_BLOCK_START 50
 
 //1 if block n is free, 0 o/w
 int isBlockFree(int n){
     char buf[BLOCK_SIZE];
-    int blk = 1 + ((n / BLOCK_SIZE) / 8);
-    block_read(blk, (void*) buf);
+    //int blk = 1 + ((n / BLOCK_SIZE) / 8);
+    block_read(1, (void*) buf);
 
-    n = n - (((blk - 1) * BLOCK_SIZE) * 8);
+    //n = n - (((blk - 1) * BLOCK_SIZE) * 8);
 
     return (buf[n / 8] >> n % 8) & 1;
 }
@@ -61,10 +62,10 @@ int isBlockFree(int n){
 //sets block n to 1 (free) or 0 (not free)
 void setBlock(int n, int setting){
     char buf[BLOCK_SIZE];
-    int blk = 1 + ((n / BLOCK_SIZE) / 8);
-    block_read(blk, (void*) buf);
+    //int blk = 1 + ((n / BLOCK_SIZE) / 8);
+    block_read(1, (void*) buf);
 
-    n = n - (((blk - 1) * BLOCK_SIZE) * 8);
+    //n = n - (((blk - 1) * BLOCK_SIZE) * 8);
 
     if(setting == 1){
         buf[n / 8] |= 1 << n % 8;
@@ -72,7 +73,7 @@ void setBlock(int n, int setting){
         buf[n / 8] &= ~(1 << n % 8);
     }
 
-    block_write(blk, (const void*) buf);
+    block_write(1, (const void*) buf);
 }
 
 //1 if inode n is free, 0 o/w
@@ -100,12 +101,12 @@ void setInode(int n, int setting){
 //returns the nth inode in the list
 inode readInode(int n){
     int numPerBlock = BLOCK_SIZE / sizeof(inode);
-    int block = 33 + (n / numPerBlock);
+    int block = 3 + (n / numPerBlock);
     char buf[BLOCK_SIZE];
 
     block_read(block, (void*) buf);
 
-    inode* rp = (inode*) buf + (n % numPerBlock);
+    inode* rp = (inode*) (buf + (n % numPerBlock) * sizeof(inode));
     inode result = *rp;
 
     return result;
@@ -114,12 +115,12 @@ inode readInode(int n){
 void writeInode(inode nd){
     int n = nd.id;
     int numPerBlock = BLOCK_SIZE / sizeof(inode);
-    int block = 33 + (n / numPerBlock);
+    int block = 3 + (n / numPerBlock);
     char buf[BLOCK_SIZE];
 
     block_read(block, (void*) buf);
 
-    inode* rp = (inode*) buf + (n % numPerBlock);
+    inode* rp = (inode*) (buf + (n % numPerBlock) * sizeof(inode));
     *rp = nd;
 
     block_write(block, (const void*) buf);
@@ -133,6 +134,7 @@ inode checkiNodePathName(const char *path){
     for(i = 0; i < INODE_LIST_SIZE; i++){
 
       	if(!isInodeFree(i)){
+            log_msg("got hereee, i is %d\n",i);
             inode in = readInode(i);
             log_msg("path = %s, node's path = %s\n",path, in.path);
 
@@ -151,13 +153,15 @@ inode checkiNodePathName(const char *path){
 
 void fillStatBuff(struct stat *statbuf, inode iNode){
     statbuf->st_mode = iNode.mode; //S_IFREG | 0644;
-    statbuf->st_nlink = 1;
+    statbuf->st_nlink = iNode.hardlinks;
     statbuf->st_size = iNode.size;
     statbuf->st_blocks = iNode.size / BLOCK_SIZE + 1;
 
     statbuf->st_ino = 0; //iNode.id;
 
-
+    statbuf->st_ctime = time(0);
+    statbuf->st_mtime = time(0);
+    statbuf->st_atime = time(0);
 }
 
 
@@ -228,31 +232,29 @@ void *sfs_init(struct fuse_conn_info *conn)
     block_write(0, (const void*) buf);
     //magic num and imap span block 0
 
-    //this looks stupid and complicated...and it is,
-    //but it sets bmap which spans multiple blocks
-    char bmbuf[BMAP_SIZE / BLOCK_SIZE][BLOCK_SIZE];
-    int blk = 1;
-    i = 0;
-    for (blk = 1; blk <= BMAP_SIZE / BLOCK_SIZE; i++) {
-        bmbuf[blk][i] = 0xFF;
-        if(i % BLOCK_SIZE == 0 && i != 0){
-            block_write(blk, (const void*) bmbuf[blk]);
-            blk++;
-            i = 0;
-        }
+
+    char bmbuf[BLOCK_SIZE];
+    for (i = 0; i < BMAP_SIZE; i++) {
+        bmbuf[i] = 0xFF;
     }
-    //bmap spans block 1-32
+
+    block_write(1, (const void*) bmbuf);
+
+
 
     //set up root inode
     setInode(0,0);
     inode root;
     root.id = 0;
-    root.path = (char*) malloc(256);
     memcpy(root.path, "/", 2);
-    root.mode = S_IFDIR | 0777;
+    root.mode = S_IFDIR | 0777; //S_IROTH | S_IWOTH | S_IXOTH | S_IXGRP | S_IWGRP | S_IRGRP | S_IXUSR | S_IWUSR | S_IRUSR;
     root.size = 0;
     root.hardlinks = 2;
 
+    writeInode(root);
+log_msg("YOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+    inode test = readInode(0);
+    log_msg("test has mode %d links %d and id %d",test.mode,test.hardlinks,test.id);
 
     return SFS_DATA;
 }
@@ -286,23 +288,29 @@ int sfs_getattr(const char *path, struct stat *statbuf)
 	  path, statbuf);
 
     if(strcmp(path, "/") == 0){
+
 	     statbuf->st_mode = S_IFDIR | 0777;
 	     statbuf->st_nlink = 2;
+
+       //fillStatBuff(statbuf, readInode(0));
        log_stat(statbuf);
 
        return retstat;
     }
-
+    log_msg("didnt fail yet\n");
     inode n = checkiNodePathName(path);
+    log_msg("still didnt fail\n");
     if(n.id != -1){
+       log_msg("found the inode\n");
 	     fillStatBuff(statbuf, n);
        log_stat(statbuf);
        return retstat;
     }
+    log_msg("didnt found the inode\n");
 
     //*statbuf = (struct stat) {0};
     log_stat(statbuf);
-    return -1;
+    return -ENOENT;
 }
 
 /**
@@ -332,8 +340,7 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
             in.size = 0;
             in.mode = mode;
             in.open = 1;
-            in.path = (char*) malloc(256);
-            in.data = (int*) malloc(sizeof(int) * 32768);
+            memcpy(in.path, path, 256);
             writeInode(in);
             //fi->fh = in.id;
             return retstat;
@@ -393,8 +400,11 @@ int sfs_open(const char *path, struct fuse_file_info *fi)
       return -1;
     }
     for(i = 0; i < INODE_LIST_SIZE; i++){
-      if(isInodeFree(i) == 0 && strcmp(path, readInode(i).path) == 0){
-        return 0;
+      if(isInodeFree(i) == 0){
+          inode in = readInode(i);
+          if(strcmp(path, in.path) == 0){
+            return 0;
+          }
       }
     }
 
@@ -576,9 +586,14 @@ int sfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offse
 
     char filename[255];
     int i;
-    for(i = 0; i < INODE_LIST_SIZE; i++){
+    for(i = 1; i < INODE_LIST_SIZE; i++){
+      //log_msg("got here 1\n");
       if(isInodeFree(i) == 0){
-        memcpy(filename, readInode(i).path + 1, 255);
+        //log_msg("got here 2\n");
+        inode in = readInode(i);
+        memcpy(filename, in.path + 1, 255);
+        //log_msg("got here 3\n");
+
         filler(buf, filename, NULL, 0);
       }
     }

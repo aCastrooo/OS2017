@@ -28,7 +28,7 @@
 
 typedef struct inode_{
     short id;
-    char* path;
+    char path[256];
 
     short open;
 
@@ -37,8 +37,7 @@ typedef struct inode_{
     //size in bytes of the file so far. size in blocks can be calculated using BLOCK_SIZE
     int size;
 
-    //32768 blocks can hold 16MB, enough to hold the memallocator's file
-    int* data;
+    int data[1024];
 
     //number of hard links to the file
     int hardlinks;
