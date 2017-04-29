@@ -372,8 +372,6 @@ int sfs_unlink(const char *path)
         }
     }
 
-    free(file.data);
-    free(file.path);
     setInode(file.id, 1);
 
     return retstat;
