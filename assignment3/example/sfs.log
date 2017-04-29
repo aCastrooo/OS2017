@@ -1,0 +1,3056 @@
+
+sfs_init()
+    conn:
+    proto_major = 7
+    proto_minor = 23
+    async_read = 1
+    max_write = 131072
+    max_readahead = 131072
+    capable = 00000ffb
+    want = 00000010
+    context:
+    fuse = 024a9500
+    uid = 0
+    gid = 0
+    pid = 0
+    private_data = 024a9010
+    logfile = 024a9030
+    diskfile = /home/csuser/testing/OS2017/assignment3/testfsfile
+    umask = 00000
+
+sfs_getattr(path="/", statbuf=0xdd64dbf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040777
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/", statbuf=0xdce4cbf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040777
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/", statbuf=0xdd64dbf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040777
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_readdir(path="/", fi=0xdce4cc50)
+
+sfs_getattr(path="/", statbuf=0xdce4cbf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040777
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_readdir(path="/", fi=0xdce4cc50)
+
+sfs_getattr(path="/gg.c", statbuf=0xdce4cc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_create(path="/gg.c", mode=0100664, fi=0xdd64dd10)
+
+sfs_getattr(path="/gg.c", statbuf=0xdd64dbe0)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904edd9
+    st_mtime = 0x5904edd9
+    st_ctime = 0x5904edd9
+
+sfs_release(path="/gg.c", fi=0xdd64dd10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_readdir(path="/", fi=0xdd64dc50)
+
+sfs_getattr(path="/gg.c", statbuf=0xdce4cc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904edda
+    st_mtime = 0x5904edda
+    st_ctime = 0x5904edda
+
+sfs_readdir(path="/", fi=0xdce4cc50)
+
+sfs_getattr(path="/gg.c", statbuf=0xdd64dc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ede2
+    st_mtime = 0x5904ede2
+    st_ctime = 0x5904ede2
+
+sfs_getattr(path="/gg.c", statbuf=0xdce4cc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ede8
+    st_mtime = 0x5904ede8
+    st_ctime = 0x5904ede8
+
+sfs_open(path"/gg.c", fi=0xdd64dd10)
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xdce4cc20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xdd64dc20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_create(path="/.gg.c.swp", mode=0100600, fi=0xdce4cd10)
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xdce4cbe0)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ede8
+    st_mtime = 0x5904ede8
+    st_ctime = 0x5904ede8
+
+sfs_getattr(path="/.gg.c.swx", statbuf=0xdd64dc20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swx, node's path = /
+got hereee, i is 1
+path = /.gg.c.swx, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swx, node's path = /.gg.c.swp
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/.gg.c.swx", statbuf=0xdce4cc20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swx, node's path = /
+got hereee, i is 1
+path = /.gg.c.swx, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swx, node's path = /.gg.c.swp
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_create(path="/.gg.c.swx", mode=0100600, fi=0xdd64dd10)
+
+sfs_getattr(path="/.gg.c.swx", statbuf=0xdd64dbe0)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swx, node's path = /
+got hereee, i is 1
+path = /.gg.c.swx, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swx, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /.gg.c.swx, node's path = /.gg.c.swx
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ede8
+    st_mtime = 0x5904ede8
+    st_ctime = 0x5904ede8
+
+sfs_release(path="/.gg.c.swx", fi=0xdce4cd10)
+got hereee, i is 0
+path = /.gg.c.swx, node's path = /
+got hereee, i is 1
+path = /.gg.c.swx, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swx, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /.gg.c.swx, node's path = /.gg.c.swx
+sfs_unlink(path="/.gg.c.swx")
+got hereee, i is 0
+path = /.gg.c.swx, node's path = /
+got hereee, i is 1
+path = /.gg.c.swx, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swx, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /.gg.c.swx, node's path = /.gg.c.swx
+
+sfs_release(path="/.gg.c.swp", fi=0xdd64dd10)
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+sfs_unlink(path="/.gg.c.swp")
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xdd64dc20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xdce4cc20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xdd64dc20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xdce4cc20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_create(path="/.gg.c.swp", mode=0100600, fi=0xdd64dd10)
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xdd64dbe0)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ede8
+    st_mtime = 0x5904ede8
+    st_ctime = 0x5904ede8
+
+sfs_write(path="/.gg.c.swp", buf=0xde266060, size=4096, offset=0, fi=0xdd64dd80)
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+
+sfs_release(path="/gg.c", fi=0xdce4cd10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_open(path"/gg.c", fi=0xdce4cd10)
+
+sfs_read(path="/gg.c", buf=0xd0000af0, size=4096, offset=0, fi=0xdce4cd10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_release(path="/gg.c", fi=0xdd64dd10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_getattr(path="/gg.c", statbuf=0xdce4cbf0)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ede8
+    st_mtime = 0x5904ede8
+    st_ctime = 0x5904ede8
+
+sfs_write(path="/.gg.c.swp", buf=0xde266060, size=4096, offset=4096, fi=0xdd64dd80)
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+
+sfs_write(path="/.gg.c.swp", buf=0xde222060, size=4096, offset=8192, fi=0xd7ffed80)
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+
+sfs_write(path="/.gg.c.swp", buf=0xde244060, size=4096, offset=0, fi=0xdce4cd80)
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+
+sfs_getattr(path="/gg.c", statbuf=0xdd64dc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904edfa
+    st_mtime = 0x5904edfa
+    st_ctime = 0x5904edfa
+
+sfs_getattr(path="/gg.c", statbuf=0xd7ffec20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904edfb
+    st_mtime = 0x5904edfb
+    st_ctime = 0x5904edfb
+
+sfs_getattr(path="/4913", statbuf=0xdce4cc20)
+didnt fail yet
+got hereee, i is 0
+path = /4913, node's path = /
+got hereee, i is 1
+path = /4913, node's path = /gg.c
+got hereee, i is 2
+path = /4913, node's path = /.gg.c.swp
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/4913", statbuf=0xdd64dc20)
+didnt fail yet
+got hereee, i is 0
+path = /4913, node's path = /
+got hereee, i is 1
+path = /4913, node's path = /gg.c
+got hereee, i is 2
+path = /4913, node's path = /.gg.c.swp
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_create(path="/4913", mode=0100644, fi=0xd7ffed10)
+
+sfs_getattr(path="/4913", statbuf=0xd7ffebe0)
+didnt fail yet
+got hereee, i is 0
+path = /4913, node's path = /
+got hereee, i is 1
+path = /4913, node's path = /gg.c
+got hereee, i is 2
+path = /4913, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /4913, node's path = /4913
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904edfb
+    st_mtime = 0x5904edfb
+    st_ctime = 0x5904edfb
+
+sfs_release(path="/4913", fi=0xdd64dd10)
+got hereee, i is 0
+path = /4913, node's path = /
+got hereee, i is 1
+path = /4913, node's path = /gg.c
+got hereee, i is 2
+path = /4913, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /4913, node's path = /4913
+sfs_unlink(path="/4913")
+got hereee, i is 0
+path = /4913, node's path = /
+got hereee, i is 1
+path = /4913, node's path = /gg.c
+got hereee, i is 2
+path = /4913, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /4913, node's path = /4913
+
+sfs_getattr(path="/gg.c~", statbuf=0xdce4cc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c~, node's path = /
+got hereee, i is 1
+path = /gg.c~, node's path = /gg.c
+got hereee, i is 2
+path = /gg.c~, node's path = /.gg.c.swp
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/gg.c~", statbuf=0xdd64dc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c~, node's path = /
+got hereee, i is 1
+path = /gg.c~, node's path = /gg.c
+got hereee, i is 2
+path = /gg.c~, node's path = /.gg.c.swp
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/gg.c~", statbuf=0xd7ffec20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c~, node's path = /
+got hereee, i is 1
+path = /gg.c~, node's path = /gg.c
+got hereee, i is 2
+path = /gg.c~, node's path = /.gg.c.swp
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/gg.c~", statbuf=0xdce4cc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c~, node's path = /
+got hereee, i is 1
+path = /gg.c~, node's path = /gg.c
+got hereee, i is 2
+path = /gg.c~, node's path = /.gg.c.swp
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_open(path"/gg.c", fi=0xdce4cd10)
+
+sfs_getattr(path="/gg.c~", statbuf=0xdce4cc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c~, node's path = /
+got hereee, i is 1
+path = /gg.c~, node's path = /gg.c
+got hereee, i is 2
+path = /gg.c~, node's path = /.gg.c.swp
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_create(path="/gg.c~", mode=0100644, fi=0xdd64dd10)
+
+sfs_getattr(path="/gg.c~", statbuf=0xdd64dbe0)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c~, node's path = /
+got hereee, i is 1
+path = /gg.c~, node's path = /gg.c
+got hereee, i is 2
+path = /gg.c~, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /gg.c~, node's path = /gg.c~
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904edfb
+    st_mtime = 0x5904edfb
+    st_ctime = 0x5904edfb
+
+sfs_read(path="/gg.c", buf=0xd0000af0, size=4096, offset=0, fi=0xdce4cd10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_release(path="/gg.c", fi=0xdd64dd10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_release(path="/gg.c~", fi=0xdd64dd10)
+got hereee, i is 0
+path = /gg.c~, node's path = /
+got hereee, i is 1
+path = /gg.c~, node's path = /gg.c
+got hereee, i is 2
+path = /gg.c~, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /gg.c~, node's path = /gg.c~
+
+sfs_getattr(path="/gg.c", statbuf=0xdce4cbf0)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904edfb
+    st_mtime = 0x5904edfb
+    st_ctime = 0x5904edfb
+
+sfs_open(path"/gg.c", fi=0xdd64dd10)
+
+sfs_release(path="/gg.c", fi=0xdd64dd10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_open(path"/gg.c", fi=0xdd64dd10)
+
+sfs_read(path="/gg.c", buf=0xd0000af0, size=4096, offset=0, fi=0xdce4cd10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_release(path="/gg.c", fi=0xdd64dd10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_write(path="/.gg.c.swp", buf=0xde266060, size=4096, offset=8192, fi=0xdd64dd80)
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+
+sfs_open(path"/gg.c", fi=0xdce4cd10)
+
+sfs_release(path="/gg.c", fi=0xdce4cd10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_getattr(path="/gg.c", statbuf=0xd7ffebf0)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904edfb
+    st_mtime = 0x5904edfb
+    st_ctime = 0x5904edfb
+sfs_unlink(path="/gg.c")
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_getattr(path="/gg.c", statbuf=0xdd64dc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 2
+path = /gg.c, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /gg.c, node's path = /gg.c~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_create(path="/gg.c", mode=0100644, fi=0xdce4cd10)
+
+sfs_getattr(path="/gg.c", statbuf=0xdce4cbe0)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904edfb
+    st_mtime = 0x5904edfb
+    st_ctime = 0x5904edfb
+
+sfs_write(path="/gg.c", buf=0xde222060, size=20, offset=0, fi=0xd7ffed80)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_release(path="/gg.c", fi=0xd7ffed10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_write(path="/.gg.c.swp", buf=0xde244060, size=4096, offset=0, fi=0xdce4cd80)
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+
+sfs_getattr(path="/gg.c", statbuf=0xd7ffebf0)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904edfb
+    st_mtime = 0x5904edfb
+    st_ctime = 0x5904edfb
+
+sfs_write(path="/.gg.c.swp", buf=0xde266060, size=4096, offset=0, fi=0xdd64dd80)
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+
+sfs_getattr(path="/gg.c", statbuf=0xdce4cc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee05
+    st_mtime = 0x5904ee05
+    st_ctime = 0x5904ee05
+
+sfs_getattr(path="/gg.c", statbuf=0xd7ffec20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee07
+    st_mtime = 0x5904ee07
+    st_ctime = 0x5904ee07
+
+sfs_getattr(path="/4913", statbuf=0xd77fdc20)
+didnt fail yet
+got hereee, i is 0
+path = /4913, node's path = /
+got hereee, i is 1
+path = /4913, node's path = /gg.c
+got hereee, i is 2
+path = /4913, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /4913, node's path = /gg.c~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/4913", statbuf=0xdd64dc20)
+didnt fail yet
+got hereee, i is 0
+path = /4913, node's path = /
+got hereee, i is 1
+path = /4913, node's path = /gg.c
+got hereee, i is 2
+path = /4913, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /4913, node's path = /gg.c~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_create(path="/4913", mode=0100644, fi=0xdce4cd10)
+
+sfs_getattr(path="/4913", statbuf=0xdce4cbe0)
+didnt fail yet
+got hereee, i is 0
+path = /4913, node's path = /
+got hereee, i is 1
+path = /4913, node's path = /gg.c
+got hereee, i is 2
+path = /4913, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /4913, node's path = /gg.c~
+got hereee, i is 4
+path = /4913, node's path = /4913
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee07
+    st_mtime = 0x5904ee07
+    st_ctime = 0x5904ee07
+
+sfs_release(path="/4913", fi=0xd7ffed10)
+got hereee, i is 0
+path = /4913, node's path = /
+got hereee, i is 1
+path = /4913, node's path = /gg.c
+got hereee, i is 2
+path = /4913, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /4913, node's path = /gg.c~
+got hereee, i is 4
+path = /4913, node's path = /4913
+sfs_unlink(path="/4913")
+got hereee, i is 0
+path = /4913, node's path = /
+got hereee, i is 1
+path = /4913, node's path = /gg.c
+got hereee, i is 2
+path = /4913, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /4913, node's path = /gg.c~
+got hereee, i is 4
+path = /4913, node's path = /4913
+
+sfs_getattr(path="/gg.c~", statbuf=0xd7ffec20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c~, node's path = /
+got hereee, i is 1
+path = /gg.c~, node's path = /gg.c
+got hereee, i is 2
+path = /gg.c~, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /gg.c~, node's path = /gg.c~
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee07
+    st_mtime = 0x5904ee07
+    st_ctime = 0x5904ee07
+
+sfs_getattr(path="/gg.z~", statbuf=0xdd64dc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.z~, node's path = /
+got hereee, i is 1
+path = /gg.z~, node's path = /gg.c
+got hereee, i is 2
+path = /gg.z~, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /gg.z~, node's path = /gg.c~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/gg.z~", statbuf=0xdce4cc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.z~, node's path = /
+got hereee, i is 1
+path = /gg.z~, node's path = /gg.c
+got hereee, i is 2
+path = /gg.z~, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /gg.z~, node's path = /gg.c~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/gg.z~", statbuf=0xd7ffec20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.z~, node's path = /
+got hereee, i is 1
+path = /gg.z~, node's path = /gg.c
+got hereee, i is 2
+path = /gg.z~, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /gg.z~, node's path = /gg.c~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/gg.z~", statbuf=0xd77fdc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.z~, node's path = /
+got hereee, i is 1
+path = /gg.z~, node's path = /gg.c
+got hereee, i is 2
+path = /gg.z~, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /gg.z~, node's path = /gg.c~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_open(path"/gg.c", fi=0xdd64dd10)
+
+sfs_getattr(path="/gg.z~", statbuf=0xdce4cc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.z~, node's path = /
+got hereee, i is 1
+path = /gg.z~, node's path = /gg.c
+got hereee, i is 2
+path = /gg.z~, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /gg.z~, node's path = /gg.c~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_create(path="/gg.z~", mode=0100644, fi=0xd7ffed10)
+
+sfs_getattr(path="/gg.z~", statbuf=0xd7ffebe0)
+didnt fail yet
+got hereee, i is 0
+path = /gg.z~, node's path = /
+got hereee, i is 1
+path = /gg.z~, node's path = /gg.c
+got hereee, i is 2
+path = /gg.z~, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /gg.z~, node's path = /gg.c~
+got hereee, i is 4
+path = /gg.z~, node's path = /gg.z~
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee07
+    st_mtime = 0x5904ee07
+    st_ctime = 0x5904ee07
+
+sfs_read(path="/gg.c", buf=0xd8001080, size=4096, offset=0, fi=0xdd64dd10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_release(path="/gg.c", fi=0xdd64dd10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_release(path="/gg.z~", fi=0xdd64dd10)
+got hereee, i is 0
+path = /gg.z~, node's path = /
+got hereee, i is 1
+path = /gg.z~, node's path = /gg.c
+got hereee, i is 2
+path = /gg.z~, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /gg.z~, node's path = /gg.c~
+got hereee, i is 4
+path = /gg.z~, node's path = /gg.z~
+
+sfs_getattr(path="/gg.c", statbuf=0xd7ffebf0)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee07
+    st_mtime = 0x5904ee07
+    st_ctime = 0x5904ee07
+
+sfs_open(path"/gg.c", fi=0xdce4cd10)
+
+sfs_release(path="/gg.c", fi=0xd77fdd10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_open(path"/gg.c", fi=0xdce4cd10)
+
+sfs_read(path="/gg.c", buf=0xd0000af0, size=4096, offset=0, fi=0xdce4cd10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_release(path="/gg.c", fi=0xd77fdd10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_open(path"/gg.c", fi=0xdd64dd10)
+
+sfs_release(path="/gg.c", fi=0xdd64dd10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_getattr(path="/gg.c", statbuf=0xd77fdbf0)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee07
+    st_mtime = 0x5904ee07
+    st_ctime = 0x5904ee07
+sfs_unlink(path="/gg.c")
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_getattr(path="/gg.c", statbuf=0xdce4cc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 2
+path = /gg.c, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /gg.c, node's path = /gg.c~
+got hereee, i is 4
+path = /gg.c, node's path = /gg.z~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_create(path="/gg.c", mode=0100644, fi=0xdd64dd10)
+
+sfs_getattr(path="/gg.c", statbuf=0xdd64dbe0)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee07
+    st_mtime = 0x5904ee07
+    st_ctime = 0x5904ee07
+
+sfs_write(path="/gg.c", buf=0xde222060, size=20, offset=0, fi=0xd7ffed80)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_release(path="/gg.c", fi=0xd77fdd10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_getattr(path="/gg.c", statbuf=0xd7ffebf0)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee07
+    st_mtime = 0x5904ee07
+    st_ctime = 0x5904ee07
+
+sfs_release(path="/.gg.c.swp", fi=0xd77fdd10)
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xdd64dc20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee07
+    st_mtime = 0x5904ee07
+    st_ctime = 0x5904ee07
+sfs_unlink(path="/.gg.c.swp")
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+
+sfs_readdir(path="/", fi=0xd77fdc50)
+
+sfs_getattr(path="/gg.c", statbuf=0xdce4cc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee09
+    st_mtime = 0x5904ee09
+    st_ctime = 0x5904ee09
+
+sfs_getattr(path="/gg.c~", statbuf=0xd7ffec20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c~, node's path = /
+got hereee, i is 1
+path = /gg.c~, node's path = /gg.c
+got hereee, i is 3
+path = /gg.c~, node's path = /gg.c~
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee09
+    st_mtime = 0x5904ee09
+    st_ctime = 0x5904ee09
+
+sfs_getattr(path="/gg.z~", statbuf=0xdd64dc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.z~, node's path = /
+got hereee, i is 1
+path = /gg.z~, node's path = /gg.c
+got hereee, i is 3
+path = /gg.z~, node's path = /gg.c~
+got hereee, i is 4
+path = /gg.z~, node's path = /gg.z~
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee09
+    st_mtime = 0x5904ee09
+    st_ctime = 0x5904ee09
+
+sfs_readdir(path="/", fi=0xd7ffec50)
+
+sfs_getattr(path="/gg.c", statbuf=0xdd64dc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee14
+    st_mtime = 0x5904ee14
+    st_ctime = 0x5904ee14
+
+sfs_getattr(path="/gg.c~", statbuf=0xd6ffcc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c~, node's path = /
+got hereee, i is 1
+path = /gg.c~, node's path = /gg.c
+got hereee, i is 3
+path = /gg.c~, node's path = /gg.c~
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee14
+    st_mtime = 0x5904ee14
+    st_ctime = 0x5904ee14
+
+sfs_getattr(path="/gg.z~", statbuf=0xd77fdc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.z~, node's path = /
+got hereee, i is 1
+path = /gg.z~, node's path = /gg.c
+got hereee, i is 3
+path = /gg.z~, node's path = /gg.c~
+got hereee, i is 4
+path = /gg.z~, node's path = /gg.z~
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee14
+    st_mtime = 0x5904ee14
+    st_ctime = 0x5904ee14
+
+sfs_getattr(path="/gg.c", statbuf=0xdd64dc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee17
+    st_mtime = 0x5904ee17
+    st_ctime = 0x5904ee17
+
+sfs_open(path"/gg.c", fi=0xd7ffed10)
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xdd64dc20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 3
+path = /.gg.c.swp, node's path = /gg.c~
+got hereee, i is 4
+path = /.gg.c.swp, node's path = /gg.z~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xd6ffcc20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 3
+path = /.gg.c.swp, node's path = /gg.c~
+got hereee, i is 4
+path = /.gg.c.swp, node's path = /gg.z~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_create(path="/.gg.c.swp", mode=0100600, fi=0xd77fdd10)
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xd77fdbe0)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee17
+    st_mtime = 0x5904ee17
+    st_ctime = 0x5904ee17
+
+sfs_getattr(path="/.gg.c.swx", statbuf=0xdce4cc20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swx, node's path = /
+got hereee, i is 1
+path = /.gg.c.swx, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swx, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /.gg.c.swx, node's path = /gg.c~
+got hereee, i is 4
+path = /.gg.c.swx, node's path = /gg.z~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/.gg.c.swx", statbuf=0xd7ffec20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swx, node's path = /
+got hereee, i is 1
+path = /.gg.c.swx, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swx, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /.gg.c.swx, node's path = /gg.c~
+got hereee, i is 4
+path = /.gg.c.swx, node's path = /gg.z~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_create(path="/.gg.c.swx", mode=0100600, fi=0xdd64dd10)
+
+sfs_getattr(path="/.gg.c.swx", statbuf=0xdd64dbe0)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swx, node's path = /
+got hereee, i is 1
+path = /.gg.c.swx, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swx, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /.gg.c.swx, node's path = /gg.c~
+got hereee, i is 4
+path = /.gg.c.swx, node's path = /gg.z~
+got hereee, i is 5
+path = /.gg.c.swx, node's path = /.gg.c.swx
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee17
+    st_mtime = 0x5904ee17
+    st_ctime = 0x5904ee17
+
+sfs_release(path="/.gg.c.swx", fi=0xd6ffcd10)
+got hereee, i is 0
+path = /.gg.c.swx, node's path = /
+got hereee, i is 1
+path = /.gg.c.swx, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swx, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /.gg.c.swx, node's path = /gg.c~
+got hereee, i is 4
+path = /.gg.c.swx, node's path = /gg.z~
+got hereee, i is 5
+path = /.gg.c.swx, node's path = /.gg.c.swx
+sfs_unlink(path="/.gg.c.swx")
+got hereee, i is 0
+path = /.gg.c.swx, node's path = /
+got hereee, i is 1
+path = /.gg.c.swx, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swx, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /.gg.c.swx, node's path = /gg.c~
+got hereee, i is 4
+path = /.gg.c.swx, node's path = /gg.z~
+got hereee, i is 5
+path = /.gg.c.swx, node's path = /.gg.c.swx
+
+sfs_release(path="/.gg.c.swp", fi=0xdce4cd10)
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+sfs_unlink(path="/.gg.c.swp")
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xd7ffec20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 3
+path = /.gg.c.swp, node's path = /gg.c~
+got hereee, i is 4
+path = /.gg.c.swp, node's path = /gg.z~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xdd64dc20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 3
+path = /.gg.c.swp, node's path = /gg.c~
+got hereee, i is 4
+path = /.gg.c.swp, node's path = /gg.z~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xd6ffcc20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 3
+path = /.gg.c.swp, node's path = /gg.c~
+got hereee, i is 4
+path = /.gg.c.swp, node's path = /gg.z~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xd77fdc20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 3
+path = /.gg.c.swp, node's path = /gg.c~
+got hereee, i is 4
+path = /.gg.c.swp, node's path = /gg.z~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_create(path="/.gg.c.swp", mode=0100600, fi=0xdce4cd10)
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xdce4cbe0)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee17
+    st_mtime = 0x5904ee17
+    st_ctime = 0x5904ee17
+
+sfs_write(path="/.gg.c.swp", buf=0xde244060, size=4096, offset=0, fi=0xdce4cd80)
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+
+sfs_release(path="/gg.c", fi=0xdce4cd10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_open(path"/gg.c", fi=0xd77fdd10)
+
+sfs_read(path="/gg.c", buf=0xd0000af0, size=4096, offset=0, fi=0xdce4cd10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_release(path="/gg.c", fi=0xd77fdd10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_getattr(path="/gg.c", statbuf=0xd7ffebf0)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee17
+    st_mtime = 0x5904ee17
+    st_ctime = 0x5904ee17
+
+sfs_release(path="/.gg.c.swp", fi=0xdd64dd10)
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xd6ffcc20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee1f
+    st_mtime = 0x5904ee1f
+    st_ctime = 0x5904ee1f
+sfs_unlink(path="/.gg.c.swp")
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+
+sfs_getattr(path="/gg.c", statbuf=0xd7ffec20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee51
+    st_mtime = 0x5904ee51
+    st_ctime = 0x5904ee51
+
+sfs_open(path"/gg.c", fi=0xd77fdd10)
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xd7ffec20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 3
+path = /.gg.c.swp, node's path = /gg.c~
+got hereee, i is 4
+path = /.gg.c.swp, node's path = /gg.z~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xdd64dc20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 3
+path = /.gg.c.swp, node's path = /gg.c~
+got hereee, i is 4
+path = /.gg.c.swp, node's path = /gg.z~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_create(path="/.gg.c.swp", mode=0100600, fi=0xd6ffcd10)
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xd6ffcbe0)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee51
+    st_mtime = 0x5904ee51
+    st_ctime = 0x5904ee51
+
+sfs_getattr(path="/.gg.c.swx", statbuf=0xdce4cc20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swx, node's path = /
+got hereee, i is 1
+path = /.gg.c.swx, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swx, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /.gg.c.swx, node's path = /gg.c~
+got hereee, i is 4
+path = /.gg.c.swx, node's path = /gg.z~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/.gg.c.swx", statbuf=0xd77fdc20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swx, node's path = /
+got hereee, i is 1
+path = /.gg.c.swx, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swx, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /.gg.c.swx, node's path = /gg.c~
+got hereee, i is 4
+path = /.gg.c.swx, node's path = /gg.z~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_create(path="/.gg.c.swx", mode=0100600, fi=0xd7ffed10)
+
+sfs_getattr(path="/.gg.c.swx", statbuf=0xd7ffebe0)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swx, node's path = /
+got hereee, i is 1
+path = /.gg.c.swx, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swx, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /.gg.c.swx, node's path = /gg.c~
+got hereee, i is 4
+path = /.gg.c.swx, node's path = /gg.z~
+got hereee, i is 5
+path = /.gg.c.swx, node's path = /.gg.c.swx
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee51
+    st_mtime = 0x5904ee51
+    st_ctime = 0x5904ee51
+
+sfs_release(path="/.gg.c.swx", fi=0xd6ffcd10)
+got hereee, i is 0
+path = /.gg.c.swx, node's path = /
+got hereee, i is 1
+path = /.gg.c.swx, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swx, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /.gg.c.swx, node's path = /gg.c~
+got hereee, i is 4
+path = /.gg.c.swx, node's path = /gg.z~
+got hereee, i is 5
+path = /.gg.c.swx, node's path = /.gg.c.swx
+sfs_unlink(path="/.gg.c.swx")
+got hereee, i is 0
+path = /.gg.c.swx, node's path = /
+got hereee, i is 1
+path = /.gg.c.swx, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swx, node's path = /.gg.c.swp
+got hereee, i is 3
+path = /.gg.c.swx, node's path = /gg.c~
+got hereee, i is 4
+path = /.gg.c.swx, node's path = /gg.z~
+got hereee, i is 5
+path = /.gg.c.swx, node's path = /.gg.c.swx
+
+sfs_release(path="/.gg.c.swp", fi=0xdce4cd10)
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+sfs_unlink(path="/.gg.c.swp")
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xd77fdc20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 3
+path = /.gg.c.swp, node's path = /gg.c~
+got hereee, i is 4
+path = /.gg.c.swp, node's path = /gg.z~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xdd64dc20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 3
+path = /.gg.c.swp, node's path = /gg.c~
+got hereee, i is 4
+path = /.gg.c.swp, node's path = /gg.z~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xd7ffec20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 3
+path = /.gg.c.swp, node's path = /gg.c~
+got hereee, i is 4
+path = /.gg.c.swp, node's path = /gg.z~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xd6ffcc20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 3
+path = /.gg.c.swp, node's path = /gg.c~
+got hereee, i is 4
+path = /.gg.c.swp, node's path = /gg.z~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_create(path="/.gg.c.swp", mode=0100600, fi=0xdce4cd10)
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xdce4cbe0)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee51
+    st_mtime = 0x5904ee51
+    st_ctime = 0x5904ee51
+
+sfs_write(path="/.gg.c.swp", buf=0xde244060, size=4096, offset=0, fi=0xdce4cd80)
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+
+sfs_release(path="/gg.c", fi=0xdce4cd10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_open(path"/gg.c", fi=0xd77fdd10)
+
+sfs_read(path="/gg.c", buf=0xc4000af0, size=4096, offset=0, fi=0xd77fdd10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_release(path="/gg.c", fi=0xdce4cd10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_getattr(path="/gg.c", statbuf=0xdd64dbf0)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee51
+    st_mtime = 0x5904ee51
+    st_ctime = 0x5904ee51
+
+sfs_write(path="/.gg.c.swp", buf=0xde244060, size=4096, offset=4096, fi=0xdce4cd80)
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+
+sfs_write(path="/.gg.c.swp", buf=0xde200060, size=4096, offset=8192, fi=0xd77fdd80)
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+
+sfs_release(path="/.gg.c.swp", fi=0xd6ffcd10)
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+
+sfs_getattr(path="/.gg.c.swp", statbuf=0xd7ffec20)
+didnt fail yet
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee57
+    st_mtime = 0x5904ee57
+    st_ctime = 0x5904ee57
+sfs_unlink(path="/.gg.c.swp")
+got hereee, i is 0
+path = /.gg.c.swp, node's path = /
+got hereee, i is 1
+path = /.gg.c.swp, node's path = /gg.c
+got hereee, i is 2
+path = /.gg.c.swp, node's path = /.gg.c.swp
+
+sfs_getattr(path="/.git", statbuf=0xd77fdc20)
+didnt fail yet
+got hereee, i is 0
+path = /.git, node's path = /
+got hereee, i is 1
+path = /.git, node's path = /gg.c
+got hereee, i is 3
+path = /.git, node's path = /gg.c~
+got hereee, i is 4
+path = /.git, node's path = /gg.z~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/.git", statbuf=0xd6ffcc20)
+didnt fail yet
+got hereee, i is 0
+path = /.git, node's path = /
+got hereee, i is 1
+path = /.git, node's path = /gg.c
+got hereee, i is 3
+path = /.git, node's path = /gg.c~
+got hereee, i is 4
+path = /.git, node's path = /gg.z~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/.git", statbuf=0xd7ffec20)
+didnt fail yet
+got hereee, i is 0
+path = /.git, node's path = /
+got hereee, i is 1
+path = /.git, node's path = /gg.c
+got hereee, i is 3
+path = /.git, node's path = /gg.c~
+got hereee, i is 4
+path = /.git, node's path = /gg.z~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/.git", statbuf=0xdd64dc20)
+didnt fail yet
+got hereee, i is 0
+path = /.git, node's path = /
+got hereee, i is 1
+path = /.git, node's path = /gg.c
+got hereee, i is 3
+path = /.git, node's path = /gg.c~
+got hereee, i is 4
+path = /.git, node's path = /gg.z~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_readdir(path="/", fi=0xd77fdc50)
+
+sfs_getattr(path="/gg.c", statbuf=0xd6ffcc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee6f
+    st_mtime = 0x5904ee6f
+    st_ctime = 0x5904ee6f
+
+sfs_getattr(path="/.gitignore", statbuf=0xd7ffec20)
+didnt fail yet
+got hereee, i is 0
+path = /.gitignore, node's path = /
+got hereee, i is 1
+path = /.gitignore, node's path = /gg.c
+got hereee, i is 3
+path = /.gitignore, node's path = /gg.c~
+got hereee, i is 4
+path = /.gitignore, node's path = /gg.z~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/gg.c~", statbuf=0xdd64dc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c~, node's path = /
+got hereee, i is 1
+path = /gg.c~, node's path = /gg.c
+got hereee, i is 3
+path = /gg.c~, node's path = /gg.c~
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee6f
+    st_mtime = 0x5904ee6f
+    st_ctime = 0x5904ee6f
+
+sfs_getattr(path="/gg.z~", statbuf=0xdce4cc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.z~, node's path = /
+got hereee, i is 1
+path = /gg.z~, node's path = /gg.c
+got hereee, i is 3
+path = /gg.z~, node's path = /gg.c~
+got hereee, i is 4
+path = /gg.z~, node's path = /gg.z~
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100644
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5904ee6f
+    st_mtime = 0x5904ee6f
+    st_ctime = 0x5904ee6f
+
+sfs_open(path"/gg.c", fi=0xd77fdd10)
+
+sfs_getattr(path="/.gitattributes", statbuf=0xd6ffcc20)
+didnt fail yet
+got hereee, i is 0
+path = /.gitattributes, node's path = /
+got hereee, i is 1
+path = /.gitattributes, node's path = /gg.c
+got hereee, i is 3
+path = /.gitattributes, node's path = /gg.c~
+got hereee, i is 4
+path = /.gitattributes, node's path = /gg.z~
+still didnt fail
+didnt found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 00
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_release(path="/gg.c", fi=0xdce4cd10)
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 1
+path = /gg.c, node's path = /gg.c
+
+sfs_open(path"/gg.c~", fi=0xdd64dd10)
+
+sfs_release(path="/gg.c~", fi=0xd7ffed10)
+got hereee, i is 0
+path = /gg.c~, node's path = /
+got hereee, i is 1
+path = /gg.c~, node's path = /gg.c
+got hereee, i is 3
+path = /gg.c~, node's path = /gg.c~
+
+sfs_open(path"/gg.z~", fi=0xd77fdd10)
+
+sfs_release(path="/gg.z~", fi=0xd6ffcd10)
+got hereee, i is 0
+path = /gg.z~, node's path = /
+got hereee, i is 1
+path = /gg.z~, node's path = /gg.c
+got hereee, i is 3
+path = /gg.z~, node's path = /gg.c~
+got hereee, i is 4
+path = /gg.z~, node's path = /gg.z~

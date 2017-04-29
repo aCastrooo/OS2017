@@ -152,7 +152,7 @@ inode checkiNodePathName(const char *path){
 }
 
 void fillStatBuff(struct stat *statbuf, inode iNode){
-    statbuf->st_mode = iNode.mode; //S_IFREG | 0644;
+    statbuf->st_mode =  S_IFREG | 0644;//iNode.mode;
     statbuf->st_nlink = iNode.hardlinks;
     statbuf->st_size = iNode.size;
     statbuf->st_blocks = iNode.size / BLOCK_SIZE + 1;
@@ -541,7 +541,9 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
    // 1 = it will go over, 0 = within file size
    int over = 0;
    char diskbuf[BLOCK_SIZE];
-
+   
+   memset(diskbuf, 0, BLOCK_SIZE);
+ 
    if(offset + size > file.size){
 	over = 1;
    }
@@ -559,6 +561,7 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
 
           block_write(file.data[blk], (void*) diskbuf);
           chr = 0;
+	  memset(diskbuf, 0, BLOCK_SIZE);
       }
    }
 
