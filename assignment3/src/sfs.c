@@ -471,7 +471,7 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
       	//EBADF error
       	return -1;
     }
-    if(offset > file.size || size > file.size){
+    if(offset + size > file.size){
       	//cant start reading after the EOF, and cant read more than the file has
       	//for the second, we can actually read what the file has, but we can't read more than that. should we just read all the stuff?
       	return -1;
@@ -482,13 +482,23 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
 
    int filePointer = 0;
    int bytesWritten = 0;
-   if(offset != 0){
-	    filePointer = offset;
-   }
 
-   for(filePointer; filePointer < file.size; filePointer++){
-    	buf[filePointer] = file.data[filePointer];
-    	bytesWritten++;
+   memset(buf, 0, size);
+
+   int blk = offset / BLOCK_SIZE;
+   int chr = offset % BLOCK_SIZE;
+   int i;
+   char diskbuf[BLOCK_SIZE];
+   block_read(file.data[blk], (void*) diskbuf);
+   for (i = 0; i < size; i++) {
+      buf[i] = diskbuf[chr];
+      chr++;
+      bytesWritten++;
+      if(chr % BLOCK_SIZE == 0){
+          blk++;
+          block_read(file.data[blk], (void*) diskbuf);
+          chr = 0;
+      }
    }
 
    return bytesWritten;
