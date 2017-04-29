@@ -462,17 +462,17 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
     inode file = checkiNodePathName(path);
     if(file.id == -1){
       	// file doesn't exist to read from
-      	return -1;
+      	return -EBADF;
     }
     if(fi->fh == -1){
       	//file has been closed, can't read from it anymore
       	//EBADF error
-      	return -1;
+      	return -EBADF;
     }
-    if(offset + size > file.size){
+    if(offset > file.size){
       	//cant start reading after the EOF, and cant read more than the file has
       	//for the second, we can actually read what the file has, but we can't read more than that. should we just read all the stuff?
-      	return -1;
+      	return -EFAULT;
     }
     if(size == 0){
 	     return 0;
@@ -542,14 +542,10 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
 
    memset(diskbuf, 0, BLOCK_SIZE);
 
-   if(offset + size > file.size){
-	    over = 1;
-   }
-
    int needToWrite = 0;
 
    for (i = 0; i < size; i++) {
-      diskbuf[i] = buf[chr];
+      diskbuf[chr] = buf[i];
       chr++;
       bytesWritten++;
       needToWrite = 1;
