@@ -480,7 +480,6 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
 	     return 0;
     }
 
-   int filePointer = 0;
    int bytesWritten = 0;
 
    memset(buf, 0, size);
@@ -519,8 +518,53 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
     log_msg("\nsfs_write(path=\"%s\", buf=0x%08x, size=%d, offset=%lld, fi=0x%08x)\n",
 	    path, buf, size, offset, fi);
 
+    inode file = checkiNodePathName(path);
+    if(file.id == -1){
+      	// file doesn't exist to read from
+      	return -EBADF;
+    }
+    if(fi->fh == -1){
+      	//file has been closed, can't write to it anymore
+      	//EBADF error
+      	return -EBADF;
+    }
+    if(size == 0){
+	     return 0;
+    }
 
-    return retstat;
+   int bytesWritten = 0;
+
+   memset(buf, 0, size);
+
+   int blk = offset / BLOCK_SIZE;
+   int chr = offset % BLOCK_SIZE;
+   int i;
+   // for checking if the bytes to write will go over the file size.
+   // 1 = it will go over, 0 = within file size
+   int over = 0;
+   char diskbuf[BLOCK_SIZE];
+
+   if(offset + size > file.size){
+	over = 1;
+   }
+
+
+   for (i = 0; i < size; i++) {
+      diskbuf[i] = buf[chr];
+      chr++;
+      bytesWritten++;
+      if(chr % BLOCK_SIZE == 0){
+          blk++;
+	  while(over == 1 && isBlockFree(blk) != 1){
+		blk++;
+	  }
+
+          block_write(file.data[blk], (void*) diskbuf);
+          chr = 0;
+      }
+   }
+
+    return bytesWritten;
 }
 
 
