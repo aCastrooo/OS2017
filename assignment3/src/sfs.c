@@ -532,8 +532,6 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
 
    int bytesWritten = 0;
 
-   memset(buf, 0, size);
-
    int blk = offset / BLOCK_SIZE;
    int chr = offset % BLOCK_SIZE;
    int i;
@@ -541,28 +539,37 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
    // 1 = it will go over, 0 = within file size
    int over = 0;
    char diskbuf[BLOCK_SIZE];
-   
+
    memset(diskbuf, 0, BLOCK_SIZE);
- 
+
    if(offset + size > file.size){
-	over = 1;
+	    over = 1;
    }
 
+   int needToWrite = 0;
 
    for (i = 0; i < size; i++) {
       diskbuf[i] = buf[chr];
       chr++;
       bytesWritten++;
+      needToWrite = 1;
       if(chr % BLOCK_SIZE == 0){
-          blk++;
-	  while(over == 1 && isBlockFree(blk) != 1){
-		blk++;
-	  }
+
+	        while(isBlockFree(blk) != 1){
+		          blk++;
+	        }
 
           block_write(file.data[blk], (void*) diskbuf);
-          chr = 0;
-	  memset(diskbuf, 0, BLOCK_SIZE);
+	        memset(diskbuf, 0, BLOCK_SIZE);
+          blk++;
+          needToWrite = 0;
       }
+   }
+   if(needToWrite == 1){
+     while(isBlockFree(blk) != 1){
+       blk++;
+     }
+     block_write(file.data[blk], (void*) diskbuf);
    }
 
     return bytesWritten;
