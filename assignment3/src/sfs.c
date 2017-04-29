@@ -372,8 +372,6 @@ int sfs_unlink(const char *path)
         }
     }
 
-    free(file.data);
-    free(file.path);
     setInode(file.id, 1);
 
     return retstat;
@@ -480,7 +478,6 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
 	     return 0;
     }
 
-   int filePointer = 0;
    int bytesWritten = 0;
 
    memset(buf, 0, size);
