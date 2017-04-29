@@ -494,7 +494,7 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
       if(chr % BLOCK_SIZE == 0){
           blk++;
           block_read(file.data[blk], (void*) diskbuf);
-          chr = 0;
+	  chr = 0;
       }
    }
 
@@ -539,8 +539,10 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
    // 1 = it will go over, 0 = within file size
    int over = 0;
    char diskbuf[BLOCK_SIZE];
-
-   memset(diskbuf, 0, BLOCK_SIZE);
+   char fromFile[BLOCK_SIZE];
+   block_read(file.data[blk], fromFile);
+   memcpy(diskbuf, fromFile, BLOCK_SIZE);
+   //memset(diskbuf, 0, BLOCK_SIZE);
 
    int needToWrite = 0;
 
@@ -551,7 +553,7 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
       needToWrite = 1;
       if(chr % BLOCK_SIZE == 0){
 
-	        while(isBlockFree(blk) != 1){
+	        while(isBlockFree(file.data[blk]) != 1){
 		          blk++;
 	        }
 
