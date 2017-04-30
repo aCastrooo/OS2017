@@ -9,20 +9,20 @@ sfs_init()
     capable = 00000ffb
     want = 00000010
     context:
-    fuse = 01236500
+    fuse = 01769500
     uid = 0
     gid = 0
     pid = 0
-    private_data = 01236010
-    logfile = 01236030
+    private_data = 01769010
+    logfile = 01769030
     diskfile = /home/csuser/testing/OS2017/assignment3/testfsfile
     umask = 00000
 
-sfs_getattr(path="/", statbuf=0x32b16bf0)
+sfs_getattr(path="/", statbuf=0x4f06bbf0)
     si:
     st_dev = 0
     st_ino = 0
-    st_mode = 040777
+    st_mode = 040755
     st_nlink = 2
     st_uid = 0
     st_gid = 0
@@ -34,18 +34,65 @@ sfs_getattr(path="/", statbuf=0x32b16bf0)
     st_mtime = 0x00000000
     st_ctime = 0x00000000
 
-sfs_readdir(path="/", fi=0x32315c50)
+sfs_readdir(path="/", fi=0x4e86ac50)
 
-sfs_readdir(path="/", fi=0x32b16c50)
-
-sfs_readdir(path="/", fi=0x32315c50)
-
-sfs_readdir(path="/", fi=0x32b16c50)
-
-sfs_getattr(path="/lol", statbuf=0x32b16c20)
+sfs_getattr(path="/fuck", statbuf=0x4f06bc20)
 didnt fail yet
 got hereee, i is 0
-path = /lol, node's path = /
+path = /fuck, node's path = /
+got hereee, i is 1
+path = /fuck, node's path = /fuck
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100777
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x59054002
+    st_mtime = 0x59054002
+    st_ctime = 0x59054002
+
+sfs_getattr(path="/fuck", statbuf=0x4e86ac20)
+didnt fail yet
+got hereee, i is 0
+path = /fuck, node's path = /
+got hereee, i is 1
+path = /fuck, node's path = /fuck
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100777
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x59054004
+    st_mtime = 0x59054004
+    st_ctime = 0x59054004
+sfs_unlink(path="/fuck")
+got hereee, i is 0
+path = /fuck, node's path = /
+got hereee, i is 1
+path = /fuck, node's path = /fuck
+
+sfs_readdir(path="/", fi=0x4e86ac50)
+
+sfs_getattr(path="/omfg.txt", statbuf=0x4e86ac20)
+didnt fail yet
+got hereee, i is 0
+path = /omfg.txt, node's path = /
 still didnt fail
 didnt found the inode
     si:
@@ -63,20 +110,20 @@ didnt found the inode
     st_mtime = 0x00000000
     st_ctime = 0x00000000
 
-sfs_create(path="/lol", mode=0100664, fi=0x32315d10)
+sfs_create(path="/omfg.txt", mode=0100664, fi=0x4f06bd10)
 
-sfs_getattr(path="/lol", statbuf=0x32315be0)
+sfs_getattr(path="/omfg.txt", statbuf=0x4f06bbe0)
 didnt fail yet
 got hereee, i is 0
-path = /lol, node's path = /
+path = /omfg.txt, node's path = /
 got hereee, i is 1
-path = /lol, node's path = /lol
+path = /omfg.txt, node's path = /omfg.txt
 still didnt fail
 found the inode
     si:
     st_dev = 0
     st_ino = 0
-    st_mode = 0100644
+    st_mode = 0100777
     st_nlink = 0
     st_uid = 0
     st_gid = 0
@@ -84,30 +131,26 @@ found the inode
     st_size = 0
     st_blksize = 0
     st_blocks = 1
-    st_atime = 0x59051140
-    st_mtime = 0x59051140
-    st_ctime = 0x59051140
+    st_atime = 0x5905400c
+    st_mtime = 0x5905400c
+    st_ctime = 0x5905400c
 
-sfs_release(path="/lol", fi=0x32315d10)
-got hereee, i is 0
-path = /lol, node's path = /
-got hereee, i is 1
-path = /lol, node's path = /lol
+sfs_release(path="/omfg.txt", fi=0x4f06bd10)
 
-sfs_readdir(path="/", fi=0x32315c50)
+sfs_readdir(path="/", fi=0x4f06bc50)
 
-sfs_getattr(path="/lol", statbuf=0x32b16c20)
+sfs_getattr(path="/omfg.txt", statbuf=0x4e86ac20)
 didnt fail yet
 got hereee, i is 0
-path = /lol, node's path = /
+path = /omfg.txt, node's path = /
 got hereee, i is 1
-path = /lol, node's path = /lol
+path = /omfg.txt, node's path = /omfg.txt
 still didnt fail
 found the inode
     si:
     st_dev = 0
     st_ino = 0
-    st_mode = 0100644
+    st_mode = 0100777
     st_nlink = 0
     st_uid = 0
     st_gid = 0
@@ -115,16 +158,704 @@ found the inode
     st_size = 0
     st_blksize = 0
     st_blocks = 1
-    st_atime = 0x59051142
-    st_mtime = 0x59051142
-    st_ctime = 0x59051142
+    st_atime = 0x5905400d
+    st_mtime = 0x5905400d
+    st_ctime = 0x5905400d
 
-sfs_getattr(path="/bbb.c", statbuf=0x32315c20)
+sfs_getattr(path="/omfg.txt", statbuf=0x4f06bc20)
 didnt fail yet
 got hereee, i is 0
-path = /bbb.c, node's path = /
+path = /omfg.txt, node's path = /
 got hereee, i is 1
-path = /bbb.c, node's path = /lol
+path = /omfg.txt, node's path = /omfg.txt
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100777
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x5905402f
+    st_mtime = 0x5905402f
+    st_ctime = 0x5905402f
+
+sfs_open(path"/omfg.txt", fi=0x4e86ad10)
+
+sfs_write(path="/omfg.txt", buf=0x4fc62060, size=43, offset=0, fi=0x4e86ad80)
+got hereee, i is 0
+path = /omfg.txt, node's path = /
+got hereee, i is 1
+path = /omfg.txt, node's path = /omfg.txt
+
+given path= /omfg.txt, inode path= /omfg.txt 
+ 
+sfs_release(path="/omfg.txt", fi=0x4f06bd10)
+
+sfs_readdir(path="/", fi=0x4f06bc50)
+
+sfs_getattr(path="/omfg.txt", statbuf=0x4e86ac20)
+didnt fail yet
+got hereee, i is 0
+path = /omfg.txt, node's path = /
+got hereee, i is 1
+path = /omfg.txt, node's path = /omfg.txt
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100777
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x59054035
+    st_mtime = 0x59054035
+    st_ctime = 0x59054035
+
+sfs_getattr(path="/", statbuf=0x4f06bbf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_readdir(path="/", fi=0x4f06bc50)
+
+sfs_getattr(path="/", statbuf=0x4f06bbf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_readdir(path="/", fi=0x4f06bc50)
+
+sfs_getattr(path="/omfg.txt", statbuf=0x4e86ac20)
+didnt fail yet
+got hereee, i is 0
+path = /omfg.txt, node's path = /
+got hereee, i is 1
+path = /omfg.txt, node's path = /omfg.txt
+still didnt fail
+found the inode
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 0100777
+    st_nlink = 0
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 1
+    st_atime = 0x59060fb6
+    st_mtime = 0x59060fb6
+    st_ctime = 0x59060fb6
+sfs_unlink(path="/omfg.txt")
+got hereee, i is 0
+path = /omfg.txt, node's path = /
+got hereee, i is 1
+path = /omfg.txt, node's path = /omfg.txt
+
+sfs_getattr(path="/", statbuf=0x4e86abf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/", statbuf=0x4f06bbf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/", statbuf=0x4e86abf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_readdir(path="/", fi=0x4e86ac50)
+
+sfs_getattr(path="/", statbuf=0x4e86abf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_readdir(path="/", fi=0x4e86ac50)
+
+sfs_getattr(path="/", statbuf=0x4e86abf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/", statbuf=0x4f06bbf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_readdir(path="/", fi=0x4f06bc50)
+
+sfs_getattr(path="/", statbuf=0x4f06bbf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_readdir(path="/", fi=0x4f06bc50)
+
+sfs_getattr(path="/", statbuf=0x4f06bbf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/", statbuf=0x4e86abf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_readdir(path="/", fi=0x4e86ac50)
+
+sfs_getattr(path="/", statbuf=0x4e86abf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_readdir(path="/", fi=0x4e86ac50)
+
+sfs_getattr(path="/", statbuf=0x4e86abf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/", statbuf=0x4f06bbf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_readdir(path="/", fi=0x4f06bc50)
+
+sfs_getattr(path="/", statbuf=0x4f06bbf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_readdir(path="/", fi=0x4f06bc50)
+
+sfs_getattr(path="/", statbuf=0x4f06bbf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/", statbuf=0x4e86abf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_readdir(path="/", fi=0x4e86ac50)
+
+sfs_getattr(path="/", statbuf=0x4e86abf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_readdir(path="/", fi=0x4e86ac50)
+
+sfs_getattr(path="/", statbuf=0x4e86abf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/", statbuf=0x4f06bbf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_readdir(path="/", fi=0x4f06bc50)
+
+sfs_getattr(path="/", statbuf=0x4f06bbf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_readdir(path="/", fi=0x4f06bc50)
+
+sfs_getattr(path="/", statbuf=0x4f06bbf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/", statbuf=0x4e86abf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_readdir(path="/", fi=0x4e86ac50)
+
+sfs_getattr(path="/", statbuf=0x4e86abf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_getattr(path="/", statbuf=0x4f06bbf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_readdir(path="/", fi=0x4f06bc50)
+
+sfs_getattr(path="/", statbuf=0x4f06bbf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_readdir(path="/", fi=0x4f06bc50)
+
+sfs_getattr(path="/", statbuf=0x4f06bbf0)
+    si:
+    st_dev = 0
+    st_ino = 0
+    st_mode = 040755
+    st_nlink = 2
+    st_uid = 0
+    st_gid = 0
+    st_rdev = 0
+    st_size = 0
+    st_blksize = 0
+    st_blocks = 0
+    st_atime = 0x00000000
+    st_mtime = 0x00000000
+    st_ctime = 0x00000000
+
+sfs_readdir(path="/", fi=0x4f06bc50)
+
+sfs_getattr(path="/gg.c", statbuf=0x4f06bc20)
+didnt fail yet
+got hereee, i is 0
+path = /gg.c, node's path = /
+got hereee, i is 2
+path = /gg.c, node's path = 
+got hereee, i is 3
+path = /gg.c, node's path = 
+got hereee, i is 4
+path = /gg.c, node's path = 
+got hereee, i is 6
+path = /gg.c, node's path = 
+got hereee, i is 7
+path = /gg.c, node's path = 
+got hereee, i is 8
+path = /gg.c, node's path = 
+got hereee, i is 9
+path = /gg.c, node's path = 
+got hereee, i is 10
+path = /gg.c, node's path = 
+got hereee, i is 11
+path = /gg.c, node's path = 
+got hereee, i is 15
+path = /gg.c, node's path = 
+got hereee, i is 16
+path = /gg.c, node's path = 
+got hereee, i is 18
+path = /gg.c, node's path = 
+got hereee, i is 19
+path = /gg.c, node's path = 
+got hereee, i is 23
+path = /gg.c, node's path = 
+got hereee, i is 28
+path = /gg.c, node's path = 
+got hereee, i is 31
+path = /gg.c, node's path = 
+got hereee, i is 32
+path = /gg.c, node's path = 
+got hereee, i is 34
+path = /gg.c, node's path = 
+got hereee, i is 36
+path = /gg.c, node's path = 
+got hereee, i is 39
+path = /gg.c, node's path = 
+got hereee, i is 41
+path = /gg.c, node's path = 
+got hereee, i is 43
+path = /gg.c, node's path = 
+got hereee, i is 44
+path = /gg.c, node's path = 
+got hereee, i is 47
+path = /gg.c, node's path = 
+got hereee, i is 50
+path = /gg.c, node's path = 
+got hereee, i is 51
+path = /gg.c, node's path = 
+got hereee, i is 52
+path = /gg.c, node's path = 
+got hereee, i is 55
+path = /gg.c, node's path = 
+got hereee, i is 56
+path = /gg.c, node's path = 
+got hereee, i is 57
+path = /gg.c, node's path = 
+got hereee, i is 59
+path = /gg.c, node's path = 
+got hereee, i is 63
+path = /gg.c, node's path = 
+got hereee, i is 64
+path = /gg.c, node's path = 
+got hereee, i is 65
+path = /gg.c, node's path = 
+got hereee, i is 66
+path = /gg.c, node's path = 
+got hereee, i is 67
+path = /gg.c, node's path = 
+got hereee, i is 68
+path = /gg.c, node's path = 
+got hereee, i is 70
+path = /gg.c, node's path = 
+got hereee, i is 71
+path = /gg.c, node's path = 
+got hereee, i is 73
+path = /gg.c, node's path = 
+got hereee, i is 76
+path = /gg.c, node's path = 
+got hereee, i is 79
+path = /gg.c, node's path = 
+got hereee, i is 81
+path = /gg.c, node's path = 
+got hereee, i is 82
+path = /gg.c, node's path = 
+got hereee, i is 83
+path = /gg.c, node's path = 
+got hereee, i is 84
+path = /gg.c, node's path = 
+got hereee, i is 87
+path = /gg.c, node's path = 
+got hereee, i is 90
+path = /gg.c, node's path = 
+got hereee, i is 92
+path = /gg.c, node's path = 
+got hereee, i is 95
+path = /gg.c, node's path = 
+got hereee, i is 97
+path = /gg.c, node's path = 
+got hereee, i is 99
+path = /gg.c, node's path = 
+got hereee, i is 100
+path = /gg.c, node's path = 
+got hereee, i is 103
+path = /gg.c, node's path = 
+got hereee, i is 106
+path = /gg.c, node's path = 
+got hereee, i is 107
+path = /gg.c, node's path = 
+got hereee, i is 111
+path = /gg.c, node's path = 
+got hereee, i is 112
+path = /gg.c, node's path = 
+got hereee, i is 113
+path = /gg.c, node's path = 
+got hereee, i is 114
+path = /gg.c, node's path = 
+got hereee, i is 115
+path = /gg.c, node's path = 
+got hereee, i is 116
+path = /gg.c, node's path = 
+got hereee, i is 118
+path = /gg.c, node's path = 
+got hereee, i is 119
+path = /gg.c, node's path = 
+got hereee, i is 121
+path = /gg.c, node's path = 
+got hereee, i is 124
+path = /gg.c, node's path = 
+got hereee, i is 127
+path = /gg.c, node's path = 
 still didnt fail
 didnt found the inode
     si:
@@ -142,180 +873,151 @@ didnt found the inode
     st_mtime = 0x00000000
     st_ctime = 0x00000000
 
-sfs_create(path="/bbb.c", mode=0100664, fi=0x32b16d10)
-
-sfs_getattr(path="/bbb.c", statbuf=0x32b16be0)
+sfs_getattr(path="/gg.c~", statbuf=0x4e86ac20)
 didnt fail yet
 got hereee, i is 0
-path = /bbb.c, node's path = /
-got hereee, i is 1
-path = /bbb.c, node's path = /lol
+path = /gg.c~, node's path = /
 got hereee, i is 2
-path = /bbb.c, node's path = /bbb.c
+path = /gg.c~, node's path = 
+got hereee, i is 3
+path = /gg.c~, node's path = 
+got hereee, i is 4
+path = /gg.c~, node's path = 
+got hereee, i is 6
+path = /gg.c~, node's path = 
+got hereee, i is 7
+path = /gg.c~, node's path = 
+got hereee, i is 8
+path = /gg.c~, node's path = 
+got hereee, i is 9
+path = /gg.c~, node's path = 
+got hereee, i is 10
+path = /gg.c~, node's path = 
+got hereee, i is 11
+path = /gg.c~, node's path = 
+got hereee, i is 15
+path = /gg.c~, node's path = 
+got hereee, i is 16
+path = /gg.c~, node's path = 
+got hereee, i is 18
+path = /gg.c~, node's path = 
+got hereee, i is 19
+path = /gg.c~, node's path = 
+got hereee, i is 23
+path = /gg.c~, node's path = 
+got hereee, i is 28
+path = /gg.c~, node's path = 
+got hereee, i is 31
+path = /gg.c~, node's path = 
+got hereee, i is 32
+path = /gg.c~, node's path = 
+got hereee, i is 34
+path = /gg.c~, node's path = 
+got hereee, i is 36
+path = /gg.c~, node's path = 
+got hereee, i is 39
+path = /gg.c~, node's path = 
+got hereee, i is 41
+path = /gg.c~, node's path = 
+got hereee, i is 43
+path = /gg.c~, node's path = 
+got hereee, i is 44
+path = /gg.c~, node's path = 
+got hereee, i is 47
+path = /gg.c~, node's path = 
+got hereee, i is 50
+path = /gg.c~, node's path = 
+got hereee, i is 51
+path = /gg.c~, node's path = 
+got hereee, i is 52
+path = /gg.c~, node's path = 
+got hereee, i is 55
+path = /gg.c~, node's path = 
+got hereee, i is 56
+path = /gg.c~, node's path = 
+got hereee, i is 57
+path = /gg.c~, node's path = 
+got hereee, i is 59
+path = /gg.c~, node's path = 
+got hereee, i is 63
+path = /gg.c~, node's path = 
+got hereee, i is 64
+path = /gg.c~, node's path = 
+got hereee, i is 65
+path = /gg.c~, node's path = 
+got hereee, i is 66
+path = /gg.c~, node's path = 
+got hereee, i is 67
+path = /gg.c~, node's path = 
+got hereee, i is 68
+path = /gg.c~, node's path = 
+got hereee, i is 70
+path = /gg.c~, node's path = 
+got hereee, i is 71
+path = /gg.c~, node's path = 
+got hereee, i is 73
+path = /gg.c~, node's path = 
+got hereee, i is 76
+path = /gg.c~, node's path = 
+got hereee, i is 79
+path = /gg.c~, node's path = 
+got hereee, i is 81
+path = /gg.c~, node's path = 
+got hereee, i is 82
+path = /gg.c~, node's path = 
+got hereee, i is 83
+path = /gg.c~, node's path = 
+got hereee, i is 84
+path = /gg.c~, node's path = 
+got hereee, i is 87
+path = /gg.c~, node's path = 
+got hereee, i is 90
+path = /gg.c~, node's path = 
+got hereee, i is 92
+path = /gg.c~, node's path = 
+got hereee, i is 95
+path = /gg.c~, node's path = 
+got hereee, i is 97
+path = /gg.c~, node's path = 
+got hereee, i is 99
+path = /gg.c~, node's path = 
+got hereee, i is 100
+path = /gg.c~, node's path = 
+got hereee, i is 103
+path = /gg.c~, node's path = 
+got hereee, i is 106
+path = /gg.c~, node's path = 
+got hereee, i is 107
+path = /gg.c~, node's path = 
+got hereee, i is 111
+path = /gg.c~, node's path = 
+got hereee, i is 112
+path = /gg.c~, node's path = 
+got hereee, i is 113
+path = /gg.c~, node's path = 
+got hereee, i is 114
+path = /gg.c~, node's path = 
+got hereee, i is 115
+path = /gg.c~, node's path = 
+got hereee, i is 116
+path = /gg.c~, node's path = 
+got hereee, i is 118
+path = /gg.c~, node's path = 
+got hereee, i is 119
+path = /gg.c~, node's path = 
+got hereee, i is 121
+path = /gg.c~, node's path = 
+got hereee, i is 124
+path = /gg.c~, node's path = 
+got hereee, i is 127
+path = /gg.c~, node's path = 
 still didnt fail
-found the inode
+didnt found the inode
     si:
     st_dev = 0
     st_ino = 0
-    st_mode = 0100644
+    st_mode = 00
     st_nlink = 0
-    st_uid = 0
-    st_gid = 0
-    st_rdev = 0
-    st_size = 0
-    st_blksize = 0
-    st_blocks = 1
-    st_atime = 0x5905114b
-    st_mtime = 0x5905114b
-    st_ctime = 0x5905114b
-
-sfs_release(path="/bbb.c", fi=0x32315d10)
-got hereee, i is 0
-path = /bbb.c, node's path = /
-got hereee, i is 1
-path = /bbb.c, node's path = /lol
-got hereee, i is 2
-path = /bbb.c, node's path = /bbb.c
-
-sfs_getattr(path="/bbb.c", statbuf=0x32b16c20)
-didnt fail yet
-got hereee, i is 0
-path = /bbb.c, node's path = /
-got hereee, i is 1
-path = /bbb.c, node's path = /lol
-got hereee, i is 2
-path = /bbb.c, node's path = /bbb.c
-still didnt fail
-found the inode
-    si:
-    st_dev = 0
-    st_ino = 0
-    st_mode = 0100644
-    st_nlink = 0
-    st_uid = 0
-    st_gid = 0
-    st_rdev = 0
-    st_size = 0
-    st_blksize = 0
-    st_blocks = 1
-    st_atime = 0x59051155
-    st_mtime = 0x59051155
-    st_ctime = 0x59051155
-
-sfs_open(path"/bbb.c", fi=0x32315d10)
-
-sfs_write(path="/bbb.c", buf=0x3370d060, size=15, offset=0, fi=0x32315d80)
-got hereee, i is 0
-path = /bbb.c, node's path = /
-got hereee, i is 1
-path = /bbb.c, node's path = /lol
-got hereee, i is 2
-path = /bbb.c, node's path = /bbb.c
-
-sfs_release(path="/bbb.c", fi=0x32b16d10)
-got hereee, i is 1
-path = /bbb.c, node's path = /lol
-got hereee, i is 2
-path = /bbb.c, node's path = /bbb.c
-
-sfs_readdir(path="/", fi=0x32b16c50)
-
-sfs_getattr(path="/lol", statbuf=0x32315c20)
-didnt fail yet
-got hereee, i is 1
-path = /lol, node's path = /lol
-still didnt fail
-found the inode
-    si:
-    st_dev = 0
-    st_ino = 0
-    st_mode = 0100644
-    st_nlink = 0
-    st_uid = 0
-    st_gid = 0
-    st_rdev = 0
-    st_size = 0
-    st_blksize = 0
-    st_blocks = 1
-    st_atime = 0x5905115b
-    st_mtime = 0x5905115b
-    st_ctime = 0x5905115b
-
-sfs_getattr(path="/bbb.c", statbuf=0x32b16c20)
-didnt fail yet
-got hereee, i is 1
-path = /bbb.c, node's path = /lol
-got hereee, i is 2
-path = /bbb.c, node's path = /bbb.c
-still didnt fail
-found the inode
-    si:
-    st_dev = 0
-    st_ino = 0
-    st_mode = 0100644
-    st_nlink = 0
-    st_uid = 0
-    st_gid = 0
-    st_rdev = 0
-    st_size = 0
-    st_blksize = 0
-    st_blocks = 1
-    st_atime = 0x5905115b
-    st_mtime = 0x5905115b
-    st_ctime = 0x5905115b
-
-sfs_readdir(path="/", fi=0x32b16c50)
-
-sfs_getattr(path="/lol", statbuf=0x32315c20)
-didnt fail yet
-got hereee, i is 1
-path = /lol, node's path = /lol
-still didnt fail
-found the inode
-    si:
-    st_dev = 0
-    st_ino = 0
-    st_mode = 0100644
-    st_nlink = 0
-    st_uid = 0
-    st_gid = 0
-    st_rdev = 0
-    st_size = 0
-    st_blksize = 0
-    st_blocks = 1
-    st_atime = 0x5905115c
-    st_mtime = 0x5905115c
-    st_ctime = 0x5905115c
-
-sfs_getattr(path="/bbb.c", statbuf=0x32b16c20)
-didnt fail yet
-got hereee, i is 1
-path = /bbb.c, node's path = /lol
-got hereee, i is 2
-path = /bbb.c, node's path = /bbb.c
-still didnt fail
-found the inode
-    si:
-    st_dev = 0
-    st_ino = 0
-    st_mode = 0100644
-    st_nlink = 0
-    st_uid = 0
-    st_gid = 0
-    st_rdev = 0
-    st_size = 0
-    st_blksize = 0
-    st_blocks = 1
-    st_atime = 0x5905115c
-    st_mtime = 0x5905115c
-    st_ctime = 0x5905115c
-
-sfs_getattr(path="/", statbuf=0x32315bf0)
-    si:
-    st_dev = 0
-    st_ino = 0
-    st_mode = 040777
-    st_nlink = 2
     st_uid = 0
     st_gid = 0
     st_rdev = 0
@@ -326,49 +1028,151 @@ sfs_getattr(path="/", statbuf=0x32315bf0)
     st_mtime = 0x00000000
     st_ctime = 0x00000000
 
-sfs_getattr(path="/bbb.c", statbuf=0x32b16c20)
+sfs_getattr(path="/gg.z~", statbuf=0x4f06bc20)
 didnt fail yet
-got hereee, i is 1
-path = /bbb.c, node's path = /lol
+got hereee, i is 0
+path = /gg.z~, node's path = /
 got hereee, i is 2
-path = /bbb.c, node's path = /bbb.c
+path = /gg.z~, node's path = 
+got hereee, i is 3
+path = /gg.z~, node's path = 
+got hereee, i is 4
+path = /gg.z~, node's path = 
+got hereee, i is 6
+path = /gg.z~, node's path = 
+got hereee, i is 7
+path = /gg.z~, node's path = 
+got hereee, i is 8
+path = /gg.z~, node's path = 
+got hereee, i is 9
+path = /gg.z~, node's path = 
+got hereee, i is 10
+path = /gg.z~, node's path = 
+got hereee, i is 11
+path = /gg.z~, node's path = 
+got hereee, i is 15
+path = /gg.z~, node's path = 
+got hereee, i is 16
+path = /gg.z~, node's path = 
+got hereee, i is 18
+path = /gg.z~, node's path = 
+got hereee, i is 19
+path = /gg.z~, node's path = 
+got hereee, i is 23
+path = /gg.z~, node's path = 
+got hereee, i is 28
+path = /gg.z~, node's path = 
+got hereee, i is 31
+path = /gg.z~, node's path = 
+got hereee, i is 32
+path = /gg.z~, node's path = 
+got hereee, i is 34
+path = /gg.z~, node's path = 
+got hereee, i is 36
+path = /gg.z~, node's path = 
+got hereee, i is 39
+path = /gg.z~, node's path = 
+got hereee, i is 41
+path = /gg.z~, node's path = 
+got hereee, i is 43
+path = /gg.z~, node's path = 
+got hereee, i is 44
+path = /gg.z~, node's path = 
+got hereee, i is 47
+path = /gg.z~, node's path = 
+got hereee, i is 50
+path = /gg.z~, node's path = 
+got hereee, i is 51
+path = /gg.z~, node's path = 
+got hereee, i is 52
+path = /gg.z~, node's path = 
+got hereee, i is 55
+path = /gg.z~, node's path = 
+got hereee, i is 56
+path = /gg.z~, node's path = 
+got hereee, i is 57
+path = /gg.z~, node's path = 
+got hereee, i is 59
+path = /gg.z~, node's path = 
+got hereee, i is 63
+path = /gg.z~, node's path = 
+got hereee, i is 64
+path = /gg.z~, node's path = 
+got hereee, i is 65
+path = /gg.z~, node's path = 
+got hereee, i is 66
+path = /gg.z~, node's path = 
+got hereee, i is 67
+path = /gg.z~, node's path = 
+got hereee, i is 68
+path = /gg.z~, node's path = 
+got hereee, i is 70
+path = /gg.z~, node's path = 
+got hereee, i is 71
+path = /gg.z~, node's path = 
+got hereee, i is 73
+path = /gg.z~, node's path = 
+got hereee, i is 76
+path = /gg.z~, node's path = 
+got hereee, i is 79
+path = /gg.z~, node's path = 
+got hereee, i is 81
+path = /gg.z~, node's path = 
+got hereee, i is 82
+path = /gg.z~, node's path = 
+got hereee, i is 83
+path = /gg.z~, node's path = 
+got hereee, i is 84
+path = /gg.z~, node's path = 
+got hereee, i is 87
+path = /gg.z~, node's path = 
+got hereee, i is 90
+path = /gg.z~, node's path = 
+got hereee, i is 92
+path = /gg.z~, node's path = 
+got hereee, i is 95
+path = /gg.z~, node's path = 
+got hereee, i is 97
+path = /gg.z~, node's path = 
+got hereee, i is 99
+path = /gg.z~, node's path = 
+got hereee, i is 100
+path = /gg.z~, node's path = 
+got hereee, i is 103
+path = /gg.z~, node's path = 
+got hereee, i is 106
+path = /gg.z~, node's path = 
+got hereee, i is 107
+path = /gg.z~, node's path = 
+got hereee, i is 111
+path = /gg.z~, node's path = 
+got hereee, i is 112
+path = /gg.z~, node's path = 
+got hereee, i is 113
+path = /gg.z~, node's path = 
+got hereee, i is 114
+path = /gg.z~, node's path = 
+got hereee, i is 115
+path = /gg.z~, node's path = 
+got hereee, i is 116
+path = /gg.z~, node's path = 
+got hereee, i is 118
+path = /gg.z~, node's path = 
+got hereee, i is 119
+path = /gg.z~, node's path = 
+got hereee, i is 121
+path = /gg.z~, node's path = 
+got hereee, i is 124
+path = /gg.z~, node's path = 
+got hereee, i is 127
+path = /gg.z~, node's path = 
 still didnt fail
-found the inode
+didnt found the inode
     si:
     st_dev = 0
     st_ino = 0
-    st_mode = 0100644
+    st_mode = 00
     st_nlink = 0
-    st_uid = 0
-    st_gid = 0
-    st_rdev = 0
-    st_size = 0
-    st_blksize = 0
-    st_blocks = 1
-    st_atime = 0x5905115f
-    st_mtime = 0x5905115f
-    st_ctime = 0x5905115f
-
-sfs_open(path"/bbb.c", fi=0x32315d10)
-
-sfs_read(path="/bbb.c", buf=0x2c000c50, size=4096, offset=0, fi=0x32b16d10)
-got hereee, i is 1
-path = /bbb.c, node's path = /lol
-got hereee, i is 2
-path = /bbb.c, node's path = /bbb.c
-
-sfs_release(path="/bbb.c", fi=0x32315d10)
-got hereee, i is 1
-path = /bbb.c, node's path = /lol
-got hereee, i is 2
-path = /bbb.c, node's path = /bbb.c
-
-sfs_getattr(path="/", statbuf=0x32b16bf0)
-    si:
-    st_dev = 0
-    st_ino = 0
-    st_mode = 040777
-    st_nlink = 2
     st_uid = 0
     st_gid = 0
     st_rdev = 0
@@ -378,183 +1182,3 @@ sfs_getattr(path="/", statbuf=0x32b16bf0)
     st_atime = 0x00000000
     st_mtime = 0x00000000
     st_ctime = 0x00000000
-
-sfs_getattr(path="/", statbuf=0x32315bf0)
-    si:
-    st_dev = 0
-    st_ino = 0
-    st_mode = 040777
-    st_nlink = 2
-    st_uid = 0
-    st_gid = 0
-    st_rdev = 0
-    st_size = 0
-    st_blksize = 0
-    st_blocks = 0
-    st_atime = 0x00000000
-    st_mtime = 0x00000000
-    st_ctime = 0x00000000
-
-sfs_readdir(path="/", fi=0x32315c50)
-
-sfs_getattr(path="/lol", statbuf=0x32b16c20)
-didnt fail yet
-got hereee, i is 1
-path = /lol, node's path = /lol
-still didnt fail
-found the inode
-    si:
-    st_dev = 0
-    st_ino = 0
-    st_mode = 0100644
-    st_nlink = 0
-    st_uid = 0
-    st_gid = 0
-    st_rdev = 0
-    st_size = 0
-    st_blksize = 0
-    st_blocks = 1
-    st_atime = 0x5905120b
-    st_mtime = 0x5905120b
-    st_ctime = 0x5905120b
-
-sfs_getattr(path="/bbb.c", statbuf=0x32315c20)
-didnt fail yet
-got hereee, i is 1
-path = /bbb.c, node's path = /lol
-got hereee, i is 2
-path = /bbb.c, node's path = /bbb.c
-still didnt fail
-found the inode
-    si:
-    st_dev = 0
-    st_ino = 0
-    st_mode = 0100644
-    st_nlink = 0
-    st_uid = 0
-    st_gid = 0
-    st_rdev = 0
-    st_size = 0
-    st_blksize = 0
-    st_blocks = 1
-    st_atime = 0x5905120b
-    st_mtime = 0x5905120b
-    st_ctime = 0x5905120b
-
-sfs_readdir(path="/", fi=0x32315c50)
-
-sfs_getattr(path="/lol", statbuf=0x32b16c20)
-didnt fail yet
-got hereee, i is 1
-path = /lol, node's path = /lol
-still didnt fail
-found the inode
-    si:
-    st_dev = 0
-    st_ino = 0
-    st_mode = 0100644
-    st_nlink = 0
-    st_uid = 0
-    st_gid = 0
-    st_rdev = 0
-    st_size = 0
-    st_blksize = 0
-    st_blocks = 1
-    st_atime = 0x5905120f
-    st_mtime = 0x5905120f
-    st_ctime = 0x5905120f
-
-sfs_getattr(path="/bbb.c", statbuf=0x32315c20)
-didnt fail yet
-got hereee, i is 1
-path = /bbb.c, node's path = /lol
-got hereee, i is 2
-path = /bbb.c, node's path = /bbb.c
-still didnt fail
-found the inode
-    si:
-    st_dev = 0
-    st_ino = 0
-    st_mode = 0100644
-    st_nlink = 0
-    st_uid = 0
-    st_gid = 0
-    st_rdev = 0
-    st_size = 0
-    st_blksize = 0
-    st_blocks = 1
-    st_atime = 0x5905120f
-    st_mtime = 0x5905120f
-    st_ctime = 0x5905120f
-
-sfs_getattr(path="/bbb.c", statbuf=0x32b16c20)
-didnt fail yet
-got hereee, i is 1
-path = /bbb.c, node's path = /lol
-got hereee, i is 2
-path = /bbb.c, node's path = /bbb.c
-still didnt fail
-found the inode
-    si:
-    st_dev = 0
-    st_ino = 0
-    st_mode = 0100644
-    st_nlink = 0
-    st_uid = 0
-    st_gid = 0
-    st_rdev = 0
-    st_size = 0
-    st_blksize = 0
-    st_blocks = 1
-    st_atime = 0x5905121a
-    st_mtime = 0x5905121a
-    st_ctime = 0x5905121a
-sfs_unlink(path="/bbb.c")
-got hereee, i is 1
-path = /bbb.c, node's path = /lol
-got hereee, i is 2
-path = /bbb.c, node's path = /bbb.c
-
-sfs_getattr(path="/lol", statbuf=0x32315c20)
-didnt fail yet
-got hereee, i is 1
-path = /lol, node's path = /lol
-still didnt fail
-found the inode
-    si:
-    st_dev = 0
-    st_ino = 0
-    st_mode = 0100644
-    st_nlink = 0
-    st_uid = 0
-    st_gid = 0
-    st_rdev = 0
-    st_size = 0
-    st_blksize = 0
-    st_blocks = 1
-    st_atime = 0x5905121d
-    st_mtime = 0x5905121d
-    st_ctime = 0x5905121d
-sfs_unlink(path="/lol")
-got hereee, i is 1
-path = /lol, node's path = /lol
-
-sfs_readdir(path="/", fi=0x32315c50)
-
-sfs_getattr(path="/", statbuf=0x32315bf0)
-    si:
-    st_dev = 0
-    st_ino = 0
-    st_mode = 040777
-    st_nlink = 2
-    st_uid = 0
-    st_gid = 0
-    st_rdev = 0
-    st_size = 0
-    st_blksize = 0
-    st_blocks = 0
-    st_atime = 0x00000000
-    st_mtime = 0x00000000
-    st_ctime = 0x00000000
-
-sfs_destroy(userdata=0x01236010)
