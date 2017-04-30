@@ -152,7 +152,7 @@ inode checkiNodePathName(const char *path){
 }
 
 void fillStatBuff(struct stat *statbuf, inode iNode){
-    statbuf->st_mode =  S_IFREG | 0777;//iNode.mode;
+    statbuf->st_mode =  iNode.mode;//S_IFREG | 0777;
     statbuf->st_nlink = iNode.hardlinks;
     statbuf->st_size = iNode.size;
     statbuf->st_blocks = iNode.size / BLOCK_SIZE + 1;
@@ -184,6 +184,17 @@ void setFileInit(){
     *magicNumSpace = MAGIC_NUM;
 
     block_write(0, (const void*) buf);
+}
+
+int findNextOpenBlock(){
+    int i;
+    for (i = 0; i < BLOCK_LIST_SIZE; i++) {
+        if(isBlockFree(i) == 1){
+            return i;
+        }
+    }
+
+    return -1;
 }
 
 ///////////////////////////////////////////////////////////
@@ -289,7 +300,7 @@ int sfs_getattr(const char *path, struct stat *statbuf)
 
     if(strcmp(path, "/") == 0){
 
-	     statbuf->st_mode = S_IFDIR | 0755;
+	     statbuf->st_mode = S_IFDIR | 0777;
 	     statbuf->st_nlink = 2;
 
        //fillStatBuff(statbuf, readInode(0));
@@ -340,9 +351,20 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
             in.size = 0;
             in.mode = mode;
             in.open = 1;
+
             memcpy(in.path, path, 256);
+
+            in.data[0] = findNextOpenBlock();
+
+            if(in.data[0] == -1){
+                return -1;
+            }
+
+            setBlock(in.data[0], 0);
+
             writeInode(in);
             fi->fh = in.id;//why does this not throw numerical out of range like open???
+
             return retstat;
         }
     }
@@ -371,18 +393,8 @@ int sfs_unlink(const char *path)
       	    setBlock(file.data[i], 1);
         }
     }
-    int i;
-    for(i = 0; i < INODE_LIST_SIZE; i++){
-      if(isInodeFree(i) == 0){
-          inode in = readInode(i);
-          if(strcmp(path, in.path) == 0){
-            setInode(i, 1);
-          }
-      }
-    }
 
-    //memset(file.path, '\0', 256);
-    //setInode(file.id, 1);
+    setInode(file.id, 1);
 
     return retstat;
 }
@@ -412,8 +424,8 @@ int sfs_open(const char *path, struct fuse_file_info *fi)
           inode in = readInode(i);
           if(strcmp(path, in.path) == 0){
             	fi->fh = i; //this doesnt work even though it works in create wtf
-				//throws a fucking numerical result out of range but it doesnt for create?? 
-		return i;
+				            //throws a fucking numerical result out of range but it doesnt for create??
+		          return 0;
           }
       }
     }
@@ -442,25 +454,16 @@ int sfs_release(const char *path, struct fuse_file_info *fi)
 	  path, fi);
 
 
-    //inode file = checkiNodePathName(path);
-    //if(file.id == -1){
+    inode file = checkiNodePathName(path);
+    if(file.id == -1){
       	//couldn't find the file
-      //	return -1;
-    //}
-int i;
-for(i = 0; i < INODE_LIST_SIZE; i++){
-      if(isInodeFree(i) == 0){
-          inode in = readInode(i);
-          if(strcmp(path, in.path) != 0){
-            return -1;
-          }
-      }
+      	return -1;
     }
 
 
     fi->fh = -1;
     //fi->flags = fi->flags ^ fi->flags;
-    
+
     return retstat;
 }
 
@@ -518,7 +521,7 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
       if(chr % BLOCK_SIZE == 0){
           blk++;
           block_read(file.data[blk], (void*) diskbuf);
-	  chr = 0;
+	        chr = 0;
       }
    }
 
@@ -545,13 +548,7 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
       	// file doesn't exist to read from
       	return -EBADF;
     }
-	/*
-    if(fi->fh == -1){
-      	//file has been closed, can't write to it anymore
-      	//EBADF error
-      	return -EBADF;
-    }
-*/
+
     if(size == 0){
 	     return 0;
     }
@@ -566,39 +563,53 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
    int over = 0;
    char diskbuf[BLOCK_SIZE];
    //char fromFile[BLOCK_SIZE];
+
+   int blksOwned = file.size / BLOCK_SIZE + 1;
+
+   while (blk > blksOwned) {
+       int nextBlk = findNextOpenBlock();
+       if(nextBlk == -1){
+          return -1;
+       }
+       file.data[blksOwned + 1] = nextBlk;
+       setBlock(nextBlk, 0);
+       blksOwned++;
+   }
+
    block_read(file.data[blk], (void *) diskbuf);
    //memcpy(diskbuf, fromFile, BLOCK_SIZE);
    //memset(diskbuf, 0, BLOCK_SIZE);
-
-   int needToWrite = 0;
 
    for (i = 0; i < size; i++) {
       diskbuf[chr] = buf[i];
       chr++;
       bytesWritten++;
-      needToWrite = 1;
-/*
-	 while(isBlockFree(file.data[blk]) != 1){
-		          blk++;
-	 }
 
-  */  block_write(file.data[blk], (void*) diskbuf);
-	       // memset(diskbuf, 0, BLOCK_SIZE);
-      blk++;
-      //get the next block
-      block_read(file.data[blk], diskbuf);
+      if(chr + (blk * BLOCK_SIZE) > file.size){
+          file.size++;
+          if(file.size % BLOCK_SIZE == 0){
+              int nbl = findNextOpenBlock();
+              if(nbl == -1){
+                  return -1;
+              }
+              file.data[blk + 1] = nbl;
+              setBlock(nbl, 0);
+          }
+      }
 
-      needToWrite = 0;
-      
-   }/*
-   if(needToWrite == 1){
-     while(isBlockFree(blk) != 1){
-       blk++;
-     }
-     block_write(file.data[blk], (void*) diskbuf);
+      if(chr % BLOCK_SIZE == 0){
+          block_write(file.data[blk], (const void*) diskbuf);
+          blk++;
+          block_read(file.data[blk], (void*) diskbuf);
+          chr = 0;
+      }
+
    }
-*/
-    return bytesWritten;
+
+   block_write(file.data[blk], (const void*) diskbuf);
+   writeInode(file);
+
+   return bytesWritten;
 }
 
 
