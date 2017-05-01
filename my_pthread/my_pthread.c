@@ -1371,8 +1371,8 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 	        //init swap file
 
-          swpFile = fopen("swpfile", "w+");
-          //swpFile = fopen("/home/csuser/OS2017/assignment3/example/mountdir/swpfile", "w+");
+          //swpFile = fopen("swpfile", "w+");
+          swpFile = fopen("/home/csuser/OS2017/assignment3/example/mountdir/swpfile", "w+");
           puts("init'ed the swp");
 
           //set the swap size 16MB

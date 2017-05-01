@@ -57,7 +57,9 @@ int isBlockFree(int n){
 
     //n = n - (((blk - 1) * BLOCK_SIZE) * 8);
 
-    return (buf[n / 8] >> n % 8) & 1;
+    unsigned result = (buf[n / 8] >> n % 8) & 0x1;
+
+    return result;
 }
 
 //sets block n to 1 (free) or 0 (not free)
@@ -69,11 +71,12 @@ void setBlock(int n, int setting){
 
 
     //n = n - (((blk - 1) * BLOCK_SIZE) * 8);
-
+    char c = 1;
     if(setting == 1){
-        buf[n / 8] |= 1 << n % 8;
+
+        buf[n / 8] |= c << n % 8;
     }else{
-        buf[n / 8] &= ~(1 << n % 8);
+        buf[n / 8] &= ~(c << n % 8);
     }
 
     block_write(1, (const void*) buf);
@@ -86,9 +89,9 @@ int isInodeFree(int n){
     char buf[BLOCK_SIZE];
     block_read(0, (void*) buf);
 
+    unsigned result = (buf[sizeof(int) + (n / 8)] >> n % 8) & 0x1;
 
-
-    return (buf[sizeof(int) + (n / 8)] >> n % 8) & 1;
+    return result;
 }
 
 //sets inode n to 1 (free) or 0 (not free)
@@ -97,11 +100,11 @@ void setInode(int n, int setting){
     block_read(0, (void*) buf);
 
 
-
+    char c = 1;
     if(setting == 1){
-        buf[sizeof(int) + (n / 8)] |= 1 << n % 8;
+        buf[sizeof(int) + (n / 8)] |= c << n % 8;
     }else{
-        buf[sizeof(int) + (n / 8)] &= ~(1 << n % 8);
+        buf[sizeof(int) + (n / 8)] &= ~(c << n % 8);
     }
 
     block_write(0, (const void*) buf);
@@ -151,7 +154,7 @@ inode checkiNodePathName(const char *path){
     int i;
     for(i = 0; i < INODE_LIST_SIZE; i++){
 
-      	if(!isInodeFree(i)){
+      	if(isInodeFree(i) == 0){
             log_msg("got hereee, i is %d\n",i);
             inode in = readInode(i);
             log_msg("path = %s, node's path = %s\n",path, in.path);
@@ -437,7 +440,7 @@ int sfs_unlink(const char *path)
     if(file.hardlinks < 1){
       	int i;
       	//set all the blocks that the file uses to free, so other files can use the space if needed
-      	for(i = 0; i <= file.size / BLOCK_SIZE; i++){
+      	for(i = 0; i <= file.size / BLOCK_SIZE + 1; i++){
       	    setBlock(file.data[i], 1);
         }
     }
@@ -509,7 +512,7 @@ int sfs_release(const char *path, struct fuse_file_info *fi)
     }
 
 
-    //fi->fh = -1;
+    fi->fh = -1;
     //fi->flags = fi->flags ^ fi->flags;
 
     return retstat;
@@ -595,6 +598,10 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
       	return -EBADF;
     }
 
+    if(fi->fh == -1){
+        return -EBADF;
+    }
+
     if(size == 0){
 	     return 0;
     }
@@ -604,15 +611,14 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
    int blk = offset / BLOCK_SIZE;
    int chr = offset % BLOCK_SIZE;
    int i;
-   // for checking if the bytes to write will go over the file size.
-   // 1 = it will go over, 0 = within file size
-   int over = 0;
+
    char diskbuf[BLOCK_SIZE];
    //char fromFile[BLOCK_SIZE];
 
    int blksOwned = file.size / BLOCK_SIZE + 1;
 
    while (blk > blksOwned) {
+       log_msg("got here\n");
        int nextBlk = findNextOpenBlock();
        if(nextBlk == -1){
           return -1;
@@ -636,6 +642,11 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
       if(chr + (blk * BLOCK_SIZE) > file.size){
           file.size++;
           if(file.size % BLOCK_SIZE == 0){
+              if(file.size == 16777216){
+                  block_write(file.data[blk], (const void*) diskbuf);
+                  writeInode(file);
+                  return bytesWritten;
+              }
               int nbl = findNextOpenBlock();
               if(nbl == -1){
                   return -1;
