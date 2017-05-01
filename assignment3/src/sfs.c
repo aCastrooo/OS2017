@@ -54,6 +54,7 @@ int isBlockFree(int n){
     //int blk = 1 + ((n / BLOCK_SIZE) / 8);
     block_read(1, (void*) buf);
 
+
     //n = n - (((blk - 1) * BLOCK_SIZE) * 8);
 
     return (buf[n / 8] >> n % 8) & 1;
@@ -65,6 +66,8 @@ void setBlock(int n, int setting){
     //int blk = 1 + ((n / BLOCK_SIZE) / 8);
     block_read(1, (void*) buf);
 
+
+
     //n = n - (((blk - 1) * BLOCK_SIZE) * 8);
 
     if(setting == 1){
@@ -74,12 +77,16 @@ void setBlock(int n, int setting){
     }
 
     block_write(1, (const void*) buf);
+
+
 }
 
 //1 if inode n is free, 0 o/w
 int isInodeFree(int n){
     char buf[BLOCK_SIZE];
     block_read(0, (void*) buf);
+
+
 
     return (buf[sizeof(int) + (n / 8)] >> n % 8) & 1;
 }
@@ -89,6 +96,8 @@ void setInode(int n, int setting){
     char buf[BLOCK_SIZE];
     block_read(0, (void*) buf);
 
+
+
     if(setting == 1){
         buf[sizeof(int) + (n / 8)] |= 1 << n % 8;
     }else{
@@ -96,6 +105,8 @@ void setInode(int n, int setting){
     }
 
     block_write(0, (const void*) buf);
+
+
 }
 
 //returns the nth inode in the list
@@ -105,6 +116,8 @@ inode readInode(int n){
     char buf[BLOCK_SIZE];
 
     block_read(block, (void*) buf);
+
+
 
     inode* rp = (inode*) (buf + (n % numPerBlock) * sizeof(inode));
     inode result = *rp;
@@ -120,10 +133,15 @@ void writeInode(inode nd){
 
     block_read(block, (void*) buf);
 
+
+
     inode* rp = (inode*) (buf + (n % numPerBlock) * sizeof(inode));
-    *rp = nd;
+    //*rp = nd;
+    memcpy(rp, &nd, sizeof(inode));
 
     block_write(block, (const void*) buf);
+
+
 }
 
 
@@ -157,7 +175,7 @@ void fillStatBuff(struct stat *statbuf, inode iNode){
     statbuf->st_size = iNode.size;
     statbuf->st_blocks = iNode.size / BLOCK_SIZE + 1;
 
-    statbuf->st_ino = 0; //iNode.id;
+    statbuf->st_ino = iNode.id;
 
     statbuf->st_ctime = time(0);
     statbuf->st_mtime = time(0);
@@ -168,6 +186,8 @@ void fillStatBuff(struct stat *statbuf, inode iNode){
 int checkIfInit(){
     char buf[BLOCK_SIZE];
     block_read(0, (void *) buf);
+
+
 
     int* magicNumSpace = (int*) buf;
 
@@ -184,6 +204,8 @@ void setFileInit(){
     *magicNumSpace = MAGIC_NUM;
 
     block_write(0, (const void*) buf);
+
+
 }
 
 int findNextOpenBlock(){
@@ -234,6 +256,8 @@ void *sfs_init(struct fuse_conn_info *conn)
 
     block_read(0, buf);
 
+
+
     //this initializes imap
     int i;
     for (i = 0; i < IMAP_SIZE; i++) {
@@ -241,6 +265,8 @@ void *sfs_init(struct fuse_conn_info *conn)
     }
 
     block_write(0, (const void*) buf);
+
+
     //magic num and imap span block 0
 
 
@@ -253,17 +279,38 @@ void *sfs_init(struct fuse_conn_info *conn)
 
 
 
+
+
     //set up root inode
     setInode(0,0);
     inode root;
     root.id = 0;
     memcpy(root.path, "/", 2);
-    root.mode = S_IFDIR | 0777; //S_IROTH | S_IWOTH | S_IXOTH | S_IXGRP | S_IWGRP | S_IRGRP | S_IXUSR | S_IWUSR | S_IRUSR;
+    root.mode = S_IFDIR | 0766; //S_IROTH | S_IWOTH | S_IXOTH | S_IXGRP | S_IWGRP | S_IRGRP | S_IXUSR | S_IWUSR | S_IRUSR;
     root.size = 0;
     root.hardlinks = 2;
-
     writeInode(root);
-log_msg("YOOOOOOOOOOOOOOOOOOOOOOOOOOO");
+
+    /*
+    setInode(1,0);
+    inode dot;
+    dot.id = 1;
+    memcpy(dot.path, ".", 2);
+    dot.mode = S_IFDIR | 0777;
+    dot.size = 0;
+    dot.hardlinks = 2;
+    writeInode(dot);
+
+    setInode(2,0);
+    inode dotdot;
+    dotdot.id = 2;
+    memcpy(dotdot.path, "..", 3);
+    dotdot.mode = S_IFDIR | 0777;
+    dotdot.size = 0;
+    dotdot.hardlinks = 2;
+    writeInode(dotdot);
+    */
+
     inode test = readInode(0);
     log_msg("test has mode %d links %d and id %d",test.mode,test.hardlinks,test.id);
 
@@ -351,6 +398,7 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
             in.size = 0;
             in.mode = mode;
             in.open = 1;
+            in.hardlinks = 1;
 
             memcpy(in.path, path, 256);
 
@@ -461,7 +509,7 @@ int sfs_release(const char *path, struct fuse_file_info *fi)
     }
 
 
-    fi->fh = -1;
+    //fi->fh = -1;
     //fi->flags = fi->flags ^ fi->flags;
 
     return retstat;
@@ -489,13 +537,7 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
       	// file doesn't exist to read from
       	return -EBADF;
     }
-/*
-    if(fi->fh == -1){
-      	//file has been closed, can't read from it anymore
-      	//EBADF error
-      	return -EBADF;
-    }
-*/
+
     if(offset > file.size){
       	//cant start reading after the EOF, and cant read more than the file has
       	//for the second, we can actually read what the file has, but we can't read more than that. should we just read all the stuff?
@@ -514,6 +556,8 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
    int i;
    char diskbuf[BLOCK_SIZE];
    block_read(file.data[blk], (void*) diskbuf);
+
+
    for (i = 0; i < size; i++) {
       buf[i] = diskbuf[chr];
       chr++;
@@ -521,6 +565,8 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
       if(chr % BLOCK_SIZE == 0){
           blk++;
           block_read(file.data[blk], (void*) diskbuf);
+
+
 	        chr = 0;
       }
    }
@@ -577,6 +623,8 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
    }
 
    block_read(file.data[blk], (void *) diskbuf);
+
+
    //memcpy(diskbuf, fromFile, BLOCK_SIZE);
    //memset(diskbuf, 0, BLOCK_SIZE);
 
@@ -599,14 +647,20 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
 
       if(chr % BLOCK_SIZE == 0){
           block_write(file.data[blk], (const void*) diskbuf);
+
+
           blk++;
           block_read(file.data[blk], (void*) diskbuf);
+
+
           chr = 0;
       }
 
    }
 
    block_write(file.data[blk], (const void*) diskbuf);
+
+
    writeInode(file);
 
    return bytesWritten;
@@ -693,7 +747,10 @@ int sfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offse
         memcpy(filename, in.path + 1, 255);
         //log_msg("got here 3\n");
 
-        filler(buf, filename, NULL, 0);
+        int x = filler(buf, filename, NULL, 0);
+        if(x != 0){
+            log_msg("\nIT FAILED\n");
+        }
       }
     }
 

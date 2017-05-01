@@ -943,7 +943,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 	}
 
 	void swapToMemFromDisk(int inMem, int fromDisk){
-		
+
 		pause_timer(scd->timer);
 
 
@@ -1144,7 +1144,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
 
   static bool moveToDiskSpace(int index) {
-		
+
 		pause_timer(scd->timer);
 
 		int i;
@@ -1165,15 +1165,15 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 				pages[index] = setPageIsF(pages[index], 1);
        				/////fclose(swpFile);
 				/////swpFile = -1;
-				
+
 				unpause_timer(scd->timer);
-				
+
 				return true;
 			}
 		}
 
 		unpause_timer(scd->timer);
-		
+
     		/////fclose(swpFile);
 		/////swpFile = -1;
 		return false;
@@ -1372,6 +1372,7 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 	        //init swap file
 
           swpFile = fopen("swpfile", "w+");
+          //swpFile = fopen("/home/csuser/OS2017/assignment3/example/mountdir/swpfile", "w+");
           puts("init'ed the swp");
 
           //set the swap size 16MB
