@@ -30,8 +30,6 @@ typedef struct inode_{
     short id;
     char path[256];
 
-    short open;
-
     mode_t mode;
 
     //size in bytes of the file so far. size in blocks can be calculated using BLOCK_SIZE

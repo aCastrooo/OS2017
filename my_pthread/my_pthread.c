@@ -192,9 +192,9 @@ unsigned int getPageIsF(unsigned int pg){
 //deletes the swpfile on program exit
 void deleteFile(){
   fclose(swpFile);
-	int done = remove("swpfile");
+	int done = remove("/home/csuser/OS2017/assignment3/example/mountdir/swpfile");
 	if(!done){
-		puts("file deleted");
+		//puts("file deleted");
 	}
 }
 
@@ -1373,13 +1373,13 @@ int my_pthread_mutex_lock(my_pthread_mutex_t *mutex) {
 
           //swpFile = fopen("swpfile", "w+");
           swpFile = fopen("/home/csuser/OS2017/assignment3/example/mountdir/swpfile", "w+");
-          puts("init'ed the swp");
+          //puts("init'ed the swp");
 
           //set the swap size 16MB
           ftruncate(fileno(swpFile), DISK_MEMORY);
           /////fclose(swpFile);
 		      /////swpFile = -1;
-	        puts("truncated done");
+	        //puts("truncated done");
 
 
     	    // deletes the swpfile at the end of program execution

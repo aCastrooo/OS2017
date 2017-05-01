@@ -400,7 +400,6 @@ int sfs_create(const char *path, mode_t mode, struct fuse_file_info *fi)
             in.id = i;
             in.size = 0;
             in.mode = mode;
-            in.open = 1;
             in.hardlinks = 1;
 
             memcpy(in.path, path, 256);
@@ -558,7 +557,7 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
    int chr = offset % BLOCK_SIZE;
    int i;
    char diskbuf[BLOCK_SIZE];
-   block_read(file.data[blk], (void*) diskbuf);
+   block_read(D_BLOCK_START + file.data[blk], (void*) diskbuf);
 
 
    for (i = 0; i < size; i++) {
@@ -567,7 +566,7 @@ int sfs_read(const char *path, char *buf, size_t size, off_t offset, struct fuse
       bytesWritten++;
       if(chr % BLOCK_SIZE == 0){
           blk++;
-          block_read(file.data[blk], (void*) diskbuf);
+          block_read(D_BLOCK_START + file.data[blk], (void*) diskbuf);
 
 
 	        chr = 0;
@@ -628,7 +627,7 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
        blksOwned++;
    }
 
-   block_read(file.data[blk], (void *) diskbuf);
+   block_read(D_BLOCK_START + file.data[blk], (void *) diskbuf);
 
 
    //memcpy(diskbuf, fromFile, BLOCK_SIZE);
@@ -643,7 +642,7 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
           file.size++;
           if(file.size % BLOCK_SIZE == 0){
               if(file.size == 16777216){
-                  block_write(file.data[blk], (const void*) diskbuf);
+                  block_write(D_BLOCK_START + file.data[blk], (const void*) diskbuf);
                   writeInode(file);
                   return bytesWritten;
               }
@@ -657,11 +656,11 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
       }
 
       if(chr % BLOCK_SIZE == 0){
-          block_write(file.data[blk], (const void*) diskbuf);
+          block_write(D_BLOCK_START + file.data[blk], (const void*) diskbuf);
 
 
           blk++;
-          block_read(file.data[blk], (void*) diskbuf);
+          block_read(D_BLOCK_START + file.data[blk], (void*) diskbuf);
 
 
           chr = 0;
@@ -669,7 +668,7 @@ int sfs_write(const char *path, const char *buf, size_t size, off_t offset,
 
    }
 
-   block_write(file.data[blk], (const void*) diskbuf);
+   block_write(D_BLOCK_START + file.data[blk], (const void*) diskbuf);
 
 
    writeInode(file);
